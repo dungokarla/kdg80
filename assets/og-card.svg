@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">80 историй о главном</title>
+  <desc id="desc">Просветительский фестиваль Российского общества Знание. Калининград, 28 марта - 19 июля 2026.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f4f6fb"/>
+      <stop offset="100%" stop-color="#e7ebf5"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#426fff"/>
+      <stop offset="100%" stop-color="#0501d0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#0501d0"/>
+  <rect x="78" y="72" width="230" height="74" rx="14" fill="#0501d0"/>
+  <text x="115" y="120" fill="#ffffff" font-size="34" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="1">ЗНАНИЕ</text>
+
+  <text x="80" y="235" fill="#426fff" font-size="26" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="2">ПРОСВЕТИТЕЛЬСКИЙ ФЕСТИВАЛЬ</text>
+  <text x="80" y="272" fill="#426fff" font-size="26" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="2">РОССИЙСКОГО ОБЩЕСТВА ЗНАНИЕ</text>
+  <text x="80" y="326" fill="#50566a" font-size="30" font-family="Arial, Helvetica, sans-serif">к 80-летию Калининградской области</text>
+
+  <text x="80" y="475" fill="url(#accent)" font-size="176" font-family="Arial, Helvetica, sans-serif" font-weight="700">80</text>
+  <text x="345" y="435" fill="#17181f" font-size="94" font-family="Arial, Helvetica, sans-serif" font-weight="700">историй</text>
+  <text x="345" y="525" fill="#17181f" font-size="94" font-family="Arial, Helvetica, sans-serif" font-weight="700">о главном</text>
+
+  <rect x="865" y="77" width="175" height="44" rx="22" fill="#eef1f8" stroke="#d3dae8"/>
+  <text x="952" y="105" text-anchor="middle" fill="#50566a" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="1">КАЛИНИНГРАД</text>
+  <rect x="1058" y="77" width="84" height="44" rx="22" fill="#dfe5f5" stroke="#cbd5f1"/>
+  <text x="1100" y="105" text-anchor="middle" fill="#0501d0" font-size="22" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="1">2026</text>
+
+  <rect x="830" y="380" width="290" height="124" rx="24" fill="url(#accent)"/>
+  <text x="875" y="430" fill="#ffffff" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="1">СКОРО НА САЙТЕ</text>
+  <text x="875" y="470" fill="#ffffff" font-size="26" font-family="Arial, Helvetica, sans-serif">Программа фестиваля</text>
+  <text x="875" y="504" fill="#ffffff" font-size="26" font-family="Arial, Helvetica, sans-serif">появится в ближайшее время</text>
+</svg>

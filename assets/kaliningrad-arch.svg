@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="450" y1="0" x2="450" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7AA8E8"/>
+      <stop offset="0.55" stop-color="#CFE2F8"/>
+      <stop offset="1" stop-color="#F6F8FB"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="221" y1="247" x2="656" y2="834" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#AE986F"/>
+      <stop offset="0.5" stop-color="#7F6A46"/>
+      <stop offset="1" stop-color="#CEB78A"/>
+    </linearGradient>
+    <linearGradient id="base" x1="390" y1="616" x2="463" y2="1135" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6E654F"/>
+      <stop offset="1" stop-color="#474335"/>
+    </linearGradient>
+    <linearGradient id="trees" x1="450" y1="770" x2="450" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#63855A"/>
+      <stop offset="1" stop-color="#3D5A36"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="1200" fill="url(#sky)"/>
+
+  <path d="M0 950C76 889 163 863 251 866C355 869 430 922 530 925C661 930 755 862 900 849V1200H0V950Z" fill="url(#trees)" opacity="0.9"/>
+  <path d="M0 1032C116 972 203 950 302 964C404 978 474 1044 580 1054C691 1065 784 1029 900 966V1200H0V1032Z" fill="#56764E" opacity="0.62"/>
+
+  <path d="M254 1145C311 1035 349 892 404 734C430 660 456 590 510 507L619 561C549 669 517 771 478 899C443 1012 397 1106 370 1145H254Z" fill="url(#base)"/>
+  <path d="M391 1093H722V1200H391V1093Z" fill="#534E40"/>
+
+  <ellipse cx="542" cy="437" rx="183" ry="297" transform="rotate(9 542 437)" stroke="url(#metal)" stroke-width="42"/>
+  <ellipse cx="542" cy="437" rx="160" ry="273" transform="rotate(9 542 437)" stroke="#544A35" stroke-opacity="0.25" stroke-width="5"/>
+
+  <path d="M508 710C519 687 534 668 553 656C565 674 569 691 567 710V752H549V714L542 703L533 714V752H515L508 710Z" fill="#7A745F"/>
+  <circle cx="544" cy="640" r="16" fill="#8A8470"/>
+
+  <path d="M325 1145H791V1200H325V1145Z" fill="#4A473A"/>
+  <path d="M325 1117H791V1145H325V1117Z" fill="#625C4D"/>
+</svg>
