@@ -3,3 +3,7 @@
 added/
 AGENTS.md
 CLAUDE_PROMPT.md
+.env
+.env.*
+!.env.example
+.secrets/
