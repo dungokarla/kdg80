@@ -1,0 +1,10 @@
+{
+  "name": "festival-landing",
+  "forwardPorts": [4321],
+  "portsAttributes": {
+    "4321": {
+      "label": "Astro Preview",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}
