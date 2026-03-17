@@ -7,3 +7,4 @@ CLAUDE_PROMPT.md
 .env.*
 !.env.example
 .secrets/
+Исходные данные/desktop.ini
