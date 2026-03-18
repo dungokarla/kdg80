@@ -10,8 +10,26 @@
 - Do not ask the user to clarify what `Opus` means unless they explicitly contrast it with another model.
 - If a tool, script, or agent needs a model name, map `Opus` directly to `opus`.
 
+## Skill Usage Policy
+
+- For any interface, frontend, layout, visual, UX, landing page, or design-related work, always use the `ui-ux-pro-max` skill.
+- For any interface or website work that can affect discoverability, page structure, content presentation, metadata, internal linking, or search performance, also use the `seo` skill.
+- For any interface or website work, also use the `seo-geo` skill to account for AI search visibility, AI Overviews, ChatGPT web search, and Perplexity-style citation patterns.
+- If the task is explicitly about GEO, AI visibility, AI citations, LLM discoverability, `llms.txt`, crawler access, or structured discoverability for AI systems, additionally use the `geo` skill.
+- Default workflow for site UI tasks: use `ui-ux-pro-max` + `seo` + `seo-geo`; add `geo` whenever the task touches AI-search readiness or GEO outcomes.
+
+## Visual Verification Policy
+
+- For any website, frontend, layout, or visual task, do not mark the work complete until you have done a visual verification pass through Playwright CLI or an equivalent Playwright command-line workflow.
+- Always verify both desktop and mobile views for visual tasks before saying the issue is fixed.
+- The verification pass must check the actual rendered result, not only the code or static CSS diff.
+- When the user reports a visual defect, re-open the affected screens in Playwright, capture fresh screenshots, and compare the result against the reported problem before closing the task.
+
 ## Git / Push Policy
 
+- Keep the cloud/remote repository reasonably up to date during normal work.
+- After every second user request, stage, commit, and push all durable project changes so the remote repository stays current.
+- Exclude temporary artifacts, cache files, build output that is not part of the shipped product, local debug files, machine-specific files, and other non-durable working artifacts from those pushes.
 - By default, stage, commit, and push only files directly related to the current user request.
 - Never include unrelated modified files in a push, even if they are already dirty in the worktree.
 - Never push secrets or local-only files such as `.env`, local credentials, machine-specific config, or ad hoc debug files.

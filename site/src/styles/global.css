@@ -1315,12 +1315,9 @@ summary {
   position: relative;
   overflow: hidden;
   min-height: 10.5rem;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   background:
-    radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.06), transparent 34%),
-    linear-gradient(180deg, #26211d 0%, #151210 74%);
+    radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.08), transparent 36%),
+    linear-gradient(180deg, #26211d 0%, #14110f 82%);
 }
 
 .event-card__dialogue-media::after {
@@ -1328,30 +1325,32 @@ summary {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 84% 54%, rgba(12, 10, 9, 0.26), transparent 28%),
-    linear-gradient(270deg, rgba(12, 10, 9, 0.34) 0%, rgba(12, 10, 9, 0.08) 26%, rgba(12, 10, 9, 0) 56%),
-    linear-gradient(0deg, rgba(12, 10, 9, 0.54) 0%, rgba(12, 10, 9, 0.16) 18%, rgba(12, 10, 9, 0) 34%);
+    radial-gradient(circle at 84% 58%, rgba(17, 14, 12, 0.42), transparent 30%),
+    linear-gradient(270deg, rgba(17, 14, 12, 0.56) 0%, rgba(17, 14, 12, 0.18) 28%, rgba(17, 14, 12, 0) 62%);
   pointer-events: none;
 }
 
 .event-card__dialogue-portrait {
   position: absolute;
   left: 50%;
-  bottom: var(--dialogue-portrait-trim, -14px);
+  top: 0;
   width: auto;
-  height: calc(100% * var(--dialogue-portrait-size, 1.06));
+  height: auto;
   max-width: none;
   transform: translate(
-    calc(-50% + var(--dialogue-portrait-shift-x, 0px)),
-    var(--dialogue-portrait-shift-y, 0px)
-  );
-  transform-origin: center bottom;
+    calc(-50% + var(--dialogue-portrait-x-mobile, 0px)),
+    var(--dialogue-portrait-y-mobile, -14px)
+  ) scale(var(--dialogue-portrait-scale-mobile, 0.304));
+  transform-origin: center top;
   filter:
     grayscale(1)
     contrast(1.08)
     brightness(0.98)
-    drop-shadow(0 0 1px rgba(249, 242, 233, 0.82))
-    drop-shadow(0 8px 16px rgba(0, 0, 0, 0.18));
+    drop-shadow(0 0 2px rgba(249, 242, 233, 1))
+    drop-shadow(0 0 8px rgba(249, 242, 233, 0.86))
+    drop-shadow(0 0 18px rgba(249, 242, 233, 0.24))
+    drop-shadow(0 16px 24px rgba(0, 0, 0, 0.32));
+  pointer-events: none;
 }
 
 .event-card__dialogue-media--placeholder {
@@ -1543,19 +1542,24 @@ summary {
   }
 
   .event-card__dialogue-visual {
-    min-height: 13.2rem;
+    min-height: 15.4rem;
   }
 
   .event-card__dialogue-person {
-    grid-template-rows: auto minmax(10.45rem, 1fr);
+    grid-template-rows: auto minmax(12.7rem, 1fr);
   }
 
   .event-card__dialogue-media {
-    min-height: 10.1rem;
+    min-height: 12.35rem;
   }
 
   .event-card__dialogue-portrait {
-    height: calc(100% * var(--dialogue-portrait-size, 1.1));
+    transform:
+      translate(
+        calc(-50% + var(--dialogue-portrait-x-desktop, var(--dialogue-portrait-x-mobile, 0px))),
+        var(--dialogue-portrait-y-desktop, -32px)
+      )
+      scale(var(--dialogue-portrait-scale-desktop, 0.372));
   }
 
   .event-card--lecture .event-card__visual-copy {
