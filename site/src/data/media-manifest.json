@@ -1,14 +1,22 @@
 {
   "events": {
     "Великие учителя - Илюшкина": "/generated/events/velikie-uchitelya-ilyushkina.webp",
+    "Виштынец - Соколов Алексей": "/generated/events/vishtynets-sokolov-aleksey.webp",
+    "Деньги до 1947 года - Перкусов": "/generated/events/dengi-do-1947-goda-perkusov.webp",
+    "Железнодорожный развитие малых городоа - Казакова": "/generated/events/zheleznodorozhnyy-razvitie-malyh-gorodoa-kazakova.webp",
     "Калининград - город поэтов - Ярцев": "/generated/events/kaliningrad-gorod-poetov-yartsev.webp",
+    "Калининград в кино - Бойко": "/generated/events/kaliningrad-v-kino-boyko.webp",
     "Кирхи, форты - Долотова": "/generated/events/kirhi-forty-dolotova.webp",
+    "Клады - Долотова": "/generated/events/klady-dolotova.webp",
     "Мосты времени - Мосиенко": "/generated/events/mosty-vremeni-mosienko.webp",
     "Образование куршской косы - Скребкова": "/generated/events/obrazovanie-kurshskoy-kosy-skrebkova.webp",
+    "Праздничный стол по-калининградски рыба в каждый дом - Конюхова": "/generated/events/prazdnichnyy-stol-po-kaliningradski-ryba-v-kazhdyy-dom-konyuhova.webp",
     "Самая западная точка России Балтийская коса - Надымова": "/generated/events/samaya-zapadnaya-tochka-rossii-baltiyskaya-kosa-nadymova.webp",
+    "Светлогорск - Быстрова": "/generated/events/svetlogorsk-bystrova.webp",
     "Советская архитектура - Попадин": "/generated/events/sovetskaya-arhitektura-popadin.webp",
     "Советское монументальное искусство - Мосиенко": "/generated/events/sovetskoe-monumentalnoe-iskusstvo-mosienko.webp",
     "Торговый порт - Нижегородцева": "/generated/events/torgovyy-port-nizhegorodtseva.webp",
+    "Янтарный комбинат - Криммель": "/generated/events/yantarnyy-kombinat-krimmel.webp",
     "Яхты1 - Жадобко": "/generated/events/yahty1-zhadobko.webp",
     "Яхты2 - Жадобко": "/generated/events/yahty2-zhadobko.webp",
     "Этюды той весны - 1": "/generated/events/etyudy-toy-vesny-1.webp",
@@ -16,6 +24,12 @@
     "Этюды той весны - 3": "/generated/events/etyudy-toy-vesny-3.webp"
   },
   "speakers": {
+    "Алексей Соколов": [
+      "/generated/speakers/aleksey-sokolov.webp"
+    ],
+    "Долотова Инга": [
+      "/generated/speakers/dolotova-inga.webp"
+    ],
     "Жадобко Сергей": [
       "/generated/speakers/zhadobko-sergey.webp"
     ],
@@ -40,6 +54,9 @@
     "Скребцова Анастасия": [
       "/generated/speakers/skrebtsova-anastasiya.webp"
     ],
+    "Татьяна Конюхова": [
+      "/generated/speakers/tatyana-konyuhova-img-20260313-105601-177.webp"
+    ],
     "Удовенко Татьяна": [
       "/generated/speakers/udovenko-tatyana.webp"
     ],
@@ -47,9 +64,6 @@
       "/generated/speakers/yartsev-andrey-2.webp",
       "/generated/speakers/yartsev-andrey-3.webp",
       "/generated/speakers/yartsev-andrey.webp"
-    ],
-    "Татьяна Конюхова": [
-      "/generated/speakers/tatyana-konyuhova-img-20260313-105601-177.webp"
     ]
   }
 }

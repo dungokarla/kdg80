@@ -8,3 +8,7 @@ CLAUDE_PROMPT.md
 !.env.example
 .secrets/
 Исходные данные/desktop.ini
+.playwright-cli/
+.tmp-*.png
+site/.vscode/
+site/scripts/__pycache__/

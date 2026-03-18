@@ -12,16 +12,8 @@ const monthGroups = getMonthGroups(events);
 const speakerShowcase = getSpeakerShowcase(events);
 const openDialogues = getOpenDialogues(events).slice(0, 5);
 const nextEvent = events[0];
-
-const MONTH_SHORT: Record<string, string> = {
-  января: 'янв',
-  февраля: 'фев',
-  марта: 'мар',
-  апреля: 'апр',
-  мая: 'май',
-  июня: 'июн',
-  июля: 'июл',
-};
+const PRESS_EMAIL = 'press@kgd80.ru';
+const FESTIVAL_REGULATION_URL = '/docs/festival-regulation.pdf';
 
 const WEEKDAY_SHORT: Record<string, string> = {
   понедельник: 'пн',
@@ -32,6 +24,37 @@ const WEEKDAY_SHORT: Record<string, string> = {
   суббота: 'сб',
   воскресенье: 'вс',
 };
+
+const EVENT_PORTRAIT_OVERRIDES: Array<{ match: string; style: string }> = [
+  { match: 'Мосиенко', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.18rem;' },
+  { match: 'Соколов', style: '--event-portrait-size: 0.94; --event-portrait-shift-x: 0.08rem;' },
+  { match: 'Конюхова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.08rem;' },
+  { match: 'Илюшкина', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.22rem;' },
+  { match: 'Долотова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.12rem;' },
+  { match: 'Надымова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.12rem;' },
+  { match: 'Ярцев', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.08rem;' },
+];
+
+const SPEAKER_STRIP_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
+  { match: 'Соколов', path: '/generated/speaker-strip/aleksey-sokolov.webp' },
+  { match: 'Долотова', path: '/generated/speaker-strip/dolotova-inga.webp' },
+  { match: 'Жадобко', path: '/generated/speaker-strip/zhadobko-sergey.webp' },
+  { match: 'Илюшкина', path: '/generated/speaker-strip/ilyushkina-ekaterina.webp' },
+  { match: 'Машинская', path: '/generated/speaker-strip/mashinskaya-ekaterina.webp' },
+  { match: 'Мосиенко', path: '/generated/speaker-strip/mosienko-evgeniy.webp' },
+  { match: 'Надымова', path: '/generated/speaker-strip/nadymova-valeriya.webp' },
+  { match: 'Нижегородцева', path: '/generated/speaker-strip/nizhegorodtseva-evgeniya.webp' },
+  { match: 'Попадин', path: '/generated/speaker-strip/popadin-aleksandr.webp' },
+  { match: 'Скребцова', path: '/generated/speaker-strip/skrebtsova-anastasiya.webp' },
+  { match: 'Конюхова', path: '/generated/speaker-strip/tatyana-konyuhova.webp' },
+  { match: 'Удовенко', path: '/generated/speaker-strip/udovenko-tatyana.webp' },
+  { match: 'Ярцев', path: '/generated/speaker-strip/yartsev-andrey-3.webp' },
+];
+
+const SPEAKER_STRIP_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
+  { match: 'Конюхова', style: '--speaker-strip-scale-mobile: 0.322; --speaker-strip-scale-desktop: 0.392; --speaker-strip-y-mobile: -16px; --speaker-strip-y-desktop: -26px;' },
+  { match: 'Жадобко', style: '--speaker-strip-scale-mobile: 0.314; --speaker-strip-scale-desktop: 0.383; --speaker-strip-y-mobile: -14px; --speaker-strip-y-desktop: -22px;' },
+];
 
 function getDateParts(dateLabel: string) {
   const match = dateLabel.match(/(\d{1,2})\s+([а-я]+)\s+2026(?:\s+\(([^)]+)\))?/i);
@@ -44,14 +67,14 @@ function getDateParts(dateLabel: string) {
   }
 
   return {
-    day: match[1].padStart(2, '0'),
-    month: MONTH_SHORT[match[2].toLowerCase()] ?? match[2].slice(0, 3),
+    day: match[1],
+    month: match[2].toLowerCase(),
     weekday: WEEKDAY_SHORT[(match[3] ?? '').toLowerCase()] ?? '',
   };
 }
 
 function getCardText(event: { whyGo: string; summary: string }) {
-  return event.whyGo || event.summary;
+  return event.summary || event.whyGo;
 }
 
 function getPortraitFrames(images: string[]) {
@@ -63,8 +86,24 @@ function getSpeakerCaption(value: string) {
     return '';
   }
 
-  const base = value.split(/[,.]/)[0]?.trim() ?? value.trim();
-  return base.length > 34 ? `${base.slice(0, 31).trimEnd()}...` : base;
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function getSpeakerStripImage(name: string, fallback: string) {
+  return SPEAKER_STRIP_IMAGE_OVERRIDES.find((entry) => name.includes(entry.match))?.path
+    ?? fallback.replace('/generated/speakers/', '/generated/speaker-strip/');
+}
+
+function getSpeakerStripStyle(name: string) {
+  return SPEAKER_STRIP_STYLE_OVERRIDES.find((entry) => name.includes(entry.match))?.style;
+}
+
+function getEventPortraitStyle(value: string) {
+  return EVENT_PORTRAIT_OVERRIDES.find((entry) => value.includes(entry.match))?.style ?? undefined;
+}
+
+function isLectureEvent(formatLabel: string) {
+  return formatLabel.toLowerCase().includes('лекц');
 }
 ---
 
@@ -85,6 +124,8 @@ function getSpeakerCaption(value: string) {
           <a href="#dialogues">Диалоги</a>
           <a href="#press">СМИ</a>
         </nav>
+
+        <a class="button button--primary site-header__cta" href="#program">Программа</a>
       </div>
     </header>
 
@@ -172,22 +213,14 @@ function getSpeakerCaption(value: string) {
                     {speaker.affiliation && <span>{getSpeakerCaption(speaker.affiliation)}</span>}
                   </div>
 
-                  <div class="speaker-entry__media portrait-cycle" data-portrait-frames={getPortraitFrames(speaker.images)}>
+                  <div class="speaker-entry__media">
                     <img
-                      class="portrait-cycle__image is-active"
-                      src={speaker.images[0]}
+                      class="speaker-entry__portrait"
+                      src={getSpeakerStripImage(speaker.name, speaker.images[0])}
                       alt={speaker.name}
                       loading="lazy"
+                      style={getSpeakerStripStyle(speaker.name)}
                     />
-                    {speaker.images.length > 1 && (
-                      <img
-                        class="portrait-cycle__image"
-                        src={speaker.images[1]}
-                        alt={speaker.name}
-                        loading="lazy"
-                        aria-hidden="true"
-                      />
-                    )}
                   </div>
                 </a>
               ))}
@@ -255,50 +288,100 @@ function getSpeakerCaption(value: string) {
                 <div class="event-list">
                   {group.events.map((event) => {
                     const dateParts = getDateParts(event.dateLabel);
+                    const isDialogueEvent = event.formatLabel.includes('Открытый диалог') && event.dialogueParticipants.length > 0;
+                    const isLecture = isLectureEvent(event.formatLabel);
                     const portraitFrames = getPortraitFrames(event.speakerImages);
+                    const portraitStyle = getEventPortraitStyle(event.speakerLabel);
 
                     return (
-                      <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''}`} id={`event-${event.slug}`}>
-                        <div class="event-card__date">
-                          <span class="event-card__day">{dateParts.day}</span>
-                          <span class="event-card__month">{dateParts.month}</span>
-                          {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
-                          <span class="event-card__time">{event.timeLabel}</span>
-                        </div>
-
+                      <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''}`} id={`event-${event.slug}`}>
                         <div class="event-card__main">
-                          <div class="event-card__stage">
-                            <div class="event-card__visual">
-                              <img class="event-card__poster" src={event.image} alt={`Афиша: ${event.title}`} loading="lazy" />
-                              <div class="event-card__overlay"></div>
-                              <div class="event-card__headline">
-                                <span class="event-card__format">{event.formatLabel}</span>
-                                <h4>{event.title}</h4>
-                              </div>
+                          <div class={`event-card__stage ${!isDialogueEvent && event.speakerImages.length > 0 ? 'event-card__stage--portrait' : ''}`}>
+                            <div class="event-card__date">
+                              <span class="event-card__day">{dateParts.day}</span>
+                              <span class="event-card__month">{dateParts.month}</span>
+                              {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
+                              <span class="event-card__time">{event.timeLabel}</span>
                             </div>
 
-                            {event.speakerImages.length > 0 && (
-                              <div class="event-card__portrait portrait-cycle" data-portrait-frames={portraitFrames}>
-                                <img
-                                  class="portrait-cycle__image is-active"
-                                  src={event.speakerImages[0]}
-                                  alt={event.speakerLabel}
-                                  loading="lazy"
-                                />
-                                {event.speakerImages.length > 1 && (
-                                  <img
-                                    class="portrait-cycle__image"
-                                    src={event.speakerImages[1]}
-                                    alt={event.speakerLabel}
-                                    loading="lazy"
-                                    aria-hidden="true"
-                                  />
-                                )}
+                            {isDialogueEvent ? (
+                              <div
+                                class="event-card__dialogue-visual"
+                                aria-label={`Участники события ${event.title}`}
+                                style={`--dialogue-columns: ${Math.max(Math.min(event.dialogueParticipants.length, 4), 1)}`}
+                              >
+                                {event.dialogueParticipants.slice(0, 4).map((participant) => (
+                                  <div class="event-card__dialogue-person">
+                                    <div class="event-card__dialogue-meta">
+                                      <strong>{participant.name}</strong>
+                                    </div>
+                                    <div class="event-card__dialogue-media">
+                                      <img
+                                        class="event-card__dialogue-portrait"
+                                        src={participant.images[0]}
+                                        alt={participant.name}
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
+                            ) : (
+                              <>
+                                <div class={`event-card__visual ${event.image ? '' : 'event-card__visual--plain'}`}>
+                                  {event.image && (
+                                    <img class="event-card__poster" src={event.image} alt={`Афиша: ${event.title}`} loading="lazy" />
+                                  )}
+                                  <div class="event-card__overlay"></div>
+
+                                  {isLecture && (
+                                    <div class="event-card__visual-copy">
+                                      <p class="event-card__visual-title">{event.title}</p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {event.speakerImages.length > 0 && (
+                                  <div
+                                    class="event-card__portrait portrait-cycle"
+                                    data-portrait-frames={portraitFrames}
+                                    style={portraitStyle}
+                                  >
+                                    <img
+                                      class="portrait-cycle__image is-active"
+                                      src={event.speakerImages[0]}
+                                      alt={event.speakerLabel}
+                                      loading="lazy"
+                                    />
+                                    {event.speakerImages.length > 1 && (
+                                      <img
+                                        class="portrait-cycle__image"
+                                        src={event.speakerImages[1]}
+                                        alt={event.speakerLabel}
+                                        loading="lazy"
+                                        aria-hidden="true"
+                                      />
+                                    )}
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
 
                           <div class="event-card__body">
+                            <div class="event-card__body-head">
+                              <span class="event-card__format event-card__format--body">{event.formatLabel}</span>
+                              {!isLecture && <h4 class="event-card__title">{event.title}</h4>}
+                            </div>
+
+                            {isDialogueEvent && (
+                              <div class="event-card__cast">
+                                {event.dialogueParticipants.map((participant) => (
+                                  <span>{participant.name}</span>
+                                ))}
+                              </div>
+                            )}
+
                             {event.speakerLabel && <p class="event-card__speaker">{event.speakerLabel}</p>}
                             {event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
 
@@ -369,7 +452,16 @@ function getSpeakerCaption(value: string) {
 
           <article class="footer-panel" id="press">
             <h3>Для СМИ</h3>
-            <p>Пресс-контакт, фотобанк, PDF-положение, логотипы и официальное описание фестиваля должны жить в отдельном коротком разделе, а не смешиваться с программой.</p>
+            <p>Официальный сайт просветительского фестиваля Российского общества Знание «80 историй о главном» к 80-летию Калининградской области.</p>
+            <p>Для пресс-служб и редакций здесь должны быть базовые материалы без поиска по странице: положение фестиваля, официальный пресс-контакт и ссылка на актуальную программу.</p>
+            <div class="footer-panel__actions">
+              <a class="button button--ghost" href={FESTIVAL_REGULATION_URL} target="_blank" rel="noreferrer">
+                Положение фестиваля PDF
+              </a>
+              <a class="button button--primary" href={`mailto:${PRESS_EMAIL}`}>
+                {PRESS_EMAIL}
+              </a>
+            </div>
           </article>
         </div>
       </section>
@@ -377,6 +469,16 @@ function getSpeakerCaption(value: string) {
   </div>
 
   <script is:inline>
+    const speakerStrip = document.querySelector('.speaker-strip');
+    if (speakerStrip) {
+      const entries = Array.from(speakerStrip.children);
+      for (let index = entries.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [entries[index], entries[randomIndex]] = [entries[randomIndex], entries[index]];
+      }
+      entries.forEach((entry) => speakerStrip.appendChild(entry));
+    }
+
     const cycleNodes = Array.from(document.querySelectorAll('[data-portrait-frames]'));
     const timers = new Map();
 

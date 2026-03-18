@@ -31,8 +31,9 @@ export type FestivalEvent = {
   googleCalendarUrl?: string;
   icsUrl?: string;
   calendarNote?: string;
-  image: string;
+  image?: string;
   speakerImages: string[];
+  dialogueParticipants: Array<{ name: string; images: string[] }>;
   kind: 'dated' | 'range' | 'special';
   isoStart?: string;
 };
@@ -51,85 +52,104 @@ const ROOT_DIR = path.resolve(process.cwd(), '..');
 const MASTER_PATH = path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master_actual_v3.md');
 const DEFAULT_CITY = 'Калининград';
 
-const EVENT_IMAGE_RULES: Array<{ matches: string[]; manifestKey: string }> = [
+const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: string[] }> = [
   {
-    matches: ['советское', 'монументальное', 'искусство'],
-    manifestKey: 'Советское монументальное искусство - Мосиенко',
+    title: 'Советское монументальное искусство на территории Калининградской области',
+    speaker: 'Мосиенко',
+    manifestKeys: ['Советское монументальное искусство - Мосиенко'],
   },
   {
-    matches: ['поэт'],
-    manifestKey: 'Калининград - город поэтов - Ярцев',
+    title: 'Мост, который соединяет времена. Двухъярусный мост - прошлое, настоящее и будущее.',
+    speaker: 'Мосиенко',
+    manifestKeys: ['Мосты времени - Мосиенко'],
   },
   {
-    matches: ['кирха', 'музей'],
-    manifestKey: 'Кирхи, форты - Долотова',
+    title: 'Калининградская область -- место для поэтов',
+    speaker: 'Ярцев',
+    manifestKeys: ['Калининград - город поэтов - Ярцев'],
   },
   {
-    matches: ['кирхи', 'форты'],
-    manifestKey: 'Кирхи, форты - Долотова',
+    title: 'История парусного спорта в Калинингадской области',
+    speaker: 'Жадобко',
+    manifestKeys: ['Яхты2 - Жадобко', 'Яхты1 - Жадобко'],
   },
   {
-    matches: ['мост', 'времени'],
-    manifestKey: 'Мосты времени - Мосиенко',
+    title: 'Калининградский морской торговый порт: яркие страницы советской истории и современность.',
+    speaker: 'Нижегородцева',
+    manifestKeys: ['Торговый порт - Нижегородцева'],
   },
   {
-    matches: ['куршск', 'коса'],
-    manifestKey: 'Образование куршской косы - Скребкова',
+    title: 'Кирха - склад - спортзал - музей. Сложный путь культовых учреждений из забвения к возрождению',
+    speaker: 'Долотова',
+    manifestKeys: ['Кирхи, форты - Долотова'],
   },
   {
-    matches: ['балтийск', 'коса'],
-    manifestKey: 'Самая западная точка России Балтийская коса - Надымова',
+    title: 'Архитектура советского Калининграда (1946 - 1960 годы)',
+    speaker: 'Попадин',
+    manifestKeys: ['Советская архитектура - Попадин'],
   },
   {
-    matches: ['архитектура', 'советск'],
-    manifestKey: 'Советская архитектура - Попадин',
+    title: 'Великие учителя. Преемственность художественных поколений.',
+    speaker: 'Илюшкина',
+    manifestKeys: ['Великие учителя - Илюшкина'],
   },
   {
-    matches: ['торговый', 'порт'],
-    manifestKey: 'Торговый порт - Нижегородцева',
+    title: 'Виштынецкая возвышенность: как осваивали с 1945 года, современность и перспективы',
+    speaker: 'Соколов',
+    manifestKeys: ['Виштынец - Соколов Алексей'],
   },
   {
-    matches: ['яхт'],
-    manifestKey: 'Яхты1 - Жадобко',
+    title: 'Денежное обращение в послевоенный период 1945-1947',
+    speaker: 'Перкусов',
+    manifestKeys: ['Деньги до 1947 года - Перкусов'],
   },
   {
-    matches: ['парус'],
-    manifestKey: 'Яхты2 - Жадобко',
+    title: 'История становления и развития малых городов Калининградской области на примере п. Железнодорожный',
+    speaker: 'Казакова',
+    manifestKeys: ['Железнодорожный развитие малых городоа - Казакова'],
   },
   {
-    matches: ['великие', 'учителя'],
-    manifestKey: 'Великие учителя - Илюшкина',
+    title: 'Калининград и область как кинодекорация — история съёмок художественных фильмов в регионе',
+    speaker: 'Бойко',
+    manifestKeys: ['Калининград в кино - Бойко'],
   },
   {
-    matches: ['этюды', 'весны'],
-    manifestKey: 'Этюды той весны - 1',
+    title: '“Кладомания” и городской фольклор: почему мы верим в скрытые сокровища',
+    speaker: 'Долотова',
+    manifestKeys: ['Клады - Долотова'],
+  },
+  {
+    title: 'История образования и развития национального парка«Куршская коса',
+    speaker: 'Скребцова',
+    manifestKeys: ['Образование куршской косы - Скребкова'],
+  },
+  {
+    title: 'Рыба на каждом столе: в ресторане и дома. Праздничный стол по- калининградски',
+    speaker: 'Конюхова',
+    manifestKeys: ['Праздничный стол по-калининградски рыба в каждый дом - Конюхова'],
+  },
+  {
+    title: 'Мирная жизнь самой западной точки России (Балтийской косы)',
+    speaker: 'Надымова',
+    manifestKeys: ['Самая западная точка России Балтийская коса - Надымова'],
+  },
+  {
+    title: 'История Светлогорска в семейном альбоме',
+    speaker: 'Быстрова',
+    manifestKeys: ['Светлогорск - Быстрова'],
+  },
+  {
+    title: 'Этюды той весны',
+    speaker: 'Никитин',
+    manifestKeys: ['Этюды той весны - 1', 'Этюды той весны - 2', 'Этюды той весны - 3'],
+  },
+  {
+    title: 'Восстановление янтарного карьера и Янтарный комбинат в послевоенные годы.',
+    speaker: 'Криммель',
+    manifestKeys: ['Янтарный комбинат - Криммель'],
   },
 ];
 
-const SHARED_EVENT_BACKDROPS = [
-  '/shared-assets/hero-added-01.webp',
-  '/shared-assets/hero-added-02.webp',
-  '/shared-assets/hero-added-03.webp',
-  '/shared-assets/hero-added-04.webp',
-  '/shared-assets/hero-added-05.webp',
-  '/shared-assets/hero-added-06.webp',
-  '/shared-assets/hero-added-07.webp',
-  '/shared-assets/hero-added-08.webp',
-  '/shared-assets/hero-added-09.webp',
-  '/shared-assets/hero-added-10.webp',
-  '/shared-assets/kaliningrad-bg-a.webp',
-  '/shared-assets/kaliningrad-bg-b.webp',
-  '/shared-assets/kaliningrad-bg-c.webp',
-];
-
-const EVENT_POSTER_BLOCKLIST = [
-  {
-    speakerMatch: 'инга-долотова',
-    manifestKey: 'Кирхи, форты - Долотова',
-  },
-];
-
-const EVENT_MANIFEST_KEYS = Object.keys(media.events);
 const SPEAKER_MANIFEST_KEYS = Object.keys(media.speakers);
 
 let cache: FestivalEvent[] | null = null;
@@ -163,6 +183,176 @@ function normalizeText(value: string) {
     .trim();
 }
 
+function sanitizeListEntry(value: string) {
+  return normalizeText(
+    value
+      .replace(/^[—–•-]+\s*/, '')
+      .replace(/^\d+\s+/, '')
+      .replace(/^Миф\s*№?\d+:\s*/i, '')
+      .replace(/^[«"]+|[»"]+$/g, ''),
+  );
+}
+
+function lowercaseFirst(value: string) {
+  if (!value) {
+    return '';
+  }
+  return `${value.slice(0, 1).toLowerCase()}${value.slice(1)}`;
+}
+
+function joinNatural(items: string[]) {
+  if (!items.length) {
+    return '';
+  }
+  if (items.length === 1) {
+    return items[0];
+  }
+  if (items.length === 2) {
+    return `${items[0]} и ${items[1]}`;
+  }
+  return `${items.slice(0, -1).join(', ')} и ${items.at(-1)}`;
+}
+
+function extractListItems(body: string, label: string) {
+  return extractField(body, label)
+    .split('\n')
+    .map((line) => sanitizeListEntry(line))
+    .filter(Boolean);
+}
+
+function startsWithTemplateLead(value: string) {
+  const normalized = normalizeText(value).toLowerCase();
+  return normalized.startsWith('лекция, которая помогает увидеть тему');
+}
+
+function isGenericQuestionSet(items: string[]) {
+  if (items.length < 3) {
+    return false;
+  }
+
+  const [first, second, third] = items.map((item) => item.toLowerCase());
+  return first.includes('почему') && second.includes('какие люди') && third.includes('что из этого прошлого');
+}
+
+function isGenericMythSet(items: string[]) {
+  if (items.length < 3) {
+    return false;
+  }
+
+  const normalized = items.map((item) => item.toLowerCase());
+  return normalized[0].includes('частная тема')
+    && normalized[1].includes('всё давно известно')
+    && normalized[2].includes('касается только прошлого');
+}
+
+function toSentence(value: string) {
+  const cleaned = normalizeText(value).replace(/[;:]+$/g, '').trim();
+  if (!cleaned) {
+    return '';
+  }
+  return /[.!?…]$/.test(cleaned) ? cleaned : `${cleaned}.`;
+}
+
+function normalizeQuestionFragment(value: string) {
+  return sanitizeListEntry(value)
+    .replace(/^Клады\s*[-–—]\s*как\b/i, 'Как клады')
+    .replace(/^Изучение\s+истории\s+края,\s*посредством\s+поиска\s+кладов/i, 'что поиск кладов рассказывает об истории края')
+    .replace(/[;:.?]+$/g, '')
+    .trim();
+}
+
+function normalizeMythFragment(value: string) {
+  return sanitizeListEntry(value)
+    .split(/Опровержение:/i)[0]
+    .replace(/^Заблуждение(?:\s+в\s+том)?[:\s]*/i, '')
+    .replace(/^Многие думают,\s*что\s*/i, '')
+    .replace(/[;:.]+$/g, '')
+    .replace(/^«|»$/g, '')
+    .trim();
+}
+
+function composeAngleSummary(questionItems: string[], misconceptionItems: string[]) {
+  const questionText = isGenericQuestionSet(questionItems)
+    ? 'почему этот сюжет важен для региона, кто и что его сформировало и как он продолжает влиять на Калининградскую область сегодня'
+    : joinNatural(
+        questionItems
+          .slice(0, 3)
+          .map((item, index) => {
+            const fragment = normalizeQuestionFragment(item);
+            return index === 0 ? lowercaseFirst(fragment) : lowercaseFirst(fragment);
+          })
+          .filter(Boolean),
+      );
+
+  const mythsText = isGenericMythSet(misconceptionItems)
+    ? 'это узкая тема только для специалистов, о ней уже всё давно известно и она касается только прошлого'
+    : joinNatural(
+        misconceptionItems
+          .slice(0, 3)
+          .map((item) => lowercaseFirst(normalizeMythFragment(item)))
+          .filter(Boolean),
+      );
+
+  if (questionText && mythsText) {
+    return `В центре лекции — ${questionText}, а заодно она спорит с мифами о том, что ${mythsText}.`;
+  }
+
+  if (questionText) {
+    return `В центре лекции — ${questionText}.`;
+  }
+
+  if (mythsText) {
+    return `Она спорит с мифами о том, что ${mythsText}.`;
+  }
+
+  return '';
+}
+
+function trimLead(value: string) {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return '';
+  }
+
+  const sentences = normalized.split(/(?<=[.!?…])\s+/).filter(Boolean);
+  const lead = sentences.slice(0, 2).join(' ');
+  return lead.length > 220 ? `${lead.slice(0, 217).trim()}...` : lead;
+}
+
+function composeEventSummary(body: string, formatRaw: string) {
+  const shortDescription = normalizeText(
+    extractField(body, 'Короткое описание для афиши — версия 1') ||
+    extractField(body, 'Короткое описание для афиши — версия 2'),
+  );
+  const baseDescription = normalizeText(extractField(body, 'Основа для описания'));
+  const questionItems = extractListItems(body, '3 вопроса, на которые отвечает лекция');
+  const misconceptionItems = extractListItems(body, '3 заблуждения, с которыми работает лекция');
+  const pieces: string[] = [];
+  const angleSummary = composeAngleSummary(questionItems, misconceptionItems);
+
+  if (baseDescription && !startsWithTemplateLead(baseDescription)) {
+    pieces.push(toSentence(trimLead(baseDescription)));
+  } else if (shortDescription && !startsWithTemplateLead(shortDescription)) {
+    pieces.push(toSentence(trimLead(shortDescription)));
+  }
+
+  if (angleSummary) {
+    pieces.push(angleSummary);
+  }
+
+  const composed = normalizeText(pieces.join(' '));
+  if (composed) {
+    return composed;
+  }
+
+  return normalizeText(
+    extractField(body, 'Короткое описание для афиши — версия 1') ||
+    extractField(body, 'Короткое описание для афиши — версия 2') ||
+    baseDescription ||
+    (formatRaw.toLowerCase().includes('лекц') ? angleSummary : ''),
+  );
+}
+
 function transliterate(input: string) {
   const map: Record<string, string> = {
     а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i',
@@ -189,15 +379,6 @@ function tokenizeLookup(value: string) {
   return normalizeLookup(value)
     .split('-')
     .filter((token) => token.length > 2);
-}
-
-function hashString(value: string) {
-  return Array.from(value).reduce((acc, char) => ((acc << 5) - acc + char.charCodeAt(0)) | 0, 0);
-}
-
-function pickBackdrop(seed: string) {
-  const index = Math.abs(hashString(seed)) % SHARED_EVENT_BACKDROPS.length;
-  return SHARED_EVENT_BACKDROPS[index];
 }
 
 function toSlug(title: string) {
@@ -275,12 +456,6 @@ function normalizeFormatName(raw: string) {
     .replace('Открытие фестиваля + паблик-ток', 'Открытие фестиваля');
 }
 
-function matchByRules(value: string, rules: Array<{ matches: string[]; manifestKey: string }>) {
-  const normalized = normalizeLookup(value);
-  const rule = rules.find((entry) => entry.matches.every((match) => normalized.includes(normalizeLookup(match))));
-  return rule?.manifestKey;
-}
-
 function pickBestManifestKey(value: string, keys: string[], minimumScore: number) {
   const queryTokens = new Set(tokenizeLookup(value));
   if (!queryTokens.size) {
@@ -302,19 +477,20 @@ function pickBestManifestKey(value: string, keys: string[], minimumScore: number
   return bestScore >= minimumScore ? bestKey : undefined;
 }
 
-function shouldBlockPoster(speakerValue: string, manifestKey: string) {
+function assignImage(title: string, speakerValue: string) {
+  const titleLookup = normalizeLookup(title);
   const speakerLookup = normalizeLookup(speakerValue);
-  return EVENT_POSTER_BLOCKLIST.some((entry) => (
-    manifestKey === entry.manifestKey && speakerLookup.includes(entry.speakerMatch)
+  const match = EVENT_IMAGE_MAP.find((entry) => (
+    titleLookup === normalizeLookup(entry.title)
+    && speakerLookup.includes(normalizeLookup(entry.speaker))
   ));
-}
 
-function assignImage(title: string, speakerValue: string, slug: string) {
-  const manifestKey = matchByRules(title, EVENT_IMAGE_RULES) || pickBestManifestKey(title, EVENT_MANIFEST_KEYS, 2);
-  if (manifestKey && !shouldBlockPoster(speakerValue, manifestKey)) {
-    return media.events[manifestKey];
+  if (!match) {
+    return undefined;
   }
-  return pickBackdrop(`${slug}-${title}-${speakerValue}`);
+
+  const selectedKey = match.manifestKeys.find((key) => media.events[key]);
+  return selectedKey ? media.events[selectedKey] : undefined;
 }
 
 function assignSpeakerImages(speakerValue: string) {
@@ -322,17 +498,117 @@ function assignSpeakerImages(speakerValue: string) {
   return manifestKey ? media.speakers[manifestKey] ?? [] : [];
 }
 
+function normalizeSpeakerLabel(value: string) {
+  const cleaned = normalizeText(value).replace(/^[—–-]+\s*/, '').trim();
+  return cleaned;
+}
+
+function splitSpeakerSegments(raw: string) {
+  return normalizeText(raw)
+    .replace(/^[—–-]+\s*/, '')
+    .split(/\s+[—-]\s+/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+}
+
+function isLikelyPersonSegment(value: string) {
+  if (!value || value.includes(',') || /\d/.test(value)) {
+    return false;
+  }
+
+  const words = value.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 4) {
+    return false;
+  }
+
+  return words.every((word) => /^[A-ZА-ЯЁ][A-Za-zА-Яа-яЁё-]+$/.test(word));
+}
+
+function takeAffiliationFromTail(segments: string[]) {
+  if (!segments.length) {
+    return '';
+  }
+
+  let startIndex = 0;
+  if (isLikelyPersonSegment(segments[0])) {
+    startIndex = segments.findIndex((segment) => !isLikelyPersonSegment(segment));
+    if (startIndex === -1) {
+      return '';
+    }
+  }
+
+  const affiliationParts: string[] = [];
+  for (const segment of segments.slice(startIndex)) {
+    if (isLikelyPersonSegment(segment)) {
+      break;
+    }
+    affiliationParts.push(segment);
+  }
+
+  return affiliationParts.join(' — ').trim();
+}
+
 function splitSpeakerData(raw: string) {
   if (!raw) {
     return { speakerLabel: '', affiliation: '' };
   }
 
-  const normalized = normalizeText(raw);
-  const parts = normalized.split(' — ');
+  const segments = splitSpeakerSegments(raw);
+  const primarySegment = segments.find((segment) => isLikelyPersonSegment(segment)) ?? segments[0] ?? normalizeText(raw);
+  const primaryIndex = Math.max(segments.indexOf(primarySegment), 0);
+  const tail = segments.slice(primaryIndex + 1);
+
   return {
-    speakerLabel: parts[0] ?? normalized,
-    affiliation: parts.slice(1).join(' — '),
+    speakerLabel: normalizeSpeakerLabel(primarySegment),
+    affiliation: takeAffiliationFromTail(tail),
   };
+}
+
+function extractDialogueParticipants(raw: string) {
+  if (!raw) {
+    return [];
+  }
+
+  const sourceLines = raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const seededNames = sourceLines.some((line) => /^[—–•-]/.test(line))
+    ? sourceLines.map((line) => normalizeSpeakerLabel(line.replace(/^[—–•-]+\s*/, '').split(/\s+[—-]\s+/)[0] ?? line))
+    : splitSpeakerSegments(raw).map((segment) => normalizeSpeakerLabel(segment));
+
+  const seen = new Set<string>();
+  const participants: Array<{ name: string; images: string[] }> = [];
+
+  for (const seededName of seededNames) {
+    if (!seededName) {
+      continue;
+    }
+
+    const signature = normalizeLookup(seededName);
+    if (!signature || seen.has(signature)) {
+      continue;
+    }
+
+    const images = assignSpeakerImages(seededName);
+    const looksLikeName = seededName
+      .split(/\s+/)
+      .filter(Boolean)
+      .every((word) => /^[A-ZА-ЯЁ][A-Za-zА-Яа-яЁё-]+$/.test(word));
+
+    if (!images.length && !looksLikeName) {
+      continue;
+    }
+
+    seen.add(signature);
+    participants.push({
+      name: seededName,
+      images,
+    });
+  }
+
+  return participants;
 }
 
 function toUtcDate(isoStart: string, durationMinutes: number) {
@@ -435,11 +711,7 @@ function parseSections() {
     const formatRaw = extractField(body, 'Формат') || 'Событие';
     const formatLabel = normalizeFormatName(formatRaw);
     const durationLabel = extractField(body, 'Длительность') || '1 час';
-    const summary = normalizeText(
-      extractField(body, 'Короткое описание для афиши — версия 1') ||
-      extractField(body, 'Короткое описание для афиши — версия 2') ||
-      extractField(body, 'Основа для описания'),
-    );
+    const summary = composeEventSummary(body, formatRaw);
     const whyGo = normalizeText(
       extractFirst(body, [
         'Зачем идти на эту лекцию',
@@ -451,13 +723,16 @@ function parseSections() {
     );
     const venue = extractField(body, 'Площадка') || 'Площадка уточняется';
     const address = extractField(body, 'Короткий адрес') || 'Адрес уточняется';
-    const speakerRaw = normalizeText(
+    const speakerRaw = (
       extractField(body, 'Спикер') ||
       extractField(body, 'Участники') ||
       extractField(body, 'Партнёр / источник материалов') ||
-      extractField(body, 'Рабочая привязка в таблице'),
-    );
+      extractField(body, 'Рабочая привязка в таблице')
+    ).trim();
     const speakerData = splitSpeakerData(speakerRaw);
+    const dialogueParticipants = formatLabel.includes('Открытый диалог')
+      ? extractDialogueParticipants(speakerRaw)
+      : [];
     const dateLabel = extractField(body, 'Дата') || extractField(body, 'Период проведения') || 'Дата будет объявлена';
     const timeLabel = extractField(body, 'Время') || extractField(body, 'Время посещения') || 'Время будет объявлено';
     const kind: FestivalEvent['kind'] = heading.startsWith('Спецсобытие')
@@ -502,8 +777,9 @@ function parseSections() {
       googleCalendarUrl: kind === 'special' ? undefined : calendar.googleUrl,
       icsUrl: kind === 'special' ? undefined : calendar.icsUrl,
       calendarNote: kind === 'special' ? 'Дата спектакля будет объявлена позже.' : calendar.note,
-      image: assignImage(title, speakerData.speakerLabel, slug),
-      speakerImages: assignSpeakerImages(`${speakerData.speakerLabel} ${speakerData.affiliation}`),
+      image: assignImage(title, speakerData.speakerLabel),
+      speakerImages: assignSpeakerImages(speakerData.speakerLabel),
+      dialogueParticipants,
       kind,
       isoStart: exactDate?.isoStart ?? rangeDate?.isoStart,
     });

@@ -4,6 +4,9 @@
 - The aliases `Opus`, `Опус`, `Claude Opus`, and `Claude Opus latest` all mean: run Claude with the `opus` model alias.
 - If the user asks to "use Opus", "launch Opus", "run Opus", "call Opus", or uses the Russian equivalents, interpret that as a concrete instruction to use the Claude model alias `opus`.
 - In this workspace, when the user references `Opus`, prefer `claude --model opus --effort high` or an equivalent default configuration that resolves to the latest available Claude Opus model.
+- For website work, use Claude Opus with high effort as a consulting and support model for interface design, UX decisions, frontend implementation, and code-level problem solving.
+- Treat Opus as the default assistant for reviewing site UI, suggesting interface improvements, validating implementation approaches, and helping with code changes when the user asks for a consultant, helper, or second opinion.
+- When a command, script, or workflow needs an explicit Claude invocation for site-related UI or code tasks, prefer `claude --model opus --effort high`.
 - Do not ask the user to clarify what `Opus` means unless they explicitly contrast it with another model.
 - If a tool, script, or agent needs a model name, map `Opus` directly to `opus`.
 
