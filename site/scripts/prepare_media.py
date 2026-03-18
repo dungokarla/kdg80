@@ -28,6 +28,7 @@ MANIFEST_OUT = SITE_ROOT / "src" / "data" / "media-manifest.json"
 
 EVENT_MAX_WIDTH = 1800
 EVENT_QUALITY = 84
+WEBP_METHOD = 3
 SPEAKER_CANVAS = (2200, 2400)
 SPEAKER_RATIO = 0.76
 SPEAKER_QUALITY = 92
@@ -171,7 +172,7 @@ def export_event_images(manifest: dict) -> None:
 
             with Image.open(source) as img:
                 converted = resize_event_image(img.convert("RGB"))
-                converted.save(target_path, "WEBP", quality=EVENT_QUALITY, method=6)
+                converted.save(target_path, "WEBP", quality=EVENT_QUALITY, method=WEBP_METHOD)
 
             event_entries[source.stem] = f"/generated/events/{target_slug}.webp"
 
@@ -312,9 +313,34 @@ def prepare_speaker_image(source: Path) -> tuple[Image.Image, float]:
         return place_on_canvas(prepared, detected_face), portrait_score
 
 
+def prepare_speaker_strip_image(source: Path, face_override: tuple[int, int, int, int] | None = None) -> Image.Image:
+    with Image.open(source) as img:
+        rgba = img.convert("RGBA")
+        alpha_bbox = rgba.getchannel("A").getbbox()
+        face = face_override
+
+        if source.parent == SPEAKERS_CUTOUTS and alpha_bbox:
+            left, top, right, bottom = alpha_bbox
+            prepared = rgba.crop(alpha_bbox)
+            if face:
+                x, y, w, h = face
+                face = (x - left, y - top, w, h)
+        else:
+            if alpha_bbox and alpha_bbox != (0, 0, rgba.width, rgba.height):
+                prepared = crop_transparent_bounds(rgba)
+            else:
+                prepared = crop_to_ratio(rgba, SPEAKER_RATIO)
+
+        if not face:
+            face = detect_face_bounds(prepared)
+
+        return place_on_strip_canvas(prepared, face)
+
+
 def resolve_speaker_key(source: Path) -> str:
     if source.parent == SPEAKERS_CUTOUTS:
-        return source.stem.split(" - ")[0]
+        cleaned = re.sub(r"\s+\([^)]*\)$", "", source.stem)
+        return cleaned.split(" - ")[0]
     return source.parent.name
 
 
@@ -335,7 +361,7 @@ def export_speaker_images(manifest: dict) -> None:
         target_slug = slugify(resolve_speaker_slug_seed(source, key))
         target_path = SPEAKERS_OUT / f"{target_slug}.webp"
         prepared, portrait_score = prepare_speaker_image(source)
-        prepared.save(target_path, "WEBP", quality=SPEAKER_QUALITY, method=6)
+        prepared.save(target_path, "WEBP", quality=SPEAKER_QUALITY, method=WEBP_METHOD)
 
         speaker_entries.setdefault(key, []).append((portrait_score, f"/generated/speakers/{target_slug}.webp"))
 
@@ -346,27 +372,18 @@ def export_speaker_images(manifest: dict) -> None:
 
 
 def export_speaker_strip_images() -> None:
-    for slug, preset in SPEAKER_STRIP_PRESETS.items():
-        source = preset["source"]
-        if not source.exists():
+    for source in sorted(SPEAKERS_ROOT.rglob("*")):
+        if not source.is_file() or source.suffix.lower() not in IMAGE_SUFFIXES:
             continue
 
-        with Image.open(source) as img:
-            rgba = img.convert("RGBA")
-            face = preset["face"]
-            alpha_bbox = rgba.getchannel("A").getbbox()
-
-            if alpha_bbox:
-                left, top, right, bottom = alpha_bbox
-                cropped = rgba.crop(alpha_bbox)
-                if face:
-                    x, y, w, h = face
-                    face = (x - left, y - top, w, h)
-            else:
-                cropped = rgba
-
-            prepared = place_on_strip_canvas(cropped, face)
-            prepared.save(SPEAKER_STRIP_OUT / f"{slug}.webp", "WEBP", quality=SPEAKER_QUALITY, method=6)
+        key = resolve_speaker_key(source)
+        slug = slugify(resolve_speaker_slug_seed(source, key))
+        preset = SPEAKER_STRIP_PRESETS.get(slug)
+        prepared = prepare_speaker_strip_image(
+            preset["source"] if preset else source,
+            preset["face"] if preset else None,
+        )
+        prepared.save(SPEAKER_STRIP_OUT / f"{slug}.webp", "WEBP", quality=SPEAKER_QUALITY, method=WEBP_METHOD)
 
 
 def main() -> None:

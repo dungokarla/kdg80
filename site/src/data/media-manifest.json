@@ -1,19 +1,41 @@
 {
   "events": {
+    "1200 гвардейцев - Перкусов": "/generated/events/1200-gvardeytsev-perkusov.webp",
+    "Ботанический сад - Усманова": "/generated/events/botanicheskiy-sad-usmanova.webp",
     "Великие учителя - Илюшкина": "/generated/events/velikie-uchitelya-ilyushkina.webp",
     "Виштынец - Соколов Алексей": "/generated/events/vishtynets-sokolov-aleksey.webp",
+    "Восприятие новой родины - Левченков": "/generated/events/vospriyatie-novoy-rodiny-levchenkov.webp",
+    "Голубые ладони Калининграда - Долотова": "/generated/events/golubye-ladoni-kaliningrada-dolotova.webp",
+    "Демография - Манкевич": "/generated/events/demografiya-mankevich.webp",
+    "Денисов - Машинская": "/generated/events/denisov-mashinskaya.webp",
     "Деньги до 1947 года - Перкусов": "/generated/events/dengi-do-1947-goda-perkusov.webp",
     "Железнодорожный развитие малых городоа - Казакова": "/generated/events/zheleznodorozhnyy-razvitie-malyh-gorodoa-kazakova.webp",
+    "Здравоохранение - Манкевич": "/generated/events/zdravoohranenie-mankevich.webp",
+    "Зеленоградский район - Ефремов": "/generated/events/zelenogradskiy-rayon-efremov.webp",
+    "Зоопарк - Соколова": "/generated/events/zoopark-sokolova.webp",
+    "Зоопарку быть - Левкова": "/generated/events/zooparku-byt-levkova.webp",
+    "Индустриальное наследие - Мосиенко": "/generated/events/industrialnoe-nasledie-mosienko.webp",
+    "Исследования советских океанографов - Чечко (2)": "/generated/events/issledovaniya-sovetskih-okeanografov-chechko-2.webp",
+    "КВАТУ Курсанты с крылышками - Перкусов": "/generated/events/kvatu-kursanty-s-krylyshkami-perkusov.webp",
     "Калининград - город поэтов - Ярцев": "/generated/events/kaliningrad-gorod-poetov-yartsev.webp",
+    "Калининград 2125 - Сарниц": "/generated/events/kaliningrad-2125-sarnits.webp",
     "Калининград в кино - Бойко": "/generated/events/kaliningrad-v-kino-boyko.webp",
+    "Калининрадские суеверия и привычки - Никитин": "/generated/events/kalininradskie-sueveriya-i-privychki-nikitin.webp",
     "Кирхи, форты - Долотова": "/generated/events/kirhi-forty-dolotova.webp",
     "Клады - Долотова": "/generated/events/klady-dolotova.webp",
+    "Люди как птицы - Марковец": "/generated/events/lyudi-kak-ptitsy-markovets.webp",
     "Мосты времени - Мосиенко": "/generated/events/mosty-vremeni-mosienko.webp",
+    "Ностальгический  разговор - Попадин": "/generated/events/nostalgicheskiy-razgovor-popadin.webp",
+    "О чём мечтали в советском Калининграде - Литвинович": "/generated/events/o-chem-mechtali-v-sovetskom-kaliningrade-litvinovich.webp",
     "Образование куршской косы - Скребкова": "/generated/events/obrazovanie-kurshskoy-kosy-skrebkova.webp",
+    "Планировочные решения - Анисимов": "/generated/events/planirovochnye-resheniya-anisimov.webp",
     "Праздничный стол по-калининградски рыба в каждый дом - Конюхова": "/generated/events/prazdnichnyy-stol-po-kaliningradski-ryba-v-kazhdyy-dom-konyuhova.webp",
+    "Природа чемодана - Никитин": "/generated/events/priroda-chemodana-nikitin.webp",
     "Самая западная точка России Балтийская коса - Надымова": "/generated/events/samaya-zapadnaya-tochka-rossii-baltiyskaya-kosa-nadymova.webp",
     "Светлогорск - Быстрова": "/generated/events/svetlogorsk-bystrova.webp",
+    "Скульптуры зоопарка - Колбанёва": "/generated/events/skulptury-zooparka-kolbaneva.webp",
     "Советская архитектура - Попадин": "/generated/events/sovetskaya-arhitektura-popadin.webp",
+    "Советский Гусев - Ситникова": "/generated/events/sovetskiy-gusev-sitnikova.webp",
     "Советское монументальное искусство - Мосиенко": "/generated/events/sovetskoe-monumentalnoe-iskusstvo-mosienko.webp",
     "Торговый порт - Нижегородцева": "/generated/events/torgovyy-port-nizhegorodtseva.webp",
     "Янтарный комбинат - Криммель": "/generated/events/yantarnyy-kombinat-krimmel.webp",
@@ -27,14 +49,54 @@
     "Алексей Соколов": [
       "/generated/speakers/aleksey-sokolov.webp"
     ],
+    "Анисимов Андрей": [
+      "/generated/speakers/anisimov-andrey.webp"
+    ],
+    "Бойко Андрей": [
+      "/generated/speakers/boyko-andrey.webp"
+    ],
+    "Быстрова Лариса": [
+      "/generated/speakers/bystrova-larisa.webp"
+    ],
     "Долотова Инга": [
       "/generated/speakers/dolotova-inga.webp"
+    ],
+    "Ефремов Леонид": [
+      "/generated/speakers/efremov-leonid.webp"
     ],
     "Жадобко Сергей": [
       "/generated/speakers/zhadobko-sergey.webp"
     ],
     "Илюшкина Екатерина": [
       "/generated/speakers/ilyushkina-ekaterina.webp"
+    ],
+    "Казакова Наталья": [
+      "/generated/speakers/kazakova-natalya.webp"
+    ],
+    "Колбанёва Светлана": [
+      "/generated/speakers/kolbaneva-svetlana-ispravleno.webp",
+      "/generated/speakers/kolbaneva-svetlana.webp"
+    ],
+    "Кретинин Геннадий": [
+      "/generated/speakers/kretinin-gennadiy.webp"
+    ],
+    "Криммель Наталья": [
+      "/generated/speakers/krimmel-natalya.webp"
+    ],
+    "Левкова Ольга": [
+      "/generated/speakers/levkova-olga.webp"
+    ],
+    "Левченков Андрей": [
+      "/generated/speakers/levchenkov-andrey.webp"
+    ],
+    "Литвинович Ирина": [
+      "/generated/speakers/litvinovich-irina.webp"
+    ],
+    "Манкевич Дмитрий": [
+      "/generated/speakers/mankevich-dmitriy.webp"
+    ],
+    "Марковец Михаил": [
+      "/generated/speakers/markovets-mihail.webp"
     ],
     "Машинская Екатерина": [
       "/generated/speakers/mashinskaya-ekaterina.webp"
@@ -48,8 +110,23 @@
     "Нижегородцева Евгения": [
       "/generated/speakers/nizhegorodtseva-evgeniya.webp"
     ],
+    "Никитин Никита": [
+      "/generated/speakers/nikitin-nikita.webp"
+    ],
+    "Перкусов Николай": [
+      "/generated/speakers/perkusov-nikolay.webp"
+    ],
     "Попадин Александр": [
       "/generated/speakers/popadin-aleksandr.webp"
+    ],
+    "Сарниц Артур": [
+      "/generated/speakers/sarnits-artur.webp"
+    ],
+    "Сивкова Светлана": [
+      "/generated/speakers/sivkova-svetlana.webp"
+    ],
+    "Ситникова Наталья": [
+      "/generated/speakers/sitnikova-natalya.webp"
     ],
     "Скребцова Анастасия": [
       "/generated/speakers/skrebtsova-anastasiya.webp"
@@ -60,10 +137,13 @@
     "Удовенко Татьяна": [
       "/generated/speakers/udovenko-tatyana.webp"
     ],
+    "Цедрик Михаил": [
+      "/generated/speakers/tsedrik-mihail.webp"
+    ],
     "Ярцев Андрей": [
       "/generated/speakers/yartsev-andrey-2.webp",
-      "/generated/speakers/yartsev-andrey.webp",
-      "/generated/speakers/yartsev-andrey-3.webp"
+      "/generated/speakers/yartsev-andrey-3.webp",
+      "/generated/speakers/yartsev-andrey.webp"
     ]
   }
 }
