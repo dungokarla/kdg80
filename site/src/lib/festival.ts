@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import mediaManifest from '../data/media-manifest.json';
+import summaryOverrides from '../data/summary-overrides.json';
 
 type MediaManifest = {
   events: Record<string, string>;
@@ -8,6 +9,28 @@ type MediaManifest = {
 };
 
 const media = mediaManifest as MediaManifest;
+const curatedSummaries = summaryOverrides as Record<string, string>;
+
+type FestivalEventKind = 'dated' | 'range' | 'special';
+
+export type RelatedFestivalEvent = {
+  slug: string;
+  title: string;
+  formatLabel: string;
+  dateLabel: string;
+  timeLabel: string;
+  venue: string;
+  address: string;
+  speakerLabel: string;
+  kind: FestivalEventKind;
+  relationLabel: string;
+};
+
+export type SpeakerLectureLink = {
+  slug: string;
+  title: string;
+  dateLabel: string;
+};
 
 export type FestivalEvent = {
   slug: string;
@@ -34,8 +57,10 @@ export type FestivalEvent = {
   image?: string;
   speakerImages: string[];
   dialogueParticipants: Array<{ name: string; images: string[] }>;
-  kind: 'dated' | 'range' | 'special';
+  kind: FestivalEventKind;
   isoStart?: string;
+  relatedEvent?: RelatedFestivalEvent;
+  speakerLectureLinks: SpeakerLectureLink[];
 };
 
 const MONTHS: Record<string, { number: string; label: string; anchor: string }> = {
@@ -114,6 +139,36 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Калининград в кино - Бойко'],
   },
   {
+    title: 'О чём мечтали в советском Калининграде, куда стремились и куда попали',
+    speaker: 'Литвинович',
+    manifestKeys: ['О чём мечтали в советском Калининграде - Литвинович'],
+  },
+  {
+    title: 'Советский Гусев-время созиданий',
+    speaker: 'Ситникова',
+    manifestKeys: ['Советский Гусев - Ситникова'],
+  },
+  {
+    title: 'Привычки калининградцев, юмор, суеверия не только подростковые, страшилки, легенды калининградских дворов',
+    speaker: 'Никитин',
+    manifestKeys: ['Калининрадские суеверия и привычки - Никитин'],
+  },
+  {
+    title: 'Восприятие новой родины переселенцами (как воспринимали Восточная Пруссия)',
+    speaker: 'Левченков',
+    manifestKeys: ['Восприятие новой родины - Левченков'],
+  },
+  {
+    title: 'Право на существование: зоопарки в современном мире. Перспективы развития Калининградского зоопарка',
+    speaker: 'Соколова',
+    manifestKeys: ['Зоопарк - Соколова'],
+  },
+  {
+    title: 'Приморский (Зеленоградский) район Калининградской области в советское время на этапе становления',
+    speaker: 'Ефремов',
+    manifestKeys: ['Зеленоградский район - Ефремов'],
+  },
+  {
     title: '“Кладомания” и городской фольклор: почему мы верим в скрытые сокровища',
     speaker: 'Долотова',
     manifestKeys: ['Клады - Долотова'],
@@ -148,9 +203,66 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     speaker: 'Криммель',
     manifestKeys: ['Янтарный комбинат - Криммель'],
   },
+  {
+    title: 'Природа чемодана',
+    speaker: 'Никитин',
+    manifestKeys: ['Природа чемодана - Никитин'],
+  },
+  {
+    title: 'Заводы и пароходы. Постсоветское индустриальное наследие Калининграда.',
+    speaker: 'Мосиенко',
+    manifestKeys: ['Индустриальное наследие - Мосиенко'],
+  },
+  {
+    title: 'Зоопарку – быть! Зоопарк – трофей 1945 года и один из первых очагов мирной жизни в Калининграде',
+    speaker: 'Левкова',
+    manifestKeys: ['Зоопарку быть - Левкова'],
+  },
+  {
+    title: 'Человек, заложивший фундамент современного Калининграда. Виктор Денисов и его эпоха.',
+    speaker: 'Машинская',
+    manifestKeys: ['Денисов - Машинская'],
+  },
 ];
 
 const SPEAKER_MANIFEST_KEYS = Object.keys(media.speakers);
+
+const RELATED_EVENT_BINDINGS: Array<{
+  lectureTitleMatches: string[];
+  lectureSpeakerMatch: string;
+  exhibitionTitleMatches: string[];
+}> = [
+  {
+    lectureTitleMatches: ['Первые на косе'],
+    lectureSpeakerMatch: 'Цедрик',
+    exhibitionTitleMatches: ['Выставка Первые на косе'],
+  },
+  {
+    lectureTitleMatches: ['Мирная жизнь самой западной точки России'],
+    lectureSpeakerMatch: 'Надымова',
+    exhibitionTitleMatches: [
+      'Выставка историй мирной жизни самой заподной точки России',
+      'Выставка историй мирной жизни самой западной точки России',
+    ],
+  },
+];
+
+const EXHIBITION_LOCATION_OVERRIDES: Array<{
+  titleMatches: string[];
+  venue: string;
+}> = [
+  {
+    titleMatches: ['Выставка «Первые на косе»', 'Выставка Первые на косе'],
+    venue: 'Лекционный зал, 4 этаж',
+  },
+  {
+    titleMatches: [
+      'Выставка историй мирной жизни самой заподной точки России',
+      'Выставка историй мирной жизни самой западной точки России',
+    ],
+    venue: 'Лекционный зал, 4 этаж',
+  },
+];
 
 let cache: FestivalEvent[] | null = null;
 
@@ -334,7 +446,13 @@ function trimLead(value: string) {
   return lead.length > 220 ? `${lead.slice(0, 217).trim()}...` : lead;
 }
 
-function composeEventSummary(body: string, formatRaw: string) {
+function composeEventSummary(title: string, body: string, formatRaw: string) {
+  const summaryOverride = Object.entries(curatedSummaries)
+    .find(([key]) => normalizeLookup(key) === normalizeLookup(title))?.[1];
+  if (summaryOverride) {
+    return normalizeText(summaryOverride);
+  }
+
   const shortDescription = normalizeText(
     extractField(body, 'Короткое описание для афиши — версия 1') ||
     extractField(body, 'Короткое описание для афиши — версия 2'),
@@ -458,10 +576,18 @@ function parseRangeStart(heading: string) {
 }
 
 function parseHeaderTitle(heading: string) {
+  const stripWrappedQuotes = (value: string) => {
+    if ((value.startsWith('«') && value.endsWith('»')) || (value.startsWith('"') && value.endsWith('"'))) {
+      return value.slice(1, -1).trim();
+    }
+    return value;
+  };
+
   if (heading.includes(' — ')) {
-    return heading.split(' — ').slice(1).join(' — ').trim().replace(/^«|»$/g, '');
+    const rawTitle = heading.split(' — ').slice(1).join(' — ').trim().replace(/\s*:\s*$/, '');
+    return stripWrappedQuotes(rawTitle);
   }
-  return heading.trim();
+  return stripWrappedQuotes(heading.trim().replace(/\s*:\s*$/, ''));
 }
 
 function normalizeFormatName(raw: string) {
@@ -700,6 +826,90 @@ function sortEvents(events: FestivalEvent[]) {
   });
 }
 
+function isLectureFormat(formatLabel: string) {
+  return normalizeLookup(formatLabel).includes(normalizeLookup('Лекция'));
+}
+
+function includesAnyNormalized(value: string, patterns: string[]) {
+  const lookup = normalizeLookup(value);
+  return patterns.some((pattern) => lookup.includes(normalizeLookup(pattern)));
+}
+
+function toRelatedEvent(event: FestivalEvent, relationLabel: string): RelatedFestivalEvent {
+  return {
+    slug: event.slug,
+    title: event.title,
+    formatLabel: event.formatLabel,
+    dateLabel: event.dateLabel,
+    timeLabel: event.timeLabel,
+    venue: event.venue,
+    address: event.address,
+    speakerLabel: event.speakerLabel,
+    kind: event.kind,
+    relationLabel,
+  };
+}
+
+function toSpeakerLectureLink(event: FestivalEvent): SpeakerLectureLink {
+  return {
+    slug: event.slug,
+    title: event.title,
+    dateLabel: event.dateLabel,
+  };
+}
+
+function applyExhibitionLocationOverride(title: string, kind: FestivalEventKind, venue: string) {
+  if (kind !== 'range') {
+    return venue;
+  }
+
+  const override = EXHIBITION_LOCATION_OVERRIDES.find((entry) => includesAnyNormalized(title, entry.titleMatches));
+  return override?.venue ?? venue;
+}
+
+function attachRelatedEvents(events: FestivalEvent[]) {
+  for (const binding of RELATED_EVENT_BINDINGS) {
+    const lecture = events.find((event) =>
+      event.kind !== 'range'
+      && includesAnyNormalized(event.title, binding.lectureTitleMatches)
+      && normalizeLookup(event.speakerLabel).includes(normalizeLookup(binding.lectureSpeakerMatch)));
+
+    const exhibition = events.find((event) =>
+      event.kind === 'range'
+      && includesAnyNormalized(event.title, binding.exhibitionTitleMatches));
+
+    if (!lecture || !exhibition) {
+      continue;
+    }
+
+    lecture.relatedEvent = toRelatedEvent(exhibition, 'Связано с выставкой');
+    exhibition.relatedEvent = toRelatedEvent(lecture, 'Связано с лекцией');
+  }
+
+  const lectureEvents = events.filter((event) => event.kind !== 'range' && isLectureFormat(event.formatLabel) && event.speakerLabel);
+
+  for (const event of lectureEvents) {
+    event.speakerLectureLinks = lectureEvents
+      .filter((candidate) => candidate.slug !== event.slug && candidate.speakerLabel === event.speakerLabel)
+      .sort((left, right) => {
+        if (left.isoStart && right.isoStart) {
+          return left.isoStart.localeCompare(right.isoStart);
+        }
+        if (left.isoStart) {
+          return -1;
+        }
+        if (right.isoStart) {
+          return 1;
+        }
+        return left.title.localeCompare(right.title, 'ru');
+      })
+      .slice(0, 2)
+      .map(toSpeakerLectureLink);
+  }
+
+  return events;
+}
+
 function parseSections() {
   const source = fs.readFileSync(MASTER_PATH, 'utf-8');
   const programText = source.split('## Подтверждённая программа')[1] ?? source;
@@ -726,7 +936,7 @@ function parseSections() {
     const formatRaw = extractField(body, 'Формат') || 'Событие';
     const formatLabel = normalizeFormatName(formatRaw);
     const durationLabel = extractField(body, 'Длительность') || '1 час';
-    const summary = composeEventSummary(body, formatRaw);
+    const summary = composeEventSummary(title, body, formatRaw);
     const whyGo = normalizeText(
       extractFirst(body, [
         'Зачем идти на эту лекцию',
@@ -736,7 +946,7 @@ function parseSections() {
         'Зачем идти на спектакль',
       ]),
     );
-    const venue = extractField(body, 'Площадка') || 'Площадка уточняется';
+    const rawVenue = extractField(body, 'Площадка') || 'Площадка уточняется';
     const address = extractField(body, 'Короткий адрес') || 'Адрес уточняется';
     const speakerRaw = (
       extractField(body, 'Спикер') ||
@@ -755,6 +965,7 @@ function parseSections() {
       : formatRaw.includes('Выставка') || body.includes('**Период проведения:**')
         ? 'range'
         : 'dated';
+    const venue = applyExhibitionLocationOverride(title, kind, rawVenue);
 
     const exactDate = parseExactDate(dateLabel, timeLabel);
     const rangeDate = kind === 'range' ? parseRangeStart(heading) : null;
@@ -763,7 +974,7 @@ function parseSections() {
     const calendar = createCalendarLinks({
       title,
       slug,
-      summary: whyGo || summary,
+      summary: summary || whyGo,
       venue,
       address,
       isoStart: exactDate?.isoStart,
@@ -797,10 +1008,11 @@ function parseSections() {
       dialogueParticipants,
       kind,
       isoStart: exactDate?.isoStart ?? rangeDate?.isoStart,
+      speakerLectureLinks: [],
     });
   }
 
-  return sortEvents(events);
+  return sortEvents(attachRelatedEvents(events));
 }
 
 export function getFestivalEvents() {

@@ -14,6 +14,8 @@ const openDialogues = getOpenDialogues(events).slice(0, 5);
 const nextEvent = events[0];
 const PRESS_EMAIL = 'press@kgd80.ru';
 const FESTIVAL_REGULATION_URL = '/docs/festival-regulation.pdf';
+type RelatedEventCard = NonNullable<(typeof events)[number]['relatedEvent']>;
+type SpeakerLectureLinkCard = (typeof events)[number]['speakerLectureLinks'][number];
 
 const WEEKDAY_SHORT: Record<string, string> = {
   понедельник: 'пн',
@@ -26,13 +28,26 @@ const WEEKDAY_SHORT: Record<string, string> = {
 };
 
 const EVENT_PORTRAIT_OVERRIDES: Array<{ match: string; style: string }> = [
-  { match: 'Мосиенко', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.18rem;' },
-  { match: 'Соколов', style: '--event-portrait-size: 0.94; --event-portrait-shift-x: 0.08rem;' },
-  { match: 'Конюхова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.08rem;' },
-  { match: 'Илюшкина', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.22rem;' },
-  { match: 'Долотова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.12rem;' },
-  { match: 'Надымова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.12rem;' },
-  { match: 'Ярцев', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.08rem;' },
+  { match: 'Мосиенко', style: '--event-portrait-size: 1.24; --event-portrait-shift-x: 0.22rem; --event-portrait-shift-y: 0rem;' },
+  { match: 'Соколов', style: '--event-portrait-size: 1; --event-portrait-shift-x: 0.08rem; --event-portrait-shift-y: 0rem;' },
+  { match: 'Конюхова', style: '--event-portrait-size: 1.04; --event-portrait-shift-x: 0.08rem; --event-portrait-shift-y: 0rem;' },
+  { match: 'Илюшкина', style: '--event-portrait-size: 1.03; --event-portrait-shift-x: 0.28rem; --event-portrait-shift-y: 0.14rem;' },
+  { match: 'Долотова', style: '--event-portrait-size: 1.02; --event-portrait-shift-x: 0.1rem; --event-portrait-shift-y: 0.12rem;' },
+  { match: 'Надымова', style: '--event-portrait-size: 1.04; --event-portrait-shift-x: 0.12rem; --event-portrait-shift-y: 0.12rem;' },
+  { match: 'Ярцев', style: '--event-portrait-size: 1; --event-portrait-shift-x: 0.08rem; --event-portrait-shift-y: 0.16rem;' },
+];
+
+const LECTURE_EVENT_PORTRAIT_OVERRIDES: Array<{ match: string; style: string }> = [
+  {
+    match: 'Мосиенко',
+    style: '--event-portrait-size: 1.42; --event-portrait-shift-x: 0.18rem; --event-portrait-shift-y: 0.02rem; --event-portrait-width-mobile: min(40.5%, 13rem); --event-portrait-width-desktop: min(39%, 13.2rem);',
+  },
+];
+
+const LECTURE_PORTRAIT_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
+  { match: 'Мосиенко', path: '/generated/lecture-portraits/mosienko-evgeniy-grounded.webp' },
+  { match: 'Соколов', path: '/generated/lecture-portraits/aleksey-sokolov-grounded.webp' },
+  { match: 'Конюхова', path: '/generated/lecture-portraits/tatyana-konyuhova-grounded.webp' },
 ];
 
 const SPEAKER_STRIP_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
@@ -52,8 +67,32 @@ const SPEAKER_STRIP_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
 ];
 
 const SPEAKER_STRIP_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
-  { match: 'Конюхова', style: '--speaker-strip-scale-mobile: 0.334; --speaker-strip-scale-desktop: 0.406; --speaker-strip-y-mobile: -22px; --speaker-strip-y-desktop: -34px;' },
+  { match: 'Конюхова', style: '--speaker-strip-scale-mobile: 0.352; --speaker-strip-scale-desktop: 0.458; --speaker-strip-x-mobile: -6px; --speaker-strip-x-desktop: -12px; --speaker-strip-y-mobile: -34px; --speaker-strip-y-desktop: -70px;' },
   { match: 'Жадобко', style: '--speaker-strip-scale-mobile: 0.314; --speaker-strip-scale-desktop: 0.383; --speaker-strip-y-mobile: -14px; --speaker-strip-y-desktop: -22px;' },
+];
+
+const DIALOGUE_PORTRAIT_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
+  { match: 'Удовенко', path: '/generated/dialogue-portraits/udovenko-tatyana.webp' },
+  { match: 'Сивкова', path: '/generated/dialogue-portraits/sivkova-svetlana.webp' },
+  { match: 'Жадобко', path: '/generated/dialogue-portraits/zhadobko-sergey.webp' },
+  { match: 'Попадин', path: '/generated/dialogue-portraits/popadin-aleksandr.webp' },
+  { match: 'Литвинович', path: '/generated/dialogue-portraits/litvinovich-irina.webp' },
+  { match: 'Бойко', path: '/generated/dialogue-portraits/boyko-andrey.webp' },
+  { match: 'Марковец', path: '/generated/dialogue-portraits/markovets-mihail.webp' },
+  { match: 'Никитин', path: '/generated/dialogue-portraits/nikitin-nikita.webp' },
+];
+
+const DIALOGUE_PORTRAIT_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
+  { match: 'Удовенко', style: '--dialogue-portrait-size: 1.11; --dialogue-portrait-trim: -26px; --dialogue-portrait-shift-x: 2px;' },
+  { match: 'Сивкова', style: '--dialogue-portrait-size: 1.09; --dialogue-portrait-trim: -20px;' },
+  { match: 'Жадобко', style: '--dialogue-portrait-size: 1.07; --dialogue-portrait-trim: -16px;' },
+  { match: 'Попадин', style: '--dialogue-portrait-size: 1.07; --dialogue-portrait-trim: -16px;' },
+  { match: 'Литвинович', style: '--dialogue-portrait-size: 1.09; --dialogue-portrait-trim: -18px; --dialogue-portrait-shift-x: -4px;' },
+  { match: 'Бойко', style: '--dialogue-portrait-size: 1.09; --dialogue-portrait-trim: -18px;' },
+  { match: 'Марковец', style: '--dialogue-portrait-size: 1.1; --dialogue-portrait-trim: -20px;' },
+  { match: 'Никитин', style: '--dialogue-portrait-size: 1.1; --dialogue-portrait-trim: -20px;' },
+  { match: 'Долотова', style: '--dialogue-portrait-size: 1.08; --dialogue-portrait-trim: -18px;' },
+  { match: 'Ярцев', style: '--dialogue-portrait-size: 1.07; --dialogue-portrait-trim: -16px;' },
 ];
 
 function getDateParts(dateLabel: string) {
@@ -73,12 +112,77 @@ function getDateParts(dateLabel: string) {
   };
 }
 
+function getRangeDateParts(dateLabel: string) {
+  const match = dateLabel.match(/(?:с\s*)?(\d{1,2})\s+([а-я]+)(?:\s+\d{4})?\s*(?:-|—|–|по)\s*(\d{1,2})\s+([а-я]+)\s+(\d{4})/i);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    startDay: match[1],
+    startMonth: match[2].toLowerCase(),
+    endDay: match[3],
+    endMonth: match[4].toLowerCase(),
+  };
+}
+
 function getCardText(event: { whyGo: string; summary: string }) {
   return event.summary || event.whyGo;
 }
 
-function getPortraitFrames(images: string[]) {
-  return images.join('|');
+function getCardExtraText(event: { whyGo: string; summary: string }) {
+  if (!event.whyGo) {
+    return '';
+  }
+
+  return event.whyGo !== event.summary ? event.whyGo : '';
+}
+
+function getRelatedMetaLine(relatedEvent: RelatedEventCard) {
+  const parts = [relatedEvent.formatLabel, relatedEvent.dateLabel];
+
+  if (relatedEvent.kind !== 'range' && !relatedEvent.timeLabel.includes('будет объявлено')) {
+    parts.push(relatedEvent.timeLabel);
+  }
+
+  return parts.filter(Boolean).join(' · ');
+}
+
+function getRelatedSecondaryLine(relatedEvent: RelatedEventCard) {
+  const parts = relatedEvent.kind === 'range'
+    ? [relatedEvent.venue, relatedEvent.address]
+    : [relatedEvent.speakerLabel, relatedEvent.venue];
+
+  return parts.filter(Boolean).join(' · ');
+}
+
+
+function getLectureTitleClass(title: string) {
+  const length = title.trim().length;
+
+  if (length >= 88) {
+    return 'event-card__visual-title event-card__visual-title--xxlong';
+  }
+
+  if (length >= 64) {
+    return 'event-card__visual-title event-card__visual-title--xlong';
+  }
+
+  if (length >= 46) {
+    return 'event-card__visual-title event-card__visual-title--long';
+  }
+
+  return 'event-card__visual-title';
+}
+
+function getPortraitFrames(name: string, images: string[], isLecture = false) {
+  return images
+    .map((image) => getEventPortraitImage(name, image, isLecture))
+    .join('|');
+}
+
+function getEventPortraitImages(name: string, images: string[], isLecture = false) {
+  return images.map((image) => getEventPortraitImage(name, image, isLecture));
 }
 
 function getSpeakerCaption(value: string) {
@@ -94,16 +198,57 @@ function getSpeakerStripImage(name: string, fallback: string) {
     ?? fallback.replace('/generated/speakers/', '/generated/speaker-strip/');
 }
 
+function getEventPortraitImage(name: string, fallback: string, isLecture = false) {
+  if (isLecture) {
+    const lectureOverride = LECTURE_PORTRAIT_IMAGE_OVERRIDES.find((entry) => name.includes(entry.match))?.path;
+    if (lectureOverride) {
+      return lectureOverride;
+    }
+  }
+
+  return getSpeakerStripImage(name, fallback);
+}
+
 function getSpeakerStripStyle(name: string) {
   return SPEAKER_STRIP_STYLE_OVERRIDES.find((entry) => name.includes(entry.match))?.style;
 }
 
-function getEventPortraitStyle(value: string) {
+function getDialoguePortraitImage(name: string, fallback: string) {
+  return DIALOGUE_PORTRAIT_IMAGE_OVERRIDES.find((entry) => name.includes(entry.match))?.path
+    ?? fallback.replace('/generated/speakers/', '/generated/dialogue-portraits/');
+}
+
+function getDialoguePortraitStyle(name: string) {
+  return DIALOGUE_PORTRAIT_STYLE_OVERRIDES.find((entry) => name.includes(entry.match))?.style
+    ?? undefined;
+}
+
+function getEventPortraitStyle(value: string, isLecture = false) {
+  if (isLecture) {
+    const lectureStyle = LECTURE_EVENT_PORTRAIT_OVERRIDES.find((entry) => value.includes(entry.match))?.style;
+    if (lectureStyle) {
+      return lectureStyle;
+    }
+  }
+
   return EVENT_PORTRAIT_OVERRIDES.find((entry) => value.includes(entry.match))?.style ?? undefined;
 }
 
 function isLectureEvent(formatLabel: string) {
   return formatLabel.toLowerCase().includes('лекц');
+}
+
+function isOpeningEvent(event: { title: string; format: string }) {
+  return event.title === 'Открытие фестиваля' || event.format.includes('Открытие фестиваля');
+}
+
+function getDialogueMonogram(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
 }
 ---
 
@@ -288,55 +433,92 @@ function isLectureEvent(formatLabel: string) {
                 <div class="event-list">
                   {group.events.map((event) => {
                     const dateParts = getDateParts(event.dateLabel);
+                    const rangeDateParts = event.kind === 'range' ? getRangeDateParts(event.dateLabel) : null;
                     const isDialogueEvent = event.formatLabel.includes('Открытый диалог') && event.dialogueParticipants.length > 0;
                     const isLecture = isLectureEvent(event.formatLabel);
-                    const portraitFrames = getPortraitFrames(event.speakerImages);
-                    const portraitStyle = getEventPortraitStyle(event.speakerLabel);
+                    const openingEvent = isOpeningEvent(event);
+                    const stageImage = event.image || (openingEvent ? '/shared-assets/hero-added-09.webp' : '');
+                    const useDialogueVisual = isDialogueEvent && !openingEvent;
+                    const portraitImages = getEventPortraitImages(event.speakerLabel, event.speakerImages, isLecture);
+                    const portraitFrames = getPortraitFrames(event.speakerLabel, event.speakerImages, isLecture);
+                    const portraitStyle = getEventPortraitStyle(event.speakerLabel, isLecture);
+                    const visualDialogueParticipants = useDialogueVisual
+                      ? event.dialogueParticipants.filter((participant) => participant.images[0]).slice(0, 4)
+                      : [];
+                    const dialogueStageParticipants = visualDialogueParticipants.length
+                      ? visualDialogueParticipants
+                      : event.dialogueParticipants.slice(0, 4);
+                    const cardText = getCardText(event);
+                    const cardExtraText = getCardExtraText(event);
 
                     return (
                       <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''}`} id={`event-${event.slug}`}>
                         <div class="event-card__main">
-                          <div class={`event-card__stage ${!isDialogueEvent && event.speakerImages.length > 0 ? 'event-card__stage--portrait' : ''}`}>
+                          <div class={`event-card__stage ${!useDialogueVisual && event.speakerImages.length > 0 ? 'event-card__stage--portrait' : ''}`}>
                             <div class="event-card__date">
-                              <span class="event-card__day">{dateParts.day}</span>
-                              <span class="event-card__month">{dateParts.month}</span>
-                              {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
-                              <span class="event-card__time">{event.timeLabel}</span>
+                              {rangeDateParts ? (
+                                <>
+                                  <span class="event-card__range-row">
+                                    <span class="event-card__range-prefix">с</span>
+                                    <span class="event-card__range-day">{rangeDateParts.startDay}</span>
+                                    <span class="event-card__range-month">{rangeDateParts.startMonth}</span>
+                                  </span>
+                                  <span class="event-card__range-row">
+                                    <span class="event-card__range-prefix">по</span>
+                                    <span class="event-card__range-day">{rangeDateParts.endDay}</span>
+                                    <span class="event-card__range-month">{rangeDateParts.endMonth}</span>
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <span class="event-card__day">{dateParts.day}</span>
+                                  <span class="event-card__month">{dateParts.month}</span>
+                                  {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
+                                  <span class="event-card__time">{event.timeLabel}</span>
+                                </>
+                              )}
                             </div>
 
-                            {isDialogueEvent ? (
+                            {useDialogueVisual ? (
                               <div
                                 class="event-card__dialogue-visual"
                                 aria-label={`Участники события ${event.title}`}
-                                style={`--dialogue-columns: ${Math.max(Math.min(event.dialogueParticipants.length, 4), 1)}`}
+                                style={`--dialogue-columns: ${Math.max(dialogueStageParticipants.length, 1)}`}
                               >
-                                {event.dialogueParticipants.slice(0, 4).map((participant) => (
-                                  <div class="event-card__dialogue-person">
+                                {dialogueStageParticipants.map((participant) => (
+                                  <div class={`event-card__dialogue-person ${participant.images[0] ? '' : 'event-card__dialogue-person--placeholder'}`}>
                                     <div class="event-card__dialogue-meta">
                                       <strong>{participant.name}</strong>
                                     </div>
-                                    <div class="event-card__dialogue-media">
-                                      <img
-                                        class="event-card__dialogue-portrait"
-                                        src={participant.images[0]}
-                                        alt={participant.name}
-                                        loading="lazy"
-                                      />
+                                    <div class={`event-card__dialogue-media ${participant.images[0] ? '' : 'event-card__dialogue-media--placeholder'}`}>
+                                      {participant.images[0] ? (
+                                        <img
+                                          class="event-card__dialogue-portrait"
+                                          src={getDialoguePortraitImage(participant.name, participant.images[0])}
+                                          alt={participant.name}
+                                          loading="lazy"
+                                          style={getDialoguePortraitStyle(participant.name)}
+                                        />
+                                      ) : (
+                                        <span class="event-card__dialogue-placeholder" aria-hidden="true">
+                                          {getDialogueMonogram(participant.name)}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             ) : (
                               <>
-                                <div class={`event-card__visual ${event.image ? '' : 'event-card__visual--plain'}`}>
-                                  {event.image && (
-                                    <img class="event-card__poster" src={event.image} alt={`Афиша: ${event.title}`} loading="lazy" />
+                                <div class={`event-card__visual ${stageImage ? '' : 'event-card__visual--plain'}`}>
+                                  {stageImage && (
+                                    <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" />
                                   )}
                                   <div class="event-card__overlay"></div>
 
                                   {isLecture && (
                                     <div class="event-card__visual-copy">
-                                      <p class="event-card__visual-title">{event.title}</p>
+                                      <p class={getLectureTitleClass(event.title)}>{event.title}</p>
                                     </div>
                                   )}
                                 </div>
@@ -349,14 +531,14 @@ function isLectureEvent(formatLabel: string) {
                                   >
                                     <img
                                       class="portrait-cycle__image is-active"
-                                      src={event.speakerImages[0]}
+                                      src={portraitImages[0]}
                                       alt={event.speakerLabel}
                                       loading="lazy"
                                     />
-                                    {event.speakerImages.length > 1 && (
+                                    {portraitImages.length > 1 && (
                                       <img
                                         class="portrait-cycle__image"
-                                        src={event.speakerImages[1]}
+                                        src={portraitImages[1]}
                                         alt={event.speakerLabel}
                                         loading="lazy"
                                         aria-hidden="true"
@@ -382,10 +564,45 @@ function isLectureEvent(formatLabel: string) {
                               </div>
                             )}
 
-                            {event.speakerLabel && <p class="event-card__speaker">{event.speakerLabel}</p>}
-                            {event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
+                            {!isDialogueEvent && event.speakerLabel && <p class="event-card__speaker">{event.speakerLabel}</p>}
+                            {!isDialogueEvent && event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
 
-                            <p class="event-card__summary">{getCardText(event)}</p>
+                            {isLecture && event.speakerLectureLinks.length > 0 && (
+                              <div class="event-card__speaker-links" aria-label={`Другие лекции спикера ${event.speakerLabel}`}>
+                                <span>Ещё у лектора:</span>
+                                {event.speakerLectureLinks.map((lecture) => (
+                                  <a href={`#event-${lecture.slug}`} title={lecture.dateLabel}>{lecture.title}</a>
+                                ))}
+                              </div>
+                            )}
+
+                            {event.relatedEvent && (
+                              <div class="event-card__related">
+                                <p class="event-card__related-label">{event.relatedEvent.relationLabel}</p>
+                                <a class="event-card__related-link" href={`#event-${event.relatedEvent.slug}`}>
+                                  <strong>{event.relatedEvent.title}</strong>
+                                  <span>{getRelatedMetaLine(event.relatedEvent)}</span>
+                                  <span>{getRelatedSecondaryLine(event.relatedEvent)}</span>
+                                </a>
+                              </div>
+                            )}
+
+                            {event.kind === 'range' && (
+                              <div class="event-card__range-info">
+                                <span class="event-card__range-label">Период экспонирования</span>
+                                <strong>{event.dateLabel}</strong>
+                                <span>{event.timeLabel}</span>
+                                <span>{event.venue} · {event.address}</span>
+                              </div>
+                            )}
+
+                            <details class="event-card__summary-details">
+                              <summary class="event-card__summary-toggle">
+                                <span class="event-card__summary-text">{cardText}</span>
+                                <span class="event-card__summary-hint" aria-hidden="true"></span>
+                              </summary>
+                              {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+                            </details>
 
                             <div class="event-card__meta">
                               <span>{event.venue}</span>
