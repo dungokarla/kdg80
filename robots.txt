@@ -16,5 +16,4 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-# Replace the placeholder domain below before production launch.
-Sitemap: https://festival.example.com/sitemap.xml
+Sitemap: https://kgd80.ru/sitemap.xml

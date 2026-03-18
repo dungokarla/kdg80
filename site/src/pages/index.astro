@@ -2,7 +2,6 @@
 import Layout from '../layouts/Layout.astro';
 import {
   getFestivalEvents,
-  getHookQuotes,
   getMonthGroups,
   getOpenDialogues,
   getSpeakerShowcase,
@@ -11,14 +10,106 @@ import {
 const events = getFestivalEvents();
 const monthGroups = getMonthGroups(events);
 const speakerShowcase = getSpeakerShowcase(events);
-const hooks = getHookQuotes(events);
-const openDialogues = getOpenDialogues(events);
+const openDialogues = getOpenDialogues(events).slice(0, 5);
 const nextEvent = events[0];
+const PRESS_EMAIL = 'press@kgd80.ru';
+const FESTIVAL_REGULATION_URL = '/docs/festival-regulation.pdf';
+
+const WEEKDAY_SHORT: Record<string, string> = {
+  понедельник: 'пн',
+  вторник: 'вт',
+  среда: 'ср',
+  четверг: 'чт',
+  пятница: 'пт',
+  суббота: 'сб',
+  воскресенье: 'вс',
+};
+
+const EVENT_PORTRAIT_OVERRIDES: Array<{ match: string; style: string }> = [
+  { match: 'Мосиенко', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.18rem;' },
+  { match: 'Соколов', style: '--event-portrait-size: 0.94; --event-portrait-shift-x: 0.08rem;' },
+  { match: 'Конюхова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.08rem;' },
+  { match: 'Илюшкина', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.22rem;' },
+  { match: 'Долотова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.12rem;' },
+  { match: 'Надымова', style: '--event-portrait-size: 0.92; --event-portrait-shift-x: 0.12rem;' },
+  { match: 'Ярцев', style: '--event-portrait-size: 0.9; --event-portrait-shift-x: 0.08rem;' },
+];
+
+const SPEAKER_STRIP_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
+  { match: 'Соколов', path: '/generated/speaker-strip/aleksey-sokolov.webp' },
+  { match: 'Долотова', path: '/generated/speaker-strip/dolotova-inga.webp' },
+  { match: 'Жадобко', path: '/generated/speaker-strip/zhadobko-sergey.webp' },
+  { match: 'Илюшкина', path: '/generated/speaker-strip/ilyushkina-ekaterina.webp' },
+  { match: 'Машинская', path: '/generated/speaker-strip/mashinskaya-ekaterina.webp' },
+  { match: 'Мосиенко', path: '/generated/speaker-strip/mosienko-evgeniy.webp' },
+  { match: 'Надымова', path: '/generated/speaker-strip/nadymova-valeriya.webp' },
+  { match: 'Нижегородцева', path: '/generated/speaker-strip/nizhegorodtseva-evgeniya.webp' },
+  { match: 'Попадин', path: '/generated/speaker-strip/popadin-aleksandr.webp' },
+  { match: 'Скребцова', path: '/generated/speaker-strip/skrebtsova-anastasiya.webp' },
+  { match: 'Конюхова', path: '/generated/speaker-strip/tatyana-konyuhova.webp' },
+  { match: 'Удовенко', path: '/generated/speaker-strip/udovenko-tatyana.webp' },
+  { match: 'Ярцев', path: '/generated/speaker-strip/yartsev-andrey-3.webp' },
+];
+
+const SPEAKER_STRIP_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
+  { match: 'Конюхова', style: '--speaker-strip-scale-mobile: 0.334; --speaker-strip-scale-desktop: 0.406; --speaker-strip-y-mobile: -22px; --speaker-strip-y-desktop: -34px;' },
+  { match: 'Жадобко', style: '--speaker-strip-scale-mobile: 0.314; --speaker-strip-scale-desktop: 0.383; --speaker-strip-y-mobile: -14px; --speaker-strip-y-desktop: -22px;' },
+];
+
+function getDateParts(dateLabel: string) {
+  const match = dateLabel.match(/(\d{1,2})\s+([а-я]+)\s+2026(?:\s+\(([^)]+)\))?/i);
+  if (!match) {
+    return {
+      day: '??',
+      month: 'скоро',
+      weekday: '',
+    };
+  }
+
+  return {
+    day: match[1],
+    month: match[2].toLowerCase(),
+    weekday: WEEKDAY_SHORT[(match[3] ?? '').toLowerCase()] ?? '',
+  };
+}
+
+function getCardText(event: { whyGo: string; summary: string }) {
+  return event.summary || event.whyGo;
+}
+
+function getPortraitFrames(images: string[]) {
+  return images.join('|');
+}
+
+function getSpeakerCaption(value: string) {
+  if (!value) {
+    return '';
+  }
+
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function getSpeakerStripImage(name: string, fallback: string) {
+  return SPEAKER_STRIP_IMAGE_OVERRIDES.find((entry) => name.includes(entry.match))?.path
+    ?? fallback.replace('/generated/speakers/', '/generated/speaker-strip/');
+}
+
+function getSpeakerStripStyle(name: string) {
+  return SPEAKER_STRIP_STYLE_OVERRIDES.find((entry) => name.includes(entry.match))?.style;
+}
+
+function getEventPortraitStyle(value: string) {
+  return EVENT_PORTRAIT_OVERRIDES.find((entry) => value.includes(entry.match))?.style ?? undefined;
+}
+
+function isLectureEvent(formatLabel: string) {
+  return formatLabel.toLowerCase().includes('лекц');
+}
 ---
 
 <Layout
   title="80 историй о главном | Прототип главной страницы"
-  description="Прототип фестивального лендинга: image-first карточки событий, крупный спикер, регистрация и календарь прямо в ленте."
+  description="Афишный прототип фестиваля: image-first программа, плотный обзор длинной ленты и крупные портреты спикеров."
 >
   <div class="page">
     <header class="site-header">
@@ -28,11 +119,13 @@ const nextEvent = events[0];
         </a>
 
         <nav class="site-header__nav" aria-label="Быстрые разделы">
+          <a href="#speakers">Спикеры</a>
           <a href="#program">Программа</a>
-          <a href="#dialogues">Открытые диалоги</a>
-          <a href="#formats">Форматы</a>
-          <a href="#press">Пресса</a>
+          <a href="#dialogues">Диалоги</a>
+          <a href="#press">СМИ</a>
         </nav>
+
+        <a class="button button--primary site-header__cta" href="#program">Программа</a>
       </div>
     </header>
 
@@ -40,96 +133,111 @@ const nextEvent = events[0];
       <section class="hero">
         <div class="container">
           <div class="hero__shell">
-            <div class="hero__grid">
-              <div>
-                <p class="eyebrow">Просветительский фестиваль Российского общества Знание</p>
-                <h1>80 историй о главном</h1>
-                <p class="hero__lead">
-                  Обновлённый прототип уже строится в логике фестиваля: картинка и человек работают как главный вход,
-                  а список событий остаётся открытым, плотным и удобным для выбора нескольких мероприятий подряд.
-                </p>
+            <div class="hero__copy">
+              <p class="eyebrow">Просветительский фестиваль Российского общества Знание</p>
+              <p class="hero__kicker">К 80-летию Калининградской области</p>
+              <h1>80 историй о главном</h1>
+              <p class="hero__lead">
+                В десктопе программа должна ощущаться как живая афиша, а не как длинный корпоративный реестр.
+                Поэтому главный вход здесь через изображение, дату, человека и одно сильное обещание события.
+              </p>
 
-                <div class="hero__badges" aria-label="Ключевые метки фестиваля">
-                  <span>Калининград</span>
-                  <span>28 марта — 19 июля 2026</span>
-                  <span>Регистрация сразу на все события</span>
-                </div>
-
-                <div class="hero__actions">
-                  <a class="button button--primary" href="#program">Смотреть программу</a>
-                  <a class="button button--light" href="#announces">Подписаться на анонсы</a>
-                </div>
+              <div class="hero__meta" aria-label="Ключевые параметры фестиваля">
+                <span>Калининград</span>
+                <span>28 марта - 19 июля 2026</span>
+                <span>{events.length} событий в текущей сборке</span>
               </div>
 
-              <aside class="hero__aside" aria-label="Ближайшее событие">
-                <p class="panel-label">Ближайшее событие</p>
-                <div class="next-event-card">
-                  <h2>{nextEvent.title}</h2>
-                  <div class="next-event-card__meta">
-                    <span>{nextEvent.dateLabel}</span>
-                    <span>{nextEvent.timeLabel}</span>
-                    <span>{nextEvent.venue}, {nextEvent.address}</span>
-                    <span>{nextEvent.formatLabel}</span>
-                  </div>
-                  <div class="hero__actions hero__actions--compact">
-                    <a class="button button--primary" href={`#event-${nextEvent.slug}`}>К событию</a>
-                  </div>
-                </div>
-              </aside>
+              <div class="hero__actions">
+                <a class="button button--primary" href="#program">Смотреть программу</a>
+                <a class="button button--ghost" href="#announces">Подписаться на анонсы</a>
+              </div>
+
+              <p class="hero__note">
+                Приоритетный сценарий: быстро выбрать несколько событий подряд и не потерять их.
+              </p>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section class="section section--compact">
-        <div class="container">
-          <div class="section__header">
-            <p class="section__eyebrow">Hooks</p>
-            <h2>Сильные фразы должны подталкивать к просмотру программы</h2>
-          </div>
-
-          <div class="hooks">
-            {hooks.map((item) => (
-              <article class="hook-card">
-                <blockquote>“{item.quote}”</blockquote>
-                <a class="hook-card__link" href={`#${item.anchor}`}>Перейти к событию</a>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section class="section section--compact" id="speakers">
-        <div class="container">
-          <div class="section__header">
-            <p class="section__eyebrow">Спикеры</p>
-            <h2>Полоса спикеров должна быть уже, живее и визуально дороже</h2>
-            <p class="section__text">
-              Здесь я оставляю идею вертикальных slats, но делаю людей крупнее и читаемее. По клику зритель попадает сразу к событию.
-            </p>
-          </div>
-
-          <div class="speaker-strip">
-            {speakerShowcase.map((speaker) => (
-              <a class="speaker-card" href={`#${speaker.anchor}`}>
-                <div class="speaker-card__content">
-                  <strong>{speaker.name}</strong>
-                  {speaker.affiliation && <span>{speaker.affiliation}</span>}
+            <aside class="hero__aside" aria-label="Ближайшее событие и визуальная атмосфера">
+              <article class="hero-ticket">
+                <p class="hero-ticket__eyebrow">Ближайшее событие</p>
+                <h2>{nextEvent.title}</h2>
+                <div class="hero-ticket__meta">
+                  <span>{nextEvent.dateLabel}</span>
+                  <span>{nextEvent.timeLabel}</span>
+                  <span>{nextEvent.venue}</span>
                 </div>
-                <img src={speaker.image} alt={speaker.name} loading="lazy" />
-              </a>
-            ))}
+                <a class="button button--light" href={`#event-${nextEvent.slug}`}>К событию</a>
+              </article>
+
+              <div class="hero-mosaic" aria-hidden="true">
+                <figure class="hero-mosaic__item hero-mosaic__item--large">
+                  <img src={nextEvent.image} alt="" loading="eager" />
+                </figure>
+                <figure class="hero-mosaic__item hero-mosaic__item--tall">
+                  <img src="/shared-assets/hero-added-04.webp" alt="" loading="lazy" />
+                </figure>
+                <figure class="hero-mosaic__item hero-mosaic__item--wide">
+                  <img src="/shared-assets/hero-added-09.webp" alt="" loading="lazy" />
+                </figure>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="section speaker-section" id="speakers">
+        <div class="container">
+          <div class="speaker-poster">
+            <div class="speaker-poster__masthead">
+              <div class="speaker-poster__topline">
+                <p class="speaker-poster__eyebrow">Люди фестиваля</p>
+                <p class="speaker-poster__stamp">Калининград / 2026 / 80 историй о главном</p>
+              </div>
+
+              <h2>
+                <span>ГОЛОСА</span>
+                <span>ФЕСТИВАЛЯ</span>
+              </h2>
+
+              <p class="speaker-poster__note">
+                Крупные лица, резкий кроп, без карточного воздуха.
+              </p>
+            </div>
+
+            <div class="speaker-strip">
+              {speakerShowcase.map((speaker, index) => (
+                <a class={`speaker-entry speaker-entry--${index + 1}`} href={`#${speaker.anchor}`}>
+                  <div class="speaker-entry__meta">
+                    <strong>{speaker.name}</strong>
+                    {speaker.affiliation && <span>{getSpeakerCaption(speaker.affiliation)}</span>}
+                  </div>
+
+                  <div class="speaker-entry__media">
+                    <img
+                      class="speaker-entry__portrait"
+                      src={getSpeakerStripImage(speaker.name, speaker.images[0])}
+                      alt={speaker.name}
+                      loading="lazy"
+                      style={getSpeakerStripStyle(speaker.name)}
+                    />
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       <section class="section section--compact" id="dialogues">
         <div class="container">
-          <div class="section__header">
-            <p class="section__eyebrow">Открытые диалоги</p>
-            <h2>Отдельный формат, который нужно подсветить как особую ценность фестиваля</h2>
+          <div class="section__header section__header--split">
+            <div>
+              <p class="section__eyebrow">Открытые диалоги</p>
+              <h2>Их нужно выделять как отдельную драматургию фестиваля, а не как ещё один тип карточки</h2>
+            </div>
             <p class="section__text">
-              Это не лекции и не должны выглядеть как обычные лекции. Здесь важны многоголосие, столкновение взглядов и общая энергия разговора.
+              Здесь оставляю короткий ряд афишных анонсов: многоголосие, столкновение точек зрения и ощущение публичного разговора.
             </p>
           </div>
 
@@ -145,14 +253,16 @@ const nextEvent = events[0];
         </div>
       </section>
 
-      <section class="section" id="program">
+      <section class="section section--program" id="program">
         <div class="container">
-          <div class="section__header">
-            <p class="section__eyebrow">Программа</p>
-            <h2>Все события открыты сразу, без лишних переходов и без скрытой информации</h2>
+          <div class="section__header section__header--split">
+            <div>
+              <p class="section__eyebrow">Программа</p>
+              <h2>Вся лента должна сканироваться быстро: дата, картинка, спикер и минимум ключевой информации</h2>
+            </div>
             <p class="section__text">
-              На этом этапе я показываю полную открытую ленту. На десктопе карточки становятся плотнее, image-first и строятся вокруг визуала и спикера,
-              а не вокруг большого текстового блока.
+              На десктопе перестраиваю список в плотный image-first ритм. Длинные абзацы убраны из первого экрана карточки,
+              а на первый план выходят дата, афиша события и заметный человек.
             </p>
           </div>
 
@@ -168,102 +278,159 @@ const nextEvent = events[0];
             {monthGroups.map((group) => (
               <section class="month-block" id={`month-${group.anchor}`}>
                 <header class="month-block__header">
-                  <h3>{group.label}</h3>
+                  <div>
+                    <p class="month-block__eyebrow">2026</p>
+                    <h3>{group.label}</h3>
+                  </div>
                   <span class="month-block__count">{group.events.length} событий</span>
                 </header>
 
                 <div class="event-list">
-                  {group.events.map((event) => (
-                    <article class="event-card" id={`event-${event.slug}`}>
-                      <div class="event-card__visual">
-                        {event.image ? (
-                          <img class="event-card__poster" src={event.image} alt={`Иллюстрация: ${event.title}`} loading="lazy" />
-                        ) : (
-                          <div class="event-card__placeholder" aria-hidden="true">
-                            <span>{event.formatLabel}</span>
-                            <strong>Визуал события готовится</strong>
+                  {group.events.map((event) => {
+                    const dateParts = getDateParts(event.dateLabel);
+                    const isDialogueEvent = event.formatLabel.includes('Открытый диалог') && event.dialogueParticipants.length > 0;
+                    const isLecture = isLectureEvent(event.formatLabel);
+                    const portraitFrames = getPortraitFrames(event.speakerImages);
+                    const portraitStyle = getEventPortraitStyle(event.speakerLabel);
+
+                    return (
+                      <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''}`} id={`event-${event.slug}`}>
+                        <div class="event-card__main">
+                          <div class={`event-card__stage ${!isDialogueEvent && event.speakerImages.length > 0 ? 'event-card__stage--portrait' : ''}`}>
+                            <div class="event-card__date">
+                              <span class="event-card__day">{dateParts.day}</span>
+                              <span class="event-card__month">{dateParts.month}</span>
+                              {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
+                              <span class="event-card__time">{event.timeLabel}</span>
+                            </div>
+
+                            {isDialogueEvent ? (
+                              <div
+                                class="event-card__dialogue-visual"
+                                aria-label={`Участники события ${event.title}`}
+                                style={`--dialogue-columns: ${Math.max(Math.min(event.dialogueParticipants.length, 4), 1)}`}
+                              >
+                                {event.dialogueParticipants.slice(0, 4).map((participant) => (
+                                  <div class="event-card__dialogue-person">
+                                    <div class="event-card__dialogue-meta">
+                                      <strong>{participant.name}</strong>
+                                    </div>
+                                    <div class="event-card__dialogue-media">
+                                      <img
+                                        class="event-card__dialogue-portrait"
+                                        src={participant.images[0]}
+                                        alt={participant.name}
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <>
+                                <div class={`event-card__visual ${event.image ? '' : 'event-card__visual--plain'}`}>
+                                  {event.image && (
+                                    <img class="event-card__poster" src={event.image} alt={`Афиша: ${event.title}`} loading="lazy" />
+                                  )}
+                                  <div class="event-card__overlay"></div>
+
+                                  {isLecture && (
+                                    <div class="event-card__visual-copy">
+                                      <p class="event-card__visual-title">{event.title}</p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {event.speakerImages.length > 0 && (
+                                  <div
+                                    class="event-card__portrait portrait-cycle"
+                                    data-portrait-frames={portraitFrames}
+                                    style={portraitStyle}
+                                  >
+                                    <img
+                                      class="portrait-cycle__image is-active"
+                                      src={event.speakerImages[0]}
+                                      alt={event.speakerLabel}
+                                      loading="lazy"
+                                    />
+                                    {event.speakerImages.length > 1 && (
+                                      <img
+                                        class="portrait-cycle__image"
+                                        src={event.speakerImages[1]}
+                                        alt={event.speakerLabel}
+                                        loading="lazy"
+                                        aria-hidden="true"
+                                      />
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
-                        )}
 
-                        <div class="event-card__overlay">
-                          <div class="event-card__overlay-row">
-                            <span class="badge badge--light">{event.formatLabel}</span>
-                            <span class="meta-chip meta-chip--light">{event.dateLabel}</span>
+                          <div class="event-card__body">
+                            <div class="event-card__body-head">
+                              <span class="event-card__format event-card__format--body">{event.formatLabel}</span>
+                              {!isLecture && <h4 class="event-card__title">{event.title}</h4>}
+                            </div>
+
+                            {isDialogueEvent && (
+                              <div class="event-card__cast">
+                                {event.dialogueParticipants.map((participant) => (
+                                  <span>{participant.name}</span>
+                                ))}
+                              </div>
+                            )}
+
+                            {event.speakerLabel && <p class="event-card__speaker">{event.speakerLabel}</p>}
+                            {event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
+
+                            <p class="event-card__summary">{getCardText(event)}</p>
+
+                            <div class="event-card__meta">
+                              <span>{event.venue}</span>
+                              <span>{event.address}</span>
+                              <span>{event.durationLabel}</span>
+                            </div>
                           </div>
-                          <h4>{event.title}</h4>
-                        </div>
 
-                        {event.speakerImages.length > 0 && (
-                          <div
-                            class="event-card__speaker-wrap"
-                            data-rotating-images={event.speakerImages.join(',')}
-                          >
-                            <img
-                              class="event-card__speaker"
-                              src={event.speakerImages[0]}
-                              alt={event.speakerLabel}
-                              loading="lazy"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <div class="event-card__content">
-                        <div class="event-card__meta-grid">
-                          <span class="meta-chip">{event.timeLabel}</span>
-                          <span class="meta-chip">{event.durationLabel}</span>
-                          <span class="meta-chip">{event.venue}</span>
-                          <span class="meta-chip">{event.address}</span>
-                        </div>
-
-                        {event.speakerLabel && (
-                          <div class="event-card__speaker-meta">
-                            <strong>{event.speakerLabel}</strong>
-                            {event.affiliation && <span>{event.affiliation}</span>}
-                          </div>
-                        )}
-
-                        {event.whyGo && <p class="event-card__why">{event.whyGo}</p>}
-                        <p class="event-card__summary">{event.summary}</p>
-                      </div>
-
-                      <aside class="event-card__actions">
-                        {event.registrationUrl ? (
-                          <a
-                            class="button button--primary"
-                            href={event.registrationUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Регистрация
-                          </a>
-                        ) : (
-                          <div class="notice">Информация о спектакле будет объявлена на открытии фестиваля.</div>
-                        )}
-
-                        {event.calendarReady ? (
-                          <details class="calendar-menu">
-                            <summary class="button button--dark">В календарь</summary>
-                            <div class="calendar-panel">
+                          <aside class="event-card__actions">
+                            {event.registrationUrl ? (
                               <a
-                                class="calendar-link"
-                                href={event.googleCalendarUrl}
+                                class="button button--primary"
+                                href={event.registrationUrl}
                                 target="_blank"
                                 rel="noreferrer"
                               >
-                                Google Calendar
+                                Регистрация
                               </a>
-                              <a class="calendar-link" href={event.icsUrl}>
-                                ICS / Apple Calendar
-                              </a>
-                            </div>
-                          </details>
-                        ) : (
-                          <div class="notice">{event.calendarNote ?? 'Календарь появится позже.'}</div>
-                        )}
-                      </aside>
-                    </article>
-                  ))}
+                            ) : (
+                              <div class="notice">Дата спектакля будет объявлена позже.</div>
+                            )}
+
+                            {event.calendarReady ? (
+                              <details class="calendar-menu">
+                                <summary class="button button--ghost">В календарь</summary>
+                                <div class="calendar-panel">
+                                  <a class="calendar-link" href={event.icsUrl}>ICS</a>
+                                  <a
+                                    class="calendar-link"
+                                    href={event.googleCalendarUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    Google
+                                  </a>
+                                </div>
+                              </details>
+                            ) : (
+                              <div class="notice">{event.calendarNote ?? 'Календарь появится позже.'}</div>
+                            )}
+                          </aside>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             ))}
@@ -271,35 +438,11 @@ const nextEvent = events[0];
         </div>
       </section>
 
-      <section class="section section--compact" id="formats">
-        <div class="container">
-          <div class="section__header">
-            <p class="section__eyebrow">Форматы</p>
-            <h2>Нужно быстро объяснить, что у фестиваля несколько разных режимов посещения</h2>
-          </div>
-
-          <div class="formats-grid">
-            <article class="format-card">
-              <h3>Лекция</h3>
-              <p>В среднем 1 час, вопросы из зала, модератор и ясный маршрут от любопытства к решению записаться.</p>
-            </article>
-            <article class="format-card">
-              <h3>Открытый диалог</h3>
-              <p>Несколько участников, разные позиции и тема, которую хочется обсуждать, а не только слушать.</p>
-            </article>
-            <article class="format-card">
-              <h3>Выставки и спектакль</h3>
-              <p>Выставки показываются как длительные периоды, а иммерсивный спектакль живёт как особый анонс с отдельной механикой входа.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="announces">
+      <section class="section section--compact" id="announces">
         <div class="container footer-panels">
           <article class="footer-panel">
             <h3>Анонсы фестиваля</h3>
-            <p>В desktop-версии здесь позже можно дать и ссылку, и QR-код. В мобильной оставить одну быструю кнопку.</p>
+            <p>Дальше сюда можно дать Telegram и короткий QR, но сама страница уже должна продавать выбор нескольких событий без дополнительного объяснения.</p>
             <div class="footer-panel__actions">
               <a class="button button--primary" href="https://t.me/" target="_blank" rel="noreferrer">
                 Перейти в Telegram
@@ -309,52 +452,88 @@ const nextEvent = events[0];
 
           <article class="footer-panel" id="press">
             <h3>Для СМИ</h3>
-            <p>Отдельная короткая страница: пресс-контакт, фотобанк, PDF-положение, логотипы и краткое официальное описание фестиваля.</p>
-          </article>
-
-          <article class="footer-panel">
-            <h3>Что уже проверяем этим прототипом</h3>
-            <p>Плотность ленты, работу реальных картинок, роль крупного спикера и то, помогает ли image-first карточка быстрее выбрать событие.</p>
+            <p>Официальный сайт просветительского фестиваля Российского общества Знание «80 историй о главном» к 80-летию Калининградской области.</p>
+            <p>Для пресс-служб и редакций здесь должны быть базовые материалы без поиска по странице: положение фестиваля, официальный пресс-контакт и ссылка на актуальную программу.</p>
+            <div class="footer-panel__actions">
+              <a class="button button--ghost" href={FESTIVAL_REGULATION_URL} target="_blank" rel="noreferrer">
+                Положение фестиваля PDF
+              </a>
+              <a class="button button--primary" href={`mailto:${PRESS_EMAIL}`}>
+                {PRESS_EMAIL}
+              </a>
+            </div>
           </article>
         </div>
       </section>
-
-      <div class="container footer-note">
-        Прототип остаётся landing-first: основной пользовательский сценарий живёт прямо на главной, а не уводится в отдельные страницы.
-      </div>
     </main>
   </div>
 
   <script is:inline>
-    const rotatingNodes = Array.from(document.querySelectorAll('[data-rotating-images]'));
-    const timers = new Map();
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        const node = entry.target;
-        const img = node.querySelector('img');
-        const images = (node.dataset.rotatingImages || '').split(',').filter(Boolean);
-
-        if (!img || images.length < 2) {
-          continue;
-        }
-
-        if (entry.isIntersecting) {
-          if (timers.has(node)) continue;
-          let index = 0;
-          const timer = window.setInterval(() => {
-            index = (index + 1) % images.length;
-            img.src = images[index];
-          }, 4200);
-          timers.set(node, timer);
-        } else if (timers.has(node)) {
-          window.clearInterval(timers.get(node));
-          timers.delete(node);
-        }
+    const speakerStrip = document.querySelector('.speaker-strip');
+    if (speakerStrip) {
+      const entries = Array.from(speakerStrip.children);
+      for (let index = entries.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [entries[index], entries[randomIndex]] = [entries[randomIndex], entries[index]];
       }
-    }, { threshold: 0.55 });
+      entries.forEach((entry) => speakerStrip.appendChild(entry));
+    }
+
+    const cycleNodes = Array.from(document.querySelectorAll('[data-portrait-frames]'));
+    const timers = new Map();
+
+    const startCycle = (node) => {
+      if (timers.has(node)) return;
+
+      const frames = (node.dataset.portraitFrames || '').split('|').filter(Boolean);
+      const images = Array.from(node.querySelectorAll('.portrait-cycle__image'));
+
+      if (frames.length < 2 || images.length < 2) {
+        return;
+      }
+
+      let visibleIndex = 0;
+      let frameIndex = 1;
+
+      const tick = () => {
+        const nextVisibleIndex = visibleIndex === 0 ? 1 : 0;
+        const current = images[visibleIndex];
+        const next = images[nextVisibleIndex];
+
+        next.src = frames[frameIndex];
+        window.requestAnimationFrame(() => {
+          next.classList.add('is-active');
+          current.classList.remove('is-active');
+        });
+
+        visibleIndex = nextVisibleIndex;
+        frameIndex = (frameIndex + 1) % frames.length;
+      };
+
+      const timer = window.setInterval(tick, 5200);
+      timers.set(node, timer);
+    };
+
+    const stopCycle = (node) => {
+      const timer = timers.get(node);
+      if (timer) {
+        window.clearInterval(timer);
+        timers.delete(node);
+      }
+    };
 
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      rotatingNodes.forEach((node) => observer.observe(node));
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            startCycle(entry.target);
+          } else {
+            stopCycle(entry.target);
+          }
+        }
+      }, { threshold: 0.45 });
+
+      cycleNodes.forEach((node) => observer.observe(node));
     }
   </script>
 </Layout>

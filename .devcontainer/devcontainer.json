@@ -1,5 +1,7 @@
 {
   "name": "festival-landing",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "postCreateCommand": "cd site && npm ci",
   "forwardPorts": [4321],
   "portsAttributes": {
     "4321": {
