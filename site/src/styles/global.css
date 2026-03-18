@@ -817,6 +817,11 @@ summary {
   background: #1a1613;
 }
 
+.event-card--dialogue .event-card__stage {
+  min-height: 0;
+  background: transparent;
+}
+
 .event-card__stage--portrait::after {
   content: "";
   position: absolute;
@@ -1334,13 +1339,14 @@ summary {
   position: absolute;
   left: 50%;
   top: 0;
+  bottom: auto;
   width: auto;
   height: auto;
   max-width: none;
   transform: translate(
     calc(-50% + var(--dialogue-portrait-x-mobile, 0px)),
-    var(--dialogue-portrait-y-mobile, -14px)
-  ) scale(var(--dialogue-portrait-scale-mobile, 0.304));
+    var(--dialogue-portrait-y-mobile, 10px)
+  ) scale(var(--dialogue-portrait-scale-mobile, 0.224));
   transform-origin: center top;
   filter:
     grayscale(1)
@@ -1542,24 +1548,24 @@ summary {
   }
 
   .event-card__dialogue-visual {
-    min-height: 15.4rem;
+    min-height: 14.45rem;
   }
 
   .event-card__dialogue-person {
-    grid-template-rows: auto minmax(12.7rem, 1fr);
+    grid-template-rows: auto minmax(11.75rem, 1fr);
   }
 
   .event-card__dialogue-media {
-    min-height: 12.35rem;
+    min-height: 11.35rem;
   }
 
   .event-card__dialogue-portrait {
     transform:
       translate(
         calc(-50% + var(--dialogue-portrait-x-desktop, var(--dialogue-portrait-x-mobile, 0px))),
-        var(--dialogue-portrait-y-desktop, -32px)
+        var(--dialogue-portrait-y-desktop, 18px)
       )
-      scale(var(--dialogue-portrait-scale-desktop, 0.372));
+      scale(var(--dialogue-portrait-scale-desktop, 0.214));
   }
 
   .event-card--lecture .event-card__visual-copy {
