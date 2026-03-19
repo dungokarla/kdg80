@@ -577,6 +577,11 @@ function trimLead(value: string) {
 }
 
 function composeEventSummary(title: string, body: string, formatRaw: string) {
+  const publishDescription = normalizeText(extractField(body, 'Чистовое описание для публикации'));
+  if (publishDescription) {
+    return toSentence(publishDescription);
+  }
+
   const summaryOverride = Object.entries(curatedSummaries)
     .find(([key]) => normalizeLookup(key) === normalizeLookup(title))?.[1];
   if (summaryOverride) {
