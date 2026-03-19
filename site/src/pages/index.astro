@@ -31,9 +31,9 @@ const WEEKDAY_SHORT: Record<string, string> = {
   воскресенье: 'вс',
 };
 
-const SCIENTIFIC_LIBRARY_SCHEDULE = {
+const SCIENTIFIC_LIBRARY_VISIT_SCHEDULE = {
   name: 'Калининградская областная научная библиотека',
-  hoursLabel: 'пн-чт 10:00-20:00 · пт выходной · сб-вс 10:00-18:00',
+  hoursLabel: 'Пн-чт 10:00-20:00, сб-вс 10:00-18:00, пт выходной',
   sanitaryLabel: 'Последний вторник месяца — санитарный день',
   sourceUrl: 'https://lib39.ru/aboutlibrary/grafic.php',
   sourceLabel: 'Официальный график библиотеки',
@@ -248,7 +248,7 @@ function isOpeningEvent(event: { title: string; format: string }) {
   return event.title === 'Открытие фестиваля' || event.format.includes('Открытие фестиваля');
 }
 
-function isScientificLibraryExhibition(event: { kind: string; venue: string; timeLabel: string }) {
+function usesScientificLibraryVisitSchedule(event: { kind: string; venue: string; timeLabel: string }) {
   if (event.kind !== 'range') {
     return false;
   }
@@ -260,6 +260,14 @@ function isScientificLibraryExhibition(event: { kind: string; venue: string; tim
     (venueLookup.includes('науч') && venueLookup.includes('библиот')) ||
     (timeLookup.includes('часы работы') && timeLookup.includes('библиот'))
   );
+}
+
+function getRangeVisitLabel(event: { timeLabel: string }, useScientificLibraryVisitSchedule: boolean) {
+  if (useScientificLibraryVisitSchedule) {
+    return SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.hoursLabel;
+  }
+
+  return event.timeLabel;
 }
 
 function getDialogueMonogram(name: string) {
@@ -471,7 +479,7 @@ function getDialogueMonogram(name: string) {
                       : event.dialogueParticipants.slice(0, 4);
                     const cardText = getCardText(event);
                     const cardExtraText = getCardExtraText(event);
-                    const showScientificLibrarySchedule = isScientificLibraryExhibition(event);
+                    const useScientificLibraryVisitSchedule = usesScientificLibraryVisitSchedule(event);
 
                     return (
                       <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''} ${isSpecialEvent ? 'event-card--special' : ''}`} id={`event-${event.slug}`}>
@@ -629,22 +637,20 @@ function getDialogueMonogram(name: string) {
                               <div class="event-card__range-info">
                                 <span class="event-card__range-label">Период экспонирования</span>
                                 <strong>{event.dateLabel}</strong>
-                                <span class="event-card__range-detail">{event.timeLabel}</span>
+                                <span class="event-card__range-detail">{getRangeVisitLabel(event, useScientificLibraryVisitSchedule)}</span>
+                                {useScientificLibraryVisitSchedule && (
+                                  <span class="event-card__range-detail">{SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.sanitaryLabel}</span>
+                                )}
                                 <span class="event-card__range-detail">{event.venue} · {event.address}</span>
-                                {showScientificLibrarySchedule && (
-                                  <div class="event-card__venue-hours">
-                                    <span class="event-card__venue-hours-label">Режим работы площадки</span>
-                                    <strong>{SCIENTIFIC_LIBRARY_SCHEDULE.hoursLabel}</strong>
-                                    <span class="event-card__venue-hours-note">{SCIENTIFIC_LIBRARY_SCHEDULE.sanitaryLabel}</span>
-                                    <a
-                                      class="event-card__venue-hours-link"
-                                      href={SCIENTIFIC_LIBRARY_SCHEDULE.sourceUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                    >
-                                      {SCIENTIFIC_LIBRARY_SCHEDULE.sourceLabel}
-                                    </a>
-                                  </div>
+                                {useScientificLibraryVisitSchedule && (
+                                  <a
+                                    class="event-card__range-link"
+                                    href={SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.sourceUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    {SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.sourceLabel}
+                                  </a>
                                 )}
                               </div>
                             )}
