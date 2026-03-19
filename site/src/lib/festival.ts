@@ -121,7 +121,7 @@ const SPEAKER_SHOWCASE_NAME_BONUSES: Array<{ match: string; bonus: number }> = [
   { match: 'Марковец', bonus: 1.6 },
 ];
 
-const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: string[] }> = [
+const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: string[]; alternateTitles?: string[] }> = [
   {
     title: 'Советское монументальное искусство на территории Калининградской области',
     speaker: 'Мосиенко',
@@ -133,9 +133,10 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Мосты времени - Мосиенко'],
   },
   {
-    title: 'Калининградская область -- место для поэтов',
+    title: 'Калининградская область — вдохновение для писателей',
     speaker: 'Ярцев',
     manifestKeys: ['Калининград - город поэтов - Ярцев'],
+    alternateTitles: ['Калининградская область -- место для поэтов'],
   },
   {
     title: 'Люди, которых унесли птицы (Биостанция Рыбачий в советское время)',
@@ -143,9 +144,10 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Люди как птицы - Марковец'],
   },
   {
-    title: 'История парусного спорта в Калинингадской области',
+    title: 'История парусного спорта в Калининградской области',
     speaker: 'Жадобко',
     manifestKeys: ['Яхты2 - Жадобко', 'Яхты1 - Жадобко'],
+    alternateTitles: ['История парусного спорта в Калинингадской области'],
   },
   {
     title: 'Калининградский морской торговый порт: яркие страницы советской истории и современность.',
@@ -807,7 +809,10 @@ function assignImage(title: string, speakerValue: string) {
   const titleLookup = normalizeLookup(title);
   const speakerLookup = normalizeLookup(speakerValue);
   const match = EVENT_IMAGE_MAP.find((entry) => (
-    titleLookup === normalizeLookup(entry.title)
+    (
+      titleLookup === normalizeLookup(entry.title)
+      || entry.alternateTitles?.some((alternateTitle) => titleLookup === normalizeLookup(alternateTitle))
+    )
     && speakerLookup.includes(normalizeLookup(entry.speaker))
   ));
 
