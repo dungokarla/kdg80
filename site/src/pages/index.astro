@@ -334,6 +334,8 @@ function getDialogueMonogram(name: string) {
   description="Афишный прототип фестиваля: image-first программа, плотный обзор длинной ленты и крупные портреты спикеров."
 >
   <div class="page">
+    <div id="top" aria-hidden="true"></div>
+
     <header class="site-header" data-scrolled="false" data-logo-ready="false">
       <div class="container site-header__row">
         <a class="site-header__logo" href="#top" aria-label="Российское общество Знание, фестиваль 80 историй о главном">
@@ -358,7 +360,7 @@ function getDialogueMonogram(name: string) {
       </div>
     </header>
 
-    <main id="top">
+    <main>
       <section class="hero">
         <div class="container">
           <div class="hero__shell">
@@ -903,12 +905,20 @@ function getDialogueMonogram(name: string) {
     const telegramAppLinks = Array.from(document.querySelectorAll('[data-telegram-deep-link]'));
     let headerStateFrame = 0;
 
+    const getHeaderScrollThreshold = () => {
+      if (!(siteHeader instanceof HTMLElement)) {
+        return 24;
+      }
+
+      return siteHeader.offsetHeight + 24;
+    };
+
     const syncHeaderLogoState = () => {
       if (!(siteHeader instanceof HTMLElement)) {
         return;
       }
 
-      siteHeader.dataset.scrolled = window.scrollY > 24 ? 'true' : 'false';
+      siteHeader.dataset.scrolled = window.scrollY > getHeaderScrollThreshold() ? 'true' : 'false';
     };
 
     const requestHeaderLogoStateSync = () => {
