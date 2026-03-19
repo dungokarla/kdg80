@@ -762,6 +762,26 @@ function normalizeFormatName(raw: string) {
     .replace('Открытие фестиваля + паблик-ток', 'Открытие фестиваля');
 }
 
+function isOpeningFestivalFormat(raw: string) {
+  return normalizeLookup(raw).includes(normalizeLookup('Открытие фестиваля'));
+}
+
+function isPublicTalkFormat(raw: string) {
+  return normalizeLookup(raw).includes(normalizeLookup('паблик-ток'));
+}
+
+function resolveDurationLabel(kind: FestivalEvent['kind'], body: string, formatRaw: string) {
+  if (kind === 'range') {
+    return '';
+  }
+
+  if (isPublicTalkFormat(formatRaw) && !isOpeningFestivalFormat(formatRaw)) {
+    return '45 минут';
+  }
+
+  return extractField(body, 'Длительность') || extractField(body, 'Ориентировочная длительность') || '1 час';
+}
+
 function pickBestManifestKey(value: string, keys: string[], minimumScore: number) {
   const queryTokens = new Set(tokenizeLookup(value));
   if (!queryTokens.size) {
@@ -1162,9 +1182,7 @@ function parseSections() {
       : formatRaw.includes('Выставка') || body.includes('**Период проведения:**') || body.includes('**Период работы:**')
         ? 'range'
         : 'dated';
-    const durationLabel = kind === 'range'
-      ? ''
-      : extractField(body, 'Длительность') || extractField(body, 'Ориентировочная длительность') || '1 час';
+    const durationLabel = resolveDurationLabel(kind, body, formatRaw);
     const summary = composeEventSummary(title, body, formatRaw);
     const whyGo = normalizeText(
       extractFirst(body, [
