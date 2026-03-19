@@ -330,7 +330,7 @@ function getDialogueMonogram(name: string) {
   description="Афишный прототип фестиваля: image-first программа, плотный обзор длинной ленты и крупные портреты спикеров."
 >
   <div class="page">
-    <header class="site-header" data-scrolled="false">
+    <header class="site-header" data-scrolled="false" data-logo-ready="false">
       <div class="container site-header__row">
         <a class="site-header__logo" href="#top" aria-label="Российское общество Знание, фестиваль 80 историй о главном">
           <span class="site-header__logo-shell" aria-hidden="true">
@@ -917,6 +917,13 @@ function getDialogueMonogram(name: string) {
     };
 
     syncHeaderLogoState();
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (siteHeader instanceof HTMLElement) {
+          siteHeader.dataset.logoReady = 'true';
+        }
+      });
+    });
     window.addEventListener('load', requestHeaderLogoStateSync);
     window.addEventListener('hashchange', requestHeaderLogoStateSync);
     window.addEventListener('scroll', requestHeaderLogoStateSync, { passive: true });
