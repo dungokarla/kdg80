@@ -32,6 +32,21 @@ export type SpeakerLectureLink = {
   dateLabel: string;
 };
 
+export type FestivalDialogueParticipant = {
+  name: string;
+  affiliation: string;
+  images: string[];
+};
+
+export type SpeakerShowcaseEntry = {
+  name: string;
+  affiliation: string;
+  images: string[];
+  anchor: string;
+  appearances: number;
+  weight: number;
+};
+
 export type FestivalEvent = {
   slug: string;
   title: string;
@@ -57,7 +72,7 @@ export type FestivalEvent = {
   calendarNote?: string;
   image?: string;
   speakerImages: string[];
-  dialogueParticipants: Array<{ name: string; images: string[] }>;
+  dialogueParticipants: FestivalDialogueParticipant[];
   kind: FestivalEventKind;
   isoStart?: string;
   relatedEvent?: RelatedFestivalEvent;
@@ -77,6 +92,34 @@ const MONTHS: Record<string, { number: string; label: string; anchor: string }> 
 const ROOT_DIR = path.resolve(process.cwd(), '..');
 const MASTER_PATH = path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master_actual_v3.md');
 const DEFAULT_CITY = 'Калининград';
+const SPEAKER_SHOWCASE_KEYWORD_WEIGHTS: Array<{ pattern: RegExp; bonus: number }> = [
+  { pattern: /доктор|д\.\s*н\./i, bonus: 3.2 },
+  { pattern: /к\.\s*[а-я]\.\s*н\.|кандидат/i, bonus: 2.4 },
+  { pattern: /профессор/i, bonus: 3 },
+  { pattern: /президент/i, bonus: 3.1 },
+  { pattern: /директор/i, bonus: 2.4 },
+  { pattern: /основател/i, bonus: 1.8 },
+  { pattern: /третьяковск|музей мирового океана/i, bonus: 2.2 },
+  { pattern: /музей/i, bonus: 1 },
+  { pattern: /архитектор/i, bonus: 1.4 },
+  { pattern: /автор книги|писатель|поэт/i, bonus: 1.6 },
+  { pattern: /краевед/i, bonus: 1.2 },
+  { pattern: /экскурсовод/i, bonus: 0.8 },
+  { pattern: /специалист/i, bonus: 1 },
+  { pattern: /волонт[её]р/i, bonus: 0.5 },
+];
+const SPEAKER_SHOWCASE_NAME_BONUSES: Array<{ match: string; bonus: number }> = [
+  { match: 'Ярцев', bonus: 3.4 },
+  { match: 'Сивкова', bonus: 3.1 },
+  { match: 'Попадин', bonus: 2.8 },
+  { match: 'Мосиенко', bonus: 2.6 },
+  { match: 'Илюшкина', bonus: 2.4 },
+  { match: 'Надымова', bonus: 2.2 },
+  { match: 'Конюхова', bonus: 2.1 },
+  { match: 'Долотова', bonus: 1.9 },
+  { match: 'Криммель', bonus: 1.8 },
+  { match: 'Марковец', bonus: 1.6 },
+];
 
 const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: string[] }> = [
   {
@@ -779,14 +822,15 @@ function extractDialogueParticipants(raw: string) {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const seededNames = sourceLines.some((line) => /^[—–•-]/.test(line))
-    ? sourceLines.map((line) => normalizeSpeakerLabel(line.replace(/^[—–•-]+\s*/, '').split(/\s+[—-]\s+/)[0] ?? line))
-    : splitSpeakerSegments(raw).map((segment) => normalizeSpeakerLabel(segment));
+  const seededParticipants = sourceLines.some((line) => /^[—–•-]/.test(line))
+    ? sourceLines.map((line) => splitSpeakerData(line.replace(/^[—–•-]+\s*/, '')))
+    : splitSpeakerSegments(raw).map((segment) => splitSpeakerData(segment));
 
   const seen = new Set<string>();
-  const participants: Array<{ name: string; images: string[] }> = [];
+  const participants: FestivalDialogueParticipant[] = [];
 
-  for (const seededName of seededNames) {
+  for (const seededParticipant of seededParticipants) {
+    const seededName = seededParticipant.speakerLabel;
     if (!seededName) {
       continue;
     }
@@ -809,11 +853,27 @@ function extractDialogueParticipants(raw: string) {
     seen.add(signature);
     participants.push({
       name: seededName,
+      affiliation: seededParticipant.affiliation,
       images,
     });
   }
 
   return participants;
+}
+
+function getSpeakerShowcaseWeight(speaker: Pick<SpeakerShowcaseEntry, 'name' | 'affiliation' | 'appearances'>) {
+  const affiliation = speaker.affiliation.toLowerCase();
+  const appearanceBonus = Math.max(0, speaker.appearances - 1) * 1.35;
+  const affiliationBonus = SPEAKER_SHOWCASE_KEYWORD_WEIGHTS.reduce(
+    (total, entry) => total + (entry.pattern.test(affiliation) ? entry.bonus : 0),
+    0,
+  );
+  const nameBonus = SPEAKER_SHOWCASE_NAME_BONUSES.reduce(
+    (total, entry) => total + (speaker.name.includes(entry.match) ? entry.bonus : 0),
+    0,
+  );
+
+  return Number((1 + appearanceBonus + affiliationBonus + nameBonus).toFixed(3));
 }
 
 function toUtcDate(isoStart: string, durationMinutes: number) {
@@ -1108,23 +1168,71 @@ export function getMonthGroups(events: FestivalEvent[]) {
   return Array.from(groups.values());
 }
 
-export function getSpeakerShowcase(events: FestivalEvent[]) {
-  const bySpeaker = new Map<string, { name: string; affiliation: string; images: string[]; anchor: string }>();
+export function getSpeakerShowcase(events: FestivalEvent[], limit = 8) {
+  const bySpeaker = new Map<string, Omit<SpeakerShowcaseEntry, 'weight'>>();
 
-  for (const event of events) {
-    if (!event.speakerLabel || !event.speakerImages.length || bySpeaker.has(event.speakerLabel)) {
-      continue;
+  function upsertSpeaker(speaker: {
+    name: string;
+    affiliation: string;
+    images: string[];
+    anchor: string;
+  }) {
+    if (!speaker.name || !speaker.images.length) {
+      return;
     }
 
-    bySpeaker.set(event.speakerLabel, {
-      name: event.speakerLabel,
-      affiliation: event.affiliation,
-      images: event.speakerImages,
-      anchor: `event-${event.slug}`,
+    const existing = bySpeaker.get(speaker.name);
+
+    if (existing) {
+      existing.appearances += 1;
+      if (!existing.affiliation || speaker.affiliation.length > existing.affiliation.length) {
+        existing.affiliation = speaker.affiliation;
+      }
+      if (!existing.images.length && speaker.images.length) {
+        existing.images = speaker.images;
+      }
+      return;
+    }
+
+    bySpeaker.set(speaker.name, {
+      name: speaker.name,
+      affiliation: speaker.affiliation,
+      images: speaker.images,
+      anchor: speaker.anchor,
+      appearances: 1,
     });
   }
 
-  return Array.from(bySpeaker.values()).slice(0, 8);
+  for (const event of events) {
+    if (event.speakerLabel && event.speakerImages.length) {
+      upsertSpeaker({
+        name: event.speakerLabel,
+        affiliation: event.affiliation,
+        images: event.speakerImages,
+        anchor: `event-${event.slug}`,
+      });
+    }
+
+    for (const participant of event.dialogueParticipants) {
+      upsertSpeaker({
+        name: participant.name,
+        affiliation: participant.affiliation,
+        images: participant.images,
+        anchor: `event-${event.slug}`,
+      });
+    }
+  }
+
+  return Array.from(bySpeaker.values())
+    .map((speaker) => ({
+      ...speaker,
+      weight: getSpeakerShowcaseWeight(speaker),
+    }))
+    .sort((left, right) =>
+      right.weight - left.weight
+      || right.appearances - left.appearances
+      || left.name.localeCompare(right.name, 'ru'))
+    .slice(0, limit);
 }
 
 export function getHookQuotes(events: FestivalEvent[]) {
