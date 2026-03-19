@@ -1020,6 +1020,33 @@ summary {
   border: 1px solid rgba(216, 75, 49, 0.16);
 }
 
+.event-card__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  align-items: center;
+}
+
+.event-card__access {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 1.95rem;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.event-card__access--free {
+  color: #2c6e48;
+  background: rgba(77, 140, 96, 0.1);
+  border: 1px solid rgba(77, 140, 96, 0.18);
+}
+
 .event-card__body-head {
   display: grid;
   gap: 0.55rem;
@@ -1353,14 +1380,20 @@ summary {
   color: var(--accent-deep);
 }
 
-.event-card__meta {
+.event-card__meta,
+.event-card__service-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.34rem 0.42rem;
   margin-top: 0.15rem;
 }
 
+.event-card__service-meta {
+  margin-top: 0.25rem;
+}
+
 .event-card__meta span,
+.event-card__service-meta span,
 .notice,
 .calendar-link {
   display: inline-flex;
@@ -1368,7 +1401,8 @@ summary {
   border-radius: 999px;
 }
 
-.event-card__meta span {
+.event-card__meta span,
+.event-card__service-meta span {
   max-width: 100%;
   min-height: 1.9rem;
   padding: 0.24rem 0.6rem;
@@ -1440,57 +1474,6 @@ summary {
   background:
     linear-gradient(180deg, rgba(12, 10, 8, 0.08) 0%, rgba(12, 10, 8, 0.2) 36%, rgba(12, 10, 8, 0.56) 100%),
     linear-gradient(120deg, rgba(12, 10, 8, 0.72) 0%, rgba(12, 10, 8, 0.3) 46%, rgba(12, 10, 8, 0.12) 100%);
-}
-
-.event-card__special-shell {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 0.8rem;
-  align-content: end;
-  min-height: 12rem;
-  padding: 1rem 0.95rem 0.95rem;
-}
-
-.event-card__special-eyebrow,
-.event-card__special-status,
-.event-card__special-meta {
-  margin: 0;
-}
-
-.event-card__special-eyebrow {
-  width: fit-content;
-  min-height: 1.95rem;
-  padding: 0.32rem 0.72rem;
-  border-radius: 999px;
-  color: rgba(255, 244, 236, 0.92);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1px solid rgba(255, 244, 236, 0.24);
-  background: rgba(255, 244, 236, 0.1);
-}
-
-.event-card__special-status {
-  max-width: 12ch;
-  color: #fff7f1;
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 6vw, 3rem);
-  line-height: 0.84;
-  letter-spacing: -0.07em;
-  text-wrap: balance;
-}
-
-.event-card__special-meta {
-  width: fit-content;
-  min-height: 2rem;
-  padding: 0.38rem 0.78rem;
-  border-radius: 999px;
-  color: #fff7f1;
-  font-size: 0.9rem;
-  font-weight: 500;
-  background: rgba(12, 10, 8, 0.22);
-  border: 1px solid rgba(255, 244, 236, 0.18);
 }
 
 .event-card--lecture .event-card__body {
@@ -1725,16 +1708,12 @@ summary {
     gap: 0.5rem;
   }
 
-  .event-card__meta span {
+  .event-card__meta span,
+  .event-card__service-meta span {
     min-height: 2.15rem;
     padding: 0.35rem 0.74rem;
     font-size: 0.86rem;
     line-height: 1.35;
-  }
-
-  .event-card__special-shell {
-    min-height: 12.8rem;
-    padding: 1rem 1rem 1rem;
   }
 
   .event-card--special .event-card__stage {
@@ -1926,14 +1905,6 @@ summary {
   .event-card--lecture .event-card__visual-title--xxlong {
     max-width: 11.1ch;
     font-size: clamp(1.06rem, 1.68vw, 1.3rem);
-  }
-
-  .event-card__special-shell {
-    min-height: 13.6rem;
-  }
-
-  .event-card__special-status {
-    max-width: 10.5ch;
   }
 
   .event-card--special .event-card__stage {

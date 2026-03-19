@@ -531,6 +531,13 @@ function getDialogueMonogram(name: string) {
                     const cardExtraText = getCardExtraText(event);
                     const hasExpandableCardSummary = hasExpandableSummary(event);
                     const useScientificLibraryVisitSchedule = usesScientificLibraryVisitSchedule(event);
+                    const specialServiceLabels = isSpecialEvent
+                      ? [
+                          'Дата и время будут объявлены дополнительно',
+                          event.showingsLabel,
+                          event.registrationUrl ? 'Бесплатно, по регистрации' : 'Регистрация откроется позже',
+                        ].filter(Boolean)
+                      : [];
 
                     return (
                       <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''} ${isSpecialEvent ? 'event-card--special' : ''}`} id={`event-${event.slug}`}>
@@ -542,11 +549,6 @@ function getDialogueMonogram(name: string) {
                                   <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" />
                                 )}
                                 <div class="event-card__overlay"></div>
-                                <div class="event-card__special-shell">
-                                  <p class="event-card__special-eyebrow">Спецсобытие фестиваля</p>
-                                  <p class="event-card__special-status">Дата будет объявлена дополнительно</p>
-                                  {event.showingsLabel && <p class="event-card__special-meta">{event.showingsLabel}</p>}
-                                </div>
                               </div>
                             ) : (
                               <>
@@ -652,7 +654,10 @@ function getDialogueMonogram(name: string) {
 
                           <div class="event-card__body">
                             <div class="event-card__body-head">
-                              <span class="event-card__format event-card__format--body">{event.formatLabel}</span>
+                              <div class="event-card__labels">
+                                <span class="event-card__format event-card__format--body">{event.formatLabel}</span>
+                                <span class="event-card__access event-card__access--free">Бесплатно</span>
+                              </div>
                               {!isLecture && <h4 class="event-card__title">{event.title}</h4>}
                             </div>
 
@@ -748,6 +753,14 @@ function getDialogueMonogram(name: string) {
                               )
                             )}
 
+                            {isSpecialEvent && specialServiceLabels.length > 0 && (
+                              <div class="event-card__service-meta" aria-label="Информация о спектакле">
+                                {specialServiceLabels.map((label) => (
+                                  <span>{label}</span>
+                                ))}
+                              </div>
+                            )}
+
                             <div class="event-card__meta">
                               <span>{event.venue}</span>
                               <span>{event.address}</span>
@@ -764,11 +777,9 @@ function getDialogueMonogram(name: string) {
                             )}
                           </div>
 
-                          {!isRangeEvent && (
+                          {!isRangeEvent && !isSpecialEvent && (
                             <aside class="event-card__actions">
-                              {isSpecialEvent ? (
-                                <div class="notice">Дата спектакля будет объявлена позже.</div>
-                              ) : event.registrationUrl ? (
+                              {event.registrationUrl ? (
                                 <a
                                   class="button button--primary"
                                   href={event.registrationUrl}
