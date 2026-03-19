@@ -330,10 +330,17 @@ function getDialogueMonogram(name: string) {
   description="Афишный прототип фестиваля: image-first программа, плотный обзор длинной ленты и крупные портреты спикеров."
 >
   <div class="page">
-    <header class="site-header">
+    <header class="site-header" data-scrolled="false">
       <div class="container site-header__row">
-        <a class="site-header__logo" href="#top" aria-label="Российское общество Знание">
-          <img src="/shared-assets/logo-znanie.svg" alt="Логотип Российского общества Знание" width="1325" height="209" decoding="async" fetchpriority="high" />
+        <a class="site-header__logo" href="#top" aria-label="Российское общество Знание, фестиваль 80 историй о главном">
+          <span class="site-header__logo-shell" aria-hidden="true">
+            <span class="site-header__logo-state site-header__logo-state--hero">
+              <img src="/shared-assets/logo-znanie-main.svg" alt="" width="541" height="126" decoding="async" fetchpriority="high" />
+            </span>
+            <span class="site-header__logo-state site-header__logo-state--festival">
+              <img src="/shared-assets/logo-znanie-festival.svg" alt="" width="877" height="150" decoding="async" />
+            </span>
+          </span>
         </a>
 
         <nav class="site-header__nav" aria-label="Быстрые разделы">
@@ -885,8 +892,35 @@ function getDialogueMonogram(name: string) {
   </div>
 
   <script is:inline>
+    const siteHeader = document.querySelector('.site-header');
     const telegramAppLinks = Array.from(document.querySelectorAll('[data-telegram-deep-link]'));
     const speakerStrip = document.querySelector('.speaker-strip');
+    let headerStateFrame = 0;
+
+    const syncHeaderLogoState = () => {
+      if (!(siteHeader instanceof HTMLElement)) {
+        return;
+      }
+
+      siteHeader.dataset.scrolled = window.scrollY > 24 ? 'true' : 'false';
+    };
+
+    const requestHeaderLogoStateSync = () => {
+      if (headerStateFrame) {
+        return;
+      }
+
+      headerStateFrame = window.requestAnimationFrame(() => {
+        headerStateFrame = 0;
+        syncHeaderLogoState();
+      });
+    };
+
+    syncHeaderLogoState();
+    window.addEventListener('load', requestHeaderLogoStateSync);
+    window.addEventListener('hashchange', requestHeaderLogoStateSync);
+    window.addEventListener('scroll', requestHeaderLogoStateSync, { passive: true });
+    window.addEventListener('resize', requestHeaderLogoStateSync);
 
     const shouldUseNativeNavigation = (event) => (
       event.defaultPrevented

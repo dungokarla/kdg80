@@ -6,12 +6,23 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const siteRoot = path.resolve(__dirname, '..');
 const workspaceRoot = path.resolve(siteRoot, '..');
 const assetsRoot = path.join(workspaceRoot, 'assets');
+const sourceDataRoot = path.join(workspaceRoot, 'Исходные данные');
 const publicRoot = path.join(siteRoot, 'public');
 const sharedAssetsRoot = path.join(publicRoot, 'shared-assets');
 const festivalMediaPath = path.join(publicRoot, 'festival-media');
 const telegramPngPath = path.join(publicRoot, 'generated', 'telegram', 'kenigevents-qr.png');
 
 const ALLOWED_EXTENSIONS = new Set(['.webp', '.svg', '.woff2', '.otf', '.txt']);
+const EXTRA_SHARED_ASSETS = [
+  {
+    sourcePath: path.join(sourceDataRoot, 'znanie main.svg'),
+    destinationPath: path.join(sharedAssetsRoot, 'logo-znanie-main.svg'),
+  },
+  {
+    sourcePath: path.join(sourceDataRoot, 'Festival logo.svg'),
+    destinationPath: path.join(sharedAssetsRoot, 'logo-znanie-festival.svg'),
+  },
+];
 
 async function removeIfExists(targetPath) {
   try {
@@ -54,10 +65,25 @@ async function copyAllowedAssets(sourceDir, destinationDir) {
   }
 }
 
+async function copyExtraAssets(items) {
+  for (const item of items) {
+    try {
+      await ensureDir(path.dirname(item.destinationPath));
+      await fs.copyFile(item.sourcePath, item.destinationPath);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 await removeIfExists(sharedAssetsRoot);
 await removeIfExists(festivalMediaPath);
 await removeIfExists(telegramPngPath);
 await ensureDir(sharedAssetsRoot);
 await copyAllowedAssets(assetsRoot, sharedAssetsRoot);
+await copyExtraAssets(EXTRA_SHARED_ASSETS);
 
 console.log('Prepared public assets without png/jpg leakage.');
