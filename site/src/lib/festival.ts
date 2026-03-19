@@ -516,7 +516,18 @@ function normalizeMythFragment(value: string) {
     .trim();
 }
 
-function composeAngleSummary(questionItems: string[], misconceptionItems: string[]) {
+function getFormatNarrativeSubject(formatRaw: string) {
+  const lookup = normalizeLookup(formatRaw);
+  if (lookup.includes(normalizeLookup('Выставка'))) {
+    return 'Выставка';
+  }
+  if (lookup.includes(normalizeLookup('Иммерсивный спектакль'))) {
+    return 'Спектакль';
+  }
+  return 'Лекция';
+}
+
+function composeAngleSummary(questionItems: string[], misconceptionItems: string[], formatRaw: string) {
   const questionText = isGenericQuestionSet(questionItems)
     ? 'почему этот сюжет важен для региона, кто и что его сформировало и как он продолжает влиять на Калининградскую область сегодня'
     : joinNatural(
@@ -528,10 +539,11 @@ function composeAngleSummary(questionItems: string[], misconceptionItems: string
 
   const hasMyths = misconceptionItems.some((item) => normalizeMythFragment(item));
   const questionSentence = questionText ? `${capitalizeFirst(questionText)}?` : '';
+  const subject = getFormatNarrativeSubject(formatRaw);
   const mythSentence = hasMyths
     ? isGenericMythSet(misconceptionItems)
-      ? 'Лекция возвращает этот сюжет из области штампов к живой истории региона и показывает, почему он касается не только специалистов.'
-      : 'Лекция разбирает самые живучие мифы вокруг этой темы и переводит разговор из области штампов к фактам, людям и месту.'
+      ? `${subject} возвращает этот сюжет из области штампов к живой истории региона и показывает, почему он касается не только специалистов.`
+      : `${subject} разбирает самые живучие мифы вокруг этой темы и переводит разговор из области штампов к фактам, людям и месту.`
     : '';
 
   if (questionSentence && mythSentence) {
@@ -594,7 +606,7 @@ function composeEventSummary(title: string, body: string, formatRaw: string) {
     .map((label) => extractListItems(body, label))
     .find((items) => items.length) ?? [];
   const pieces: string[] = [];
-  const angleSummary = composeAngleSummary(questionItems, misconceptionItems);
+  const angleSummary = composeAngleSummary(questionItems, misconceptionItems, formatRaw);
   const prefersShortDescription = normalizeLookup(formatRaw).includes(normalizeLookup('Иммерсивный спектакль'));
 
   if (siteDescription && !startsWithTemplateLead(siteDescription)) {
@@ -722,11 +734,13 @@ function parseHeaderTitle(heading: string) {
     return value;
   };
 
-  if (heading.includes(' — ')) {
-    const rawTitle = heading.split(' — ').slice(1).join(' — ').trim().replace(/\s*:\s*$/, '');
-    return stripWrappedQuotes(rawTitle);
-  }
-  return stripWrappedQuotes(heading.trim().replace(/\s*:\s*$/, ''));
+  let normalized = heading.trim().replace(/\s*:\s*$/, '');
+
+  normalized = normalized.replace(/^Спецсобытие\s+—\s+/i, '');
+  normalized = normalized.replace(/^(?:с\s+)?\d{1,2}\s+[а-я]+(?:\s*(?:-|—|–|по)\s*\d{1,2}\s+[а-я]+)?\s+2026\s+—\s+/i, '');
+  normalized = normalized.replace(/^Иммерсивный спектакль\s+/i, '').trim();
+
+  return stripWrappedQuotes(normalized);
 }
 
 function isProgramHeading(heading: string, body: string) {
@@ -1103,7 +1117,14 @@ function parseSections() {
     const slug = toSlug(title);
     const formatRaw = extractField(body, 'Формат') || 'Событие';
     const formatLabel = normalizeFormatName(formatRaw);
-    const durationLabel = extractField(body, 'Длительность') || extractField(body, 'Ориентировочная длительность') || '1 час';
+    const kind: FestivalEvent['kind'] = heading.startsWith('Спецсобытие')
+      ? 'special'
+      : formatRaw.includes('Выставка') || body.includes('**Период проведения:**') || body.includes('**Период работы:**')
+        ? 'range'
+        : 'dated';
+    const durationLabel = kind === 'range'
+      ? ''
+      : extractField(body, 'Длительность') || extractField(body, 'Ориентировочная длительность') || '1 час';
     const summary = composeEventSummary(title, body, formatRaw);
     const whyGo = normalizeText(
       extractFirst(body, [
@@ -1121,19 +1142,15 @@ function parseSections() {
       extractField(body, 'Спикер') ||
       extractField(body, 'Участники') ||
       extractField(body, 'Партнёр / источник материалов') ||
-      extractField(body, 'Рабочая привязка в таблице')
+      extractField(body, 'Рабочая привязка в таблице') ||
+      extractField(body, 'Связка в рабочем файле')
     ).trim();
     const speakerData = splitSpeakerData(speakerRaw);
     const dialogueParticipants = formatLabel.includes('Открытый диалог')
       ? extractDialogueParticipants(speakerRaw)
       : [];
-    const dateLabel = extractField(body, 'Дата') || extractField(body, 'Период проведения') || 'Дата будет объявлена';
-    const timeLabel = extractField(body, 'Время') || extractField(body, 'Время посещения') || 'Время будет объявлено';
-    const kind: FestivalEvent['kind'] = heading.startsWith('Спецсобытие')
-      ? 'special'
-      : formatRaw.includes('Выставка') || body.includes('**Период проведения:**')
-        ? 'range'
-        : 'dated';
+    const dateLabel = extractField(body, 'Дата') || extractField(body, 'Период работы') || extractField(body, 'Период проведения') || 'Дата будет объявлена';
+    const timeLabel = extractField(body, 'Время') || extractField(body, 'Режим посещения') || extractField(body, 'Время посещения') || 'Время будет объявлено';
     const venue = applyExhibitionLocationOverride(title, kind, rawVenue);
 
     const exactDate = parseExactDate(dateLabel, timeLabel);
@@ -1168,11 +1185,11 @@ function parseSections() {
       showingsLabel,
       summary,
       whyGo,
-      registrationUrl: kind === 'special' ? undefined : `https://example.com/register?event=${slug}`,
-      calendarReady: kind === 'special' ? false : calendar.ready,
-      googleCalendarUrl: kind === 'special' ? undefined : calendar.googleUrl,
-      icsUrl: kind === 'special' ? undefined : calendar.icsUrl,
-      calendarNote: kind === 'special' ? 'Дата спектакля будет объявлена позже.' : calendar.note,
+      registrationUrl: kind === 'dated' ? `https://example.com/register?event=${slug}` : undefined,
+      calendarReady: kind === 'dated' ? calendar.ready : false,
+      googleCalendarUrl: kind === 'dated' ? calendar.googleUrl : undefined,
+      icsUrl: kind === 'dated' ? calendar.icsUrl : undefined,
+      calendarNote: kind === 'special' ? 'Дата спектакля будет объявлена позже.' : undefined,
       image: assignImage(title, speakerData.speakerLabel),
       speakerImages: kind === 'special' ? [] : assignSpeakerImages(speakerData.speakerLabel),
       dialogueParticipants,
