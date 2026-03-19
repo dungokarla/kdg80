@@ -126,6 +126,7 @@ summary {
   background: rgba(247, 241, 232, 0.86);
   border-bottom: 1px solid rgba(18, 17, 14, 0.07);
   backdrop-filter: blur(14px);
+  overflow: hidden;
 }
 
 .site-header__row {
@@ -133,18 +134,23 @@ summary {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .site-header__logo {
   display: inline-flex;
   align-items: center;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 0;
   line-height: 0;
 }
 
 .site-header__logo img {
-  width: 8.9rem;
+  display: block;
+  inline-size: clamp(9.75rem, 46vw, 13.75rem);
+  max-inline-size: 100%;
+  block-size: auto;
 }
 
 .site-header__nav {
@@ -1664,7 +1670,7 @@ summary {
   }
 
   .site-header__logo img {
-    width: 10.4rem;
+    inline-size: clamp(12.5rem, 25vw, 15.75rem);
   }
 
   .site-header__nav {
@@ -1723,7 +1729,7 @@ summary {
 
 @media (min-width: 980px) {
   .site-header__logo img {
-    width: 11.15rem;
+    inline-size: clamp(14rem, 21vw, 17rem);
   }
 
   .telegram-card {
