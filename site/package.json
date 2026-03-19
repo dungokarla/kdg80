@@ -6,9 +6,11 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
+    "prepare:public-assets": "node scripts/prepare_public_assets.mjs",
+    "verify:public-assets": "node scripts/verify_public_assets.mjs",
+    "dev": "node scripts/prepare_public_assets.mjs && astro dev",
+    "build": "node scripts/prepare_public_assets.mjs && astro build && node scripts/verify_public_assets.mjs",
+    "preview": "node scripts/prepare_public_assets.mjs && astro preview",
     "astro": "astro"
   },
   "dependencies": {

@@ -696,6 +696,8 @@ summary {
   display: grid;
   gap: 1rem;
   padding-top: 0.3rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 2400px;
 }
 
 .month-block__header {

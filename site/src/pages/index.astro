@@ -324,7 +324,7 @@ function getDialogueMonogram(name: string) {
     <header class="site-header">
       <div class="container site-header__row">
         <a class="site-header__logo" href="#top" aria-label="Российское общество Знание">
-          <img src="/shared-assets/logo-znanie.svg" alt="Логотип Российского общества Знание" width="647" height="150" />
+          <img src="/shared-assets/logo-znanie.svg" alt="Логотип Российского общества Знание" width="647" height="150" decoding="async" fetchpriority="high" />
         </a>
 
         <nav class="site-header__nav" aria-label="Быстрые разделы">
@@ -381,13 +381,13 @@ function getDialogueMonogram(name: string) {
 
               <div class="hero-mosaic" aria-hidden="true">
                 <figure class="hero-mosaic__item hero-mosaic__item--large">
-                  <img src={nextEvent.image} alt="" loading="eager" />
+                  <img src={nextEvent.image} alt="" loading="eager" decoding="async" fetchpriority="high" />
                 </figure>
                 <figure class="hero-mosaic__item hero-mosaic__item--tall">
-                  <img src="/shared-assets/hero-added-04.webp" alt="" loading="lazy" />
+                  <img src="/shared-assets/hero-added-04.webp" alt="" loading="eager" decoding="async" fetchpriority="high" />
                 </figure>
                 <figure class="hero-mosaic__item hero-mosaic__item--wide">
-                  <img src="/shared-assets/hero-added-09.webp" alt="" loading="lazy" />
+                  <img src="/shared-assets/hero-added-09.webp" alt="" loading="eager" decoding="async" fetchpriority="high" />
                 </figure>
               </div>
             </aside>
@@ -431,7 +431,8 @@ function getDialogueMonogram(name: string) {
                       class="speaker-entry__portrait"
                       src={getSpeakerStripImage(speaker.name, speaker.images[0])}
                       alt={speaker.name}
-                      loading="eager"
+                      loading="lazy"
+                      decoding="async"
                       style={getSpeakerStripStyle(speaker.name)}
                     />
                   </div>
@@ -529,7 +530,7 @@ function getDialogueMonogram(name: string) {
                             {isSpecialEvent ? (
                               <div class={`event-card__visual ${stageImage ? 'event-card__visual--special' : 'event-card__visual--plain event-card__visual--special'}`}>
                                 {stageImage && (
-                                  <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" />
+                                  <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" />
                                 )}
                                 <div class="event-card__overlay"></div>
                                 <div class="event-card__special-shell">
@@ -582,6 +583,7 @@ function getDialogueMonogram(name: string) {
                                               src={getDialoguePortraitImage(participant.name, participant.images[0])}
                                               alt={participant.name}
                                               loading="lazy"
+                                              decoding="async"
                                               style={getDialoguePortraitStyle(participant.name)}
                                             />
                                           ) : (
@@ -597,7 +599,7 @@ function getDialogueMonogram(name: string) {
                                   <>
                                     <div class={`event-card__visual ${stageImage ? '' : 'event-card__visual--plain'}`}>
                                       {stageImage && (
-                                        <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" />
+                                        <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" />
                                       )}
                                       <div class="event-card__overlay"></div>
 
@@ -619,6 +621,7 @@ function getDialogueMonogram(name: string) {
                                           src={portraitImages[0]}
                                           alt={event.speakerLabel}
                                           loading="lazy"
+                                          decoding="async"
                                         />
                                         {portraitImages.length > 1 && (
                                           <img
@@ -626,6 +629,7 @@ function getDialogueMonogram(name: string) {
                                             src={portraitImages[1]}
                                             alt={event.speakerLabel}
                                             loading="lazy"
+                                            decoding="async"
                                             aria-hidden="true"
                                           />
                                         )}
@@ -799,7 +803,7 @@ function getDialogueMonogram(name: string) {
                   alt={`QR-код для перехода в Telegram-канал ${TELEGRAM_CHANNEL_NAME}`}
                   width="250"
                   height="250"
-                  loading="eager"
+                  loading="lazy"
                   decoding="async"
                 />
                 <strong>Сканируйте с телефона</strong>
@@ -898,54 +902,51 @@ function getDialogueMonogram(name: string) {
       return entry;
     };
 
-    const preloadSpeakerImages = (speakers) => Promise.all(
-      speakers.map((speaker) => new Promise((resolve) => {
-        if (!speaker.image) {
-          resolve();
-          return;
-        }
+    const hydrateSpeakerStrip = async () => {
+      if (!speakerStrip?.dataset.speakers || speakerStrip.dataset.ready === 'true') {
+        return;
+      }
 
-        const image = new Image();
-        const finish = () => {
-          image.onload = null;
-          image.onerror = null;
-          window.clearTimeout(timeoutId);
-          resolve();
-        };
-        const timeoutId = window.setTimeout(finish, 2500);
-        image.onload = finish;
-        image.onerror = finish;
-        image.src = speaker.image;
+      speakerStrip.dataset.ready = 'true';
 
-        if (image.complete) {
-          finish();
-        }
-      })),
-    );
+      try {
+        const speakerPool = JSON.parse(speakerStrip.dataset.speakers);
+        const visibleCount = Number.parseInt(speakerStrip.dataset.visibleCount || '', 10)
+          || speakerStrip.children.length
+          || 8;
+        const selectedSpeakers = shuffleInPlace(
+          pickWeightedSpeakers(speakerPool, Math.min(visibleCount, speakerPool.length)),
+        );
+
+        const fragment = document.createDocumentFragment();
+        selectedSpeakers.forEach((speaker, index) => {
+          fragment.appendChild(buildSpeakerEntry(speaker, index));
+        });
+
+        speakerStrip.replaceChildren(fragment);
+      } catch (error) {
+        console.error('Speaker showcase randomizer failed', error);
+        speakerStrip.dataset.ready = 'false';
+      }
+    };
 
     if (speakerStrip?.dataset.speakers) {
-      (async () => {
-        try {
-          const speakerPool = JSON.parse(speakerStrip.dataset.speakers);
-          const visibleCount = Number.parseInt(speakerStrip.dataset.visibleCount || '', 10)
-            || speakerStrip.children.length
-            || 8;
-          const selectedSpeakers = shuffleInPlace(
-            pickWeightedSpeakers(speakerPool, Math.min(visibleCount, speakerPool.length)),
-          );
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) {
+            return;
+          }
 
-          await preloadSpeakerImages(selectedSpeakers);
+          observer.disconnect();
+          void hydrateSpeakerStrip();
+        }, { rootMargin: '320px 0px' });
 
-          const fragment = document.createDocumentFragment();
-          selectedSpeakers.forEach((speaker, index) => {
-            fragment.appendChild(buildSpeakerEntry(speaker, index));
-          });
-
-          speakerStrip.replaceChildren(fragment);
-        } catch (error) {
-          console.error('Speaker showcase randomizer failed', error);
-        }
-      })();
+        observer.observe(speakerStrip);
+      } else {
+        window.setTimeout(() => {
+          void hydrateSpeakerStrip();
+        }, 0);
+      }
     }
 
     const cycleNodes = Array.from(document.querySelectorAll('[data-portrait-frames]'));
