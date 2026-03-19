@@ -161,8 +161,19 @@ summary {
 
 .site-header__cta {
   margin-left: auto;
-  min-height: 2.55rem;
-  padding-inline: 0.95rem;
+  min-height: 2.5rem;
+  padding-inline: 0.9rem;
+  border-color: rgba(155, 46, 26, 0.16);
+  color: var(--accent-deep);
+  background: rgba(216, 75, 49, 0.1);
+  box-shadow: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.site-header__cta:hover {
+  background: rgba(216, 75, 49, 0.15);
+  border-color: rgba(155, 46, 26, 0.24);
 }
 
 .site-header__nav a {
@@ -323,6 +334,19 @@ summary {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.14);
+}
+
+.site-header__cta.button--primary {
+  border-color: rgba(155, 46, 26, 0.16);
+  color: var(--accent-deep);
+  background-color: rgba(216, 75, 49, 0.1);
+  background-image: none;
+  box-shadow: none;
+}
+
+.site-header__cta.button--primary:hover {
+  background-color: rgba(216, 75, 49, 0.15);
+  border-color: rgba(155, 46, 26, 0.24);
 }
 
 .hero__aside {
@@ -1671,6 +1695,11 @@ summary {
 
   .site-header__logo img {
     inline-size: clamp(12.5rem, 25vw, 15.75rem);
+  }
+
+  .site-header__cta {
+    min-height: 2.55rem;
+    padding-inline: 0.98rem;
   }
 
   .site-header__nav {
