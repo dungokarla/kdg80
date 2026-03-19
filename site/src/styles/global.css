@@ -906,8 +906,9 @@ summary {
   line-height: 0.88;
   letter-spacing: -0.055em;
   text-wrap: balance;
-  hyphens: auto;
-  overflow-wrap: anywhere;
+  hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
   text-shadow:
     0 1px 1px rgba(8, 7, 6, 0.98),
     0 4px 10px rgba(8, 7, 6, 0.82),
