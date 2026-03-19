@@ -1319,6 +1319,12 @@ summary {
   line-height: 1.58;
 }
 
+.event-card__summary-plain {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.58;
+}
+
 .event-card__question-block {
   display: grid;
   gap: 0.42rem;

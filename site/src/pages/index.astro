@@ -157,6 +157,10 @@ function shouldShowQuestionBlock(event: { questions: string[] }) {
   return event.questions.length >= 3;
 }
 
+function hasExpandableSummary(event: { whyGo: string; summary: string; questions: string[] }) {
+  return Boolean(getCardExtraText(event) || shouldShowQuestionBlock(event));
+}
+
 function getRelatedMetaLine(relatedEvent: RelatedEventCard) {
   const parts = [relatedEvent.formatLabel, relatedEvent.dateLabel];
 
@@ -525,6 +529,7 @@ function getDialogueMonogram(name: string) {
                       : event.dialogueParticipants.slice(0, 4);
                     const cardText = getCardText(event);
                     const cardExtraText = getCardExtraText(event);
+                    const hasExpandableCardSummary = hasExpandableSummary(event);
                     const useScientificLibraryVisitSchedule = usesScientificLibraryVisitSchedule(event);
 
                     return (
@@ -663,23 +668,27 @@ function getDialogueMonogram(name: string) {
                             {!isDialogueEvent && !isSpecialEvent && event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
 
                             {isRangeEvent && (
-                              <details class="event-card__summary-details">
-                                <summary class="event-card__summary-toggle">
-                                  <span class="event-card__summary-text">{cardText}</span>
-                                  <span class="event-card__summary-hint" aria-hidden="true"></span>
-                                </summary>
-                                {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
-                                {shouldShowQuestionBlock(event) && (
-                                  <div class="event-card__question-block">
-                                    <p class="event-card__question-label">О чём поговорим</p>
-                                    <ul class="event-card__question-list">
-                                      {event.questions.map((question) => (
-                                        <li>{question}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </details>
+                              hasExpandableCardSummary ? (
+                                <details class="event-card__summary-details">
+                                  <summary class="event-card__summary-toggle">
+                                    <span class="event-card__summary-text">{cardText}</span>
+                                    <span class="event-card__summary-hint" aria-hidden="true"></span>
+                                  </summary>
+                                  {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+                                  {shouldShowQuestionBlock(event) && (
+                                    <div class="event-card__question-block">
+                                      <p class="event-card__question-label">О чём поговорим</p>
+                                      <ul class="event-card__question-list">
+                                        {event.questions.map((question) => (
+                                          <li>{question}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </details>
+                              ) : (
+                                <p class="event-card__summary-plain">{cardText}</p>
+                              )
                             )}
 
                             {event.relatedEvent && (
@@ -716,23 +725,27 @@ function getDialogueMonogram(name: string) {
                             )}
 
                             {!isRangeEvent && (
-                              <details class="event-card__summary-details">
-                                <summary class="event-card__summary-toggle">
-                                  <span class="event-card__summary-text">{cardText}</span>
-                                  <span class="event-card__summary-hint" aria-hidden="true"></span>
-                                </summary>
-                                {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
-                                {shouldShowQuestionBlock(event) && (
-                                  <div class="event-card__question-block">
-                                    <p class="event-card__question-label">О чём поговорим</p>
-                                    <ul class="event-card__question-list">
-                                      {event.questions.map((question) => (
-                                        <li>{question}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </details>
+                              hasExpandableCardSummary ? (
+                                <details class="event-card__summary-details">
+                                  <summary class="event-card__summary-toggle">
+                                    <span class="event-card__summary-text">{cardText}</span>
+                                    <span class="event-card__summary-hint" aria-hidden="true"></span>
+                                  </summary>
+                                  {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+                                  {shouldShowQuestionBlock(event) && (
+                                    <div class="event-card__question-block">
+                                      <p class="event-card__question-label">О чём поговорим</p>
+                                      <ul class="event-card__question-list">
+                                        {event.questions.map((question) => (
+                                          <li>{question}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </details>
+                              ) : (
+                                <p class="event-card__summary-plain">{cardText}</p>
+                              )
                             )}
 
                             <div class="event-card__meta">
