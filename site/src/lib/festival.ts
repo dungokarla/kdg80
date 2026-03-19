@@ -65,6 +65,7 @@ export type FestivalEvent = {
   showingsLabel: string;
   summary: string;
   whyGo: string;
+  questions: string[];
   registrationUrl?: string;
   calendarReady: boolean;
   googleCalendarUrl?: string;
@@ -415,7 +416,8 @@ function sanitizeListEntry(value: string) {
   return normalizeText(
     value
       .replace(/^[—–•-]+\s*/, '')
-      .replace(/^\d+\s+/, '')
+      .replace(/^\d+\s*[-.)]\s*/u, '')
+      .replace(/^\d+\s+/u, '')
       .replace(/^Миф\s*№?\d+:\s*/i, '')
       .replace(/^[«"]+|[»"]+$/g, ''),
   );
@@ -612,7 +614,7 @@ function composeEventSummary(title: string, body: string, formatRaw: string) {
   const prefersShortDescription = normalizeLookup(formatRaw).includes(normalizeLookup('Иммерсивный спектакль'));
 
   if (siteDescription && !startsWithTemplateLead(siteDescription)) {
-    pieces.push(toSentence(trimLead(siteDescription)));
+    return toSentence(siteDescription);
   } else if (prefersShortDescription && shortDescription && !startsWithTemplateLead(shortDescription)) {
     pieces.push(toSentence(trimLead(shortDescription)));
   } else if (baseDescription && !startsWithTemplateLead(baseDescription)) {
@@ -1198,6 +1200,14 @@ function parseSections() {
         'Зачем идти на спектакль',
       ]),
     );
+    const questions = [
+      '3 вопроса, на которые отвечает событие',
+      '3 вопроса, на которые отвечает лекция',
+      '3 вопроса, на которые отвечает выставка',
+      '3 вопроса, на которые отвечает спектакль',
+    ]
+      .map((label) => extractListItems(body, label))
+      .find((items) => items.length) ?? [];
     const rawVenue = extractField(body, 'Площадка') || 'Площадка уточняется';
     const address = extractField(body, 'Короткий адрес') || 'Адрес уточняется';
     const showingsLabel = extractField(body, 'Количество показов');
@@ -1251,6 +1261,7 @@ function parseSections() {
       showingsLabel,
       summary,
       whyGo,
+      questions,
       registrationUrl: kind === 'dated' ? `https://example.com/register?event=${slug}` : undefined,
       calendarReady: kind === 'dated' ? calendar.ready : false,
       googleCalendarUrl: kind === 'dated' ? calendar.googleUrl : undefined,

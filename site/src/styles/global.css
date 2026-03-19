@@ -1319,6 +1319,34 @@ summary {
   line-height: 1.58;
 }
 
+.event-card__question-block {
+  display: grid;
+  gap: 0.42rem;
+  padding-top: 0.12rem;
+}
+
+.event-card__question-label {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.event-card__question-list {
+  display: grid;
+  gap: 0.36rem;
+  margin: 0;
+  padding-left: 1rem;
+  color: var(--ink-soft);
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+
+.event-card__question-list li::marker {
+  color: var(--accent-deep);
+}
+
 .event-card__meta {
   display: flex;
   flex-wrap: wrap;

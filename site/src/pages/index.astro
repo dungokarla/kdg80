@@ -153,6 +153,10 @@ function getCardExtraText(event: { whyGo: string; summary: string }) {
   return event.whyGo !== event.summary ? event.whyGo : '';
 }
 
+function shouldShowQuestionBlock(event: { questions: string[] }) {
+  return event.questions.length >= 3;
+}
+
 function getRelatedMetaLine(relatedEvent: RelatedEventCard) {
   const parts = [relatedEvent.formatLabel, relatedEvent.dateLabel];
 
@@ -665,6 +669,16 @@ function getDialogueMonogram(name: string) {
                                   <span class="event-card__summary-hint" aria-hidden="true"></span>
                                 </summary>
                                 {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+                                {shouldShowQuestionBlock(event) && (
+                                  <div class="event-card__question-block">
+                                    <p class="event-card__question-label">О чём поговорим</p>
+                                    <ul class="event-card__question-list">
+                                      {event.questions.map((question) => (
+                                        <li>{question}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                               </details>
                             )}
 
@@ -708,6 +722,16 @@ function getDialogueMonogram(name: string) {
                                   <span class="event-card__summary-hint" aria-hidden="true"></span>
                                 </summary>
                                 {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+                                {shouldShowQuestionBlock(event) && (
+                                  <div class="event-card__question-block">
+                                    <p class="event-card__question-label">О чём поговорим</p>
+                                    <ul class="event-card__question-list">
+                                      {event.questions.map((question) => (
+                                        <li>{question}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                               </details>
                             )}
 
