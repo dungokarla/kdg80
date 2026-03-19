@@ -209,6 +209,23 @@ function getSpeakerCaption(value: string) {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+function stripWeekday(value: string) {
+  return value.replace(/\s+\([^)]+\)/g, '').trim();
+}
+
+function getFestivalPeriodLabel(items: typeof events) {
+  const dated = items.filter((event) => event.kind !== 'special' && event.isoStart);
+  if (!dated.length) {
+    return 'Даты скоро появятся';
+  }
+
+  const first = dated[0];
+  const last = dated[dated.length - 1];
+  return `${stripWeekday(first.dateLabel)} - ${stripWeekday(last.dateLabel)}`;
+}
+
+const festivalPeriodLabel = getFestivalPeriodLabel(events);
+
 function getSpeakerStripImage(name: string, fallback: string) {
   return SPEAKER_STRIP_IMAGE_OVERRIDES.find((entry) => name.includes(entry.match))?.path
     ?? fallback.replace('/generated/speakers/', '/generated/speaker-strip/');
@@ -337,7 +354,7 @@ function getDialogueMonogram(name: string) {
 
               <div class="hero__meta" aria-label="Ключевые параметры фестиваля">
                 <span>Калининград</span>
-                <span>28 марта - 19 июля 2026</span>
+                  <span>{festivalPeriodLabel}</span>
                 <span>{events.length} событий в текущей сборке</span>
               </div>
 

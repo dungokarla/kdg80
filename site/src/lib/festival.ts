@@ -90,7 +90,7 @@ const MONTHS: Record<string, { number: string; label: string; anchor: string }> 
 };
 
 const ROOT_DIR = path.resolve(process.cwd(), '..');
-const MASTER_PATH = path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master_actual_v3.md');
+const MASTER_PATH = path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master.md');
 const DEFAULT_CITY = 'Калининград';
 const SPEAKER_SHOWCASE_KEYWORD_WEIGHTS: Array<{ pattern: RegExp; bonus: number }> = [
   { pattern: /доктор|д\.\s*н\./i, bonus: 3.2 },
@@ -567,18 +567,39 @@ function composeEventSummary(title: string, body: string, formatRaw: string) {
     return normalizeText(summaryOverride);
   }
 
+  const siteDescription = normalizeText(extractField(body, 'Описание для сайта'));
   const shortDescription = normalizeText(
     extractField(body, 'Короткое описание для афиши — версия 1') ||
     extractField(body, 'Короткое описание для афиши — версия 2'),
   );
-  const baseDescription = normalizeText(extractField(body, 'Основа для описания'));
-  const questionItems = extractListItems(body, '3 вопроса, на которые отвечает лекция');
-  const misconceptionItems = extractListItems(body, '3 заблуждения, с которыми работает лекция');
+  const baseDescription = normalizeText(
+    extractField(body, 'Основа для описания / полезная фактура из таблицы')
+    || extractField(body, 'Основа для описания'),
+  );
+  const questionItems = [
+    '3 вопроса, на которые отвечает событие',
+    '3 вопроса, на которые отвечает лекция',
+    '3 вопроса, на которые отвечает выставка',
+    '3 вопроса, на которые отвечает спектакль',
+  ]
+    .map((label) => extractListItems(body, label))
+    .find((items) => items.length) ?? [];
+  const misconceptionItems = [
+    '3 мифа и заблуждения, с которыми работает событие',
+    '3 мифа и заблуждения, с которыми работает лекция',
+    '3 заблуждения, с которыми работает лекция',
+    '3 заблуждения, с которыми работает выставка',
+    '3 заблуждения, с которыми работает спектакль',
+  ]
+    .map((label) => extractListItems(body, label))
+    .find((items) => items.length) ?? [];
   const pieces: string[] = [];
   const angleSummary = composeAngleSummary(questionItems, misconceptionItems);
   const prefersShortDescription = normalizeLookup(formatRaw).includes(normalizeLookup('Иммерсивный спектакль'));
 
-  if (prefersShortDescription && shortDescription && !startsWithTemplateLead(shortDescription)) {
+  if (siteDescription && !startsWithTemplateLead(siteDescription)) {
+    pieces.push(toSentence(trimLead(siteDescription)));
+  } else if (prefersShortDescription && shortDescription && !startsWithTemplateLead(shortDescription)) {
     pieces.push(toSentence(trimLead(shortDescription)));
   } else if (baseDescription && !startsWithTemplateLead(baseDescription)) {
     pieces.push(toSentence(trimLead(baseDescription)));
@@ -596,6 +617,7 @@ function composeEventSummary(title: string, body: string, formatRaw: string) {
   }
 
   return normalizeText(
+    siteDescription ||
     extractField(body, 'Короткое описание для афиши — версия 1') ||
     extractField(body, 'Короткое описание для афиши — версия 2') ||
     baseDescription ||
@@ -705,6 +727,18 @@ function parseHeaderTitle(heading: string) {
     return stripWrappedQuotes(rawTitle);
   }
   return stripWrappedQuotes(heading.trim().replace(/\s*:\s*$/, ''));
+}
+
+function isProgramHeading(heading: string, body: string) {
+  if (heading.startsWith('Спецсобытие')) {
+    return true;
+  }
+
+  if (/^(?:с\s+)?\d{1,2}\s+[а-я]+(?:\s*(?:-|—|–|по)\s*\d{1,2}\s+[а-я]+)?\s+2026\s+—\s+/i.test(heading)) {
+    return true;
+  }
+
+  return /(?:\*\*Формат:\*\*\s*Иммерсивный спектакль)/i.test(body);
 }
 
 function normalizeFormatName(raw: string) {
@@ -1061,7 +1095,7 @@ function parseSections() {
     const heading = lines[0]?.trim();
     const body = lines.slice(1).join('\n').trim();
 
-    if (!heading || !body) {
+    if (!heading || !body || !isProgramHeading(heading, body)) {
       continue;
     }
 
@@ -1069,7 +1103,7 @@ function parseSections() {
     const slug = toSlug(title);
     const formatRaw = extractField(body, 'Формат') || 'Событие';
     const formatLabel = normalizeFormatName(formatRaw);
-    const durationLabel = extractField(body, 'Длительность') || '1 час';
+    const durationLabel = extractField(body, 'Длительность') || extractField(body, 'Ориентировочная длительность') || '1 час';
     const summary = composeEventSummary(title, body, formatRaw);
     const whyGo = normalizeText(
       extractFirst(body, [
