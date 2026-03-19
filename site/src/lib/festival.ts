@@ -47,6 +47,7 @@ export type FestivalEvent = {
   city: string;
   speakerLabel: string;
   affiliation: string;
+  showingsLabel: string;
   summary: string;
   whyGo: string;
   registrationUrl?: string;
@@ -522,8 +523,11 @@ function composeEventSummary(title: string, body: string, formatRaw: string) {
   const misconceptionItems = extractListItems(body, '3 заблуждения, с которыми работает лекция');
   const pieces: string[] = [];
   const angleSummary = composeAngleSummary(questionItems, misconceptionItems);
+  const prefersShortDescription = normalizeLookup(formatRaw).includes(normalizeLookup('Иммерсивный спектакль'));
 
-  if (baseDescription && !startsWithTemplateLead(baseDescription)) {
+  if (prefersShortDescription && shortDescription && !startsWithTemplateLead(shortDescription)) {
+    pieces.push(toSentence(trimLead(shortDescription)));
+  } else if (baseDescription && !startsWithTemplateLead(baseDescription)) {
     pieces.push(toSentence(trimLead(baseDescription)));
   } else if (shortDescription && !startsWithTemplateLead(shortDescription)) {
     pieces.push(toSentence(trimLead(shortDescription)));
@@ -1008,6 +1012,7 @@ function parseSections() {
     );
     const rawVenue = extractField(body, 'Площадка') || 'Площадка уточняется';
     const address = extractField(body, 'Короткий адрес') || 'Адрес уточняется';
+    const showingsLabel = extractField(body, 'Количество показов');
     const speakerRaw = (
       extractField(body, 'Спикер') ||
       extractField(body, 'Участники') ||
@@ -1054,8 +1059,9 @@ function parseSections() {
       venue,
       address,
       city: DEFAULT_CITY,
-      speakerLabel: speakerData.speakerLabel,
-      affiliation: speakerData.affiliation,
+      speakerLabel: kind === 'special' ? '' : speakerData.speakerLabel,
+      affiliation: kind === 'special' ? '' : speakerData.affiliation,
+      showingsLabel,
       summary,
       whyGo,
       registrationUrl: kind === 'special' ? undefined : `https://example.com/register?event=${slug}`,
@@ -1064,7 +1070,7 @@ function parseSections() {
       icsUrl: kind === 'special' ? undefined : calendar.icsUrl,
       calendarNote: kind === 'special' ? 'Дата спектакля будет объявлена позже.' : calendar.note,
       image: assignImage(title, speakerData.speakerLabel),
-      speakerImages: assignSpeakerImages(speakerData.speakerLabel),
+      speakerImages: kind === 'special' ? [] : assignSpeakerImages(speakerData.speakerLabel),
       dialogueParticipants,
       kind,
       isoStart: exactDate?.isoStart ?? rangeDate?.isoStart,

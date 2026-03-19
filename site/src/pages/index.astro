@@ -14,6 +14,10 @@ const openDialogues = getOpenDialogues(events).slice(0, 5);
 const nextEvent = events[0];
 const PRESS_EMAIL = 'press@kgd80.ru';
 const FESTIVAL_REGULATION_URL = '/docs/festival-regulation.pdf';
+const TELEGRAM_ANNOUNCEMENT_URL = 'https://t.me/kenigevents';
+const TELEGRAM_CHANNEL_NAME = 'Полюбить Калининград Анонсы';
+const TELEGRAM_CHANNEL_HANDLE = '@kenigevents';
+const TELEGRAM_QR_CODE_URL = '/generated/telegram/kenigevents-qr.png';
 type RelatedEventCard = NonNullable<(typeof events)[number]['relatedEvent']>;
 type SpeakerLectureLinkCard = (typeof events)[number]['speakerLectureLinks'][number];
 
@@ -25,6 +29,14 @@ const WEEKDAY_SHORT: Record<string, string> = {
   пятница: 'пт',
   суббота: 'сб',
   воскресенье: 'вс',
+};
+
+const SCIENTIFIC_LIBRARY_SCHEDULE = {
+  name: 'Калининградская областная научная библиотека',
+  hoursLabel: 'пн-чт 10:00-20:00 · пт выходной · сб-вс 10:00-18:00',
+  sanitaryLabel: 'Последний вторник месяца — санитарный день',
+  sourceUrl: 'https://lib39.ru/aboutlibrary/grafic.php',
+  sourceLabel: 'Официальный график библиотеки',
 };
 
 const EVENT_PORTRAIT_OVERRIDES: Array<{ match: string; style: string }> = [
@@ -40,11 +52,21 @@ const EVENT_PORTRAIT_OVERRIDES: Array<{ match: string; style: string }> = [
 const LECTURE_EVENT_PORTRAIT_OVERRIDES: Array<{ match: string; style: string }> = [
   {
     match: 'Мосиенко',
-    style: '--event-portrait-size: 1.42; --event-portrait-shift-x: 0.18rem; --event-portrait-shift-y: 0.02rem; --event-portrait-width-mobile: min(40.5%, 13rem); --event-portrait-width-desktop: min(39%, 13.2rem);',
+    style: '--event-portrait-size: 1.42; --event-portrait-shift-x: 0.18rem; --event-portrait-shift-y: 0.82rem; --event-portrait-width-mobile: min(40.5%, 13rem); --event-portrait-width-desktop: min(39%, 13.2rem);',
+  },
+  {
+    match: 'Конюхова',
+    style: '--event-portrait-size: 1.04; --event-portrait-shift-x: 0.08rem; --event-portrait-shift-y: 0.72rem; --event-portrait-width-mobile: min(37%, 12.1rem); --event-portrait-width-desktop: min(36%, 12.35rem);',
+  },
+  {
+    match: 'Сарниц',
+    style: '--event-portrait-size: 1.08; --event-portrait-shift-x: -1.45rem; --event-portrait-shift-y: 0rem; --event-portrait-width-mobile: min(43%, 13.2rem); --event-portrait-width-desktop: min(40.5%, 13.6rem);',
   },
 ];
 
-const LECTURE_PORTRAIT_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [];
+const LECTURE_PORTRAIT_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
+  { match: 'Сарниц', path: '/generated/lecture-portraits/sarnits-artur-lecture.webp' },
+];
 
 const SPEAKER_STRIP_IMAGE_OVERRIDES: Array<{ match: string; path: string }> = [
   { match: 'Соколов', path: '/generated/speaker-strip/aleksey-sokolov.webp' },
@@ -224,6 +246,20 @@ function isLectureEvent(formatLabel: string) {
 
 function isOpeningEvent(event: { title: string; format: string }) {
   return event.title === 'Открытие фестиваля' || event.format.includes('Открытие фестиваля');
+}
+
+function isScientificLibraryExhibition(event: { kind: string; venue: string; timeLabel: string }) {
+  if (event.kind !== 'range') {
+    return false;
+  }
+
+  const venueLookup = event.venue.toLowerCase();
+  const timeLookup = event.timeLabel.toLowerCase();
+
+  return (
+    (venueLookup.includes('науч') && venueLookup.includes('библиот')) ||
+    (timeLookup.includes('часы работы') && timeLookup.includes('библиот'))
+  );
 }
 
 function getDialogueMonogram(name: string) {
@@ -419,6 +455,7 @@ function getDialogueMonogram(name: string) {
                     const dateParts = getDateParts(event.dateLabel);
                     const rangeDateParts = event.kind === 'range' ? getRangeDateParts(event.dateLabel) : null;
                     const isDialogueEvent = event.formatLabel.includes('Открытый диалог') && event.dialogueParticipants.length > 0;
+                    const isSpecialEvent = event.kind === 'special';
                     const isLecture = isLectureEvent(event.formatLabel);
                     const openingEvent = isOpeningEvent(event);
                     const stageImage = event.image || (openingEvent ? '/shared-assets/hero-added-09.webp' : '');
@@ -434,101 +471,118 @@ function getDialogueMonogram(name: string) {
                       : event.dialogueParticipants.slice(0, 4);
                     const cardText = getCardText(event);
                     const cardExtraText = getCardExtraText(event);
+                    const showScientificLibrarySchedule = isScientificLibraryExhibition(event);
 
                     return (
-                      <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''}`} id={`event-${event.slug}`}>
+                      <article class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''} ${isSpecialEvent ? 'event-card--special' : ''}`} id={`event-${event.slug}`}>
                         <div class="event-card__main">
                           <div class={`event-card__stage ${!useDialogueVisual && event.speakerImages.length > 0 ? 'event-card__stage--portrait' : ''}`}>
-                            <div class="event-card__date">
-                              {rangeDateParts ? (
-                                <>
-                                  <span class="event-card__range-row">
-                                    <span class="event-card__range-prefix">с</span>
-                                    <span class="event-card__range-day">{rangeDateParts.startDay}</span>
-                                    <span class="event-card__range-month">{rangeDateParts.startMonth}</span>
-                                  </span>
-                                  <span class="event-card__range-row">
-                                    <span class="event-card__range-prefix">по</span>
-                                    <span class="event-card__range-day">{rangeDateParts.endDay}</span>
-                                    <span class="event-card__range-month">{rangeDateParts.endMonth}</span>
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <span class="event-card__day">{dateParts.day}</span>
-                                  <span class="event-card__month">{dateParts.month}</span>
-                                  {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
-                                  <span class="event-card__time">{event.timeLabel}</span>
-                                </>
-                              )}
-                            </div>
-
-                            {useDialogueVisual ? (
-                              <div
-                                class="event-card__dialogue-visual"
-                                aria-label={`Участники события ${event.title}`}
-                                style={`--dialogue-columns: ${Math.max(dialogueStageParticipants.length, 1)}`}
-                              >
-                                {dialogueStageParticipants.map((participant) => (
-                                  <div class={`event-card__dialogue-person ${participant.images[0] ? '' : 'event-card__dialogue-person--placeholder'}`}>
-                                    <div class="event-card__dialogue-meta">
-                                      <strong>{participant.name}</strong>
-                                    </div>
-                                    <div class={`event-card__dialogue-media ${participant.images[0] ? '' : 'event-card__dialogue-media--placeholder'}`}>
-                                      {participant.images[0] ? (
-                                        <img
-                                          class="event-card__dialogue-portrait"
-                                          src={getDialoguePortraitImage(participant.name, participant.images[0])}
-                                          alt={participant.name}
-                                          loading="lazy"
-                                          style={getDialoguePortraitStyle(participant.name)}
-                                        />
-                                      ) : (
-                                        <span class="event-card__dialogue-placeholder" aria-hidden="true">
-                                          {getDialogueMonogram(participant.name)}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
+                            {isSpecialEvent ? (
+                              <div class={`event-card__visual ${stageImage ? 'event-card__visual--special' : 'event-card__visual--plain event-card__visual--special'}`}>
+                                {stageImage && (
+                                  <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" />
+                                )}
+                                <div class="event-card__overlay"></div>
+                                <div class="event-card__special-shell">
+                                  <p class="event-card__special-eyebrow">Спецсобытие фестиваля</p>
+                                  <p class="event-card__special-status">Дата будет объявлена дополнительно</p>
+                                  {event.showingsLabel && <p class="event-card__special-meta">{event.showingsLabel} показа</p>}
+                                </div>
                               </div>
                             ) : (
                               <>
-                                <div class={`event-card__visual ${stageImage ? '' : 'event-card__visual--plain'}`}>
-                                  {stageImage && (
-                                    <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" />
-                                  )}
-                                  <div class="event-card__overlay"></div>
-
-                                  {isLecture && (
-                                    <div class="event-card__visual-copy">
-                                      <p class={getLectureTitleClass(event.title)}>{event.title}</p>
-                                    </div>
+                                <div class="event-card__date">
+                                  {rangeDateParts ? (
+                                    <>
+                                      <span class="event-card__range-row">
+                                        <span class="event-card__range-prefix">с</span>
+                                        <span class="event-card__range-day">{rangeDateParts.startDay}</span>
+                                        <span class="event-card__range-month">{rangeDateParts.startMonth}</span>
+                                      </span>
+                                      <span class="event-card__range-row">
+                                        <span class="event-card__range-prefix">по</span>
+                                        <span class="event-card__range-day">{rangeDateParts.endDay}</span>
+                                        <span class="event-card__range-month">{rangeDateParts.endMonth}</span>
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span class="event-card__day">{dateParts.day}</span>
+                                      <span class="event-card__month">{dateParts.month}</span>
+                                      {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
+                                      <span class="event-card__time">{event.timeLabel}</span>
+                                    </>
                                   )}
                                 </div>
 
-                                {event.speakerImages.length > 0 && (
+                                {useDialogueVisual ? (
                                   <div
-                                    class="event-card__portrait portrait-cycle"
-                                    data-portrait-frames={portraitFrames}
-                                    style={portraitStyle}
+                                    class="event-card__dialogue-visual"
+                                    aria-label={`Участники события ${event.title}`}
+                                    style={`--dialogue-columns: ${Math.max(dialogueStageParticipants.length, 1)}`}
                                   >
-                                    <img
-                                      class="portrait-cycle__image is-active"
-                                      src={portraitImages[0]}
-                                      alt={event.speakerLabel}
-                                      loading="lazy"
-                                    />
-                                    {portraitImages.length > 1 && (
-                                      <img
-                                        class="portrait-cycle__image"
-                                        src={portraitImages[1]}
-                                        alt={event.speakerLabel}
-                                        loading="lazy"
-                                        aria-hidden="true"
-                                      />
-                                    )}
+                                    {dialogueStageParticipants.map((participant) => (
+                                      <div class={`event-card__dialogue-person ${participant.images[0] ? '' : 'event-card__dialogue-person--placeholder'}`}>
+                                        <div class="event-card__dialogue-meta">
+                                          <strong>{participant.name}</strong>
+                                        </div>
+                                        <div class={`event-card__dialogue-media ${participant.images[0] ? '' : 'event-card__dialogue-media--placeholder'}`}>
+                                          {participant.images[0] ? (
+                                            <img
+                                              class="event-card__dialogue-portrait"
+                                              src={getDialoguePortraitImage(participant.name, participant.images[0])}
+                                              alt={participant.name}
+                                              loading="lazy"
+                                              style={getDialoguePortraitStyle(participant.name)}
+                                            />
+                                          ) : (
+                                            <span class="event-card__dialogue-placeholder" aria-hidden="true">
+                                              {getDialogueMonogram(participant.name)}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
+                                ) : (
+                                  <>
+                                    <div class={`event-card__visual ${stageImage ? '' : 'event-card__visual--plain'}`}>
+                                      {stageImage && (
+                                        <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" />
+                                      )}
+                                      <div class="event-card__overlay"></div>
+
+                                      {isLecture && (
+                                        <div class="event-card__visual-copy">
+                                          <p class={getLectureTitleClass(event.title)}>{event.title}</p>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {event.speakerImages.length > 0 && (
+                                      <div
+                                        class="event-card__portrait portrait-cycle"
+                                        data-portrait-frames={portraitFrames}
+                                        style={portraitStyle}
+                                      >
+                                        <img
+                                          class="portrait-cycle__image is-active"
+                                          src={portraitImages[0]}
+                                          alt={event.speakerLabel}
+                                          loading="lazy"
+                                        />
+                                        {portraitImages.length > 1 && (
+                                          <img
+                                            class="portrait-cycle__image"
+                                            src={portraitImages[1]}
+                                            alt={event.speakerLabel}
+                                            loading="lazy"
+                                            aria-hidden="true"
+                                          />
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </>
                             )}
@@ -548,8 +602,8 @@ function getDialogueMonogram(name: string) {
                               </div>
                             )}
 
-                            {!isDialogueEvent && event.speakerLabel && <p class="event-card__speaker">{event.speakerLabel}</p>}
-                            {!isDialogueEvent && event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
+                            {!isDialogueEvent && !isSpecialEvent && event.speakerLabel && <p class="event-card__speaker">{event.speakerLabel}</p>}
+                            {!isDialogueEvent && !isSpecialEvent && event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
 
                             {isLecture && event.speakerLectureLinks.length > 0 && (
                               <div class="event-card__speaker-links" aria-label={`Другие лекции спикера ${event.speakerLabel}`}>
@@ -575,8 +629,23 @@ function getDialogueMonogram(name: string) {
                               <div class="event-card__range-info">
                                 <span class="event-card__range-label">Период экспонирования</span>
                                 <strong>{event.dateLabel}</strong>
-                                <span>{event.timeLabel}</span>
-                                <span>{event.venue} · {event.address}</span>
+                                <span class="event-card__range-detail">{event.timeLabel}</span>
+                                <span class="event-card__range-detail">{event.venue} · {event.address}</span>
+                                {showScientificLibrarySchedule && (
+                                  <div class="event-card__venue-hours">
+                                    <span class="event-card__venue-hours-label">Режим работы площадки</span>
+                                    <strong>{SCIENTIFIC_LIBRARY_SCHEDULE.hoursLabel}</strong>
+                                    <span class="event-card__venue-hours-note">{SCIENTIFIC_LIBRARY_SCHEDULE.sanitaryLabel}</span>
+                                    <a
+                                      class="event-card__venue-hours-link"
+                                      href={SCIENTIFIC_LIBRARY_SCHEDULE.sourceUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      {SCIENTIFIC_LIBRARY_SCHEDULE.sourceLabel}
+                                    </a>
+                                  </div>
+                                )}
                               </div>
                             )}
 
@@ -596,7 +665,9 @@ function getDialogueMonogram(name: string) {
                           </div>
 
                           <aside class="event-card__actions">
-                            {event.registrationUrl ? (
+                            {isSpecialEvent ? (
+                              <div class="notice">Дата спектакля будет объявлена позже.</div>
+                            ) : event.registrationUrl ? (
                               <a
                                 class="button button--primary"
                                 href={event.registrationUrl}
@@ -609,7 +680,7 @@ function getDialogueMonogram(name: string) {
                               <div class="notice">Дата спектакля будет объявлена позже.</div>
                             )}
 
-                            {event.calendarReady ? (
+                            {!isSpecialEvent && event.calendarReady ? (
                               <details class="calendar-menu">
                                 <summary class="button button--ghost">В календарь</summary>
                                 <div class="calendar-panel">
@@ -624,9 +695,9 @@ function getDialogueMonogram(name: string) {
                                   </a>
                                 </div>
                               </details>
-                            ) : (
+                            ) : !isSpecialEvent ? (
                               <div class="notice">{event.calendarNote ?? 'Календарь появится позже.'}</div>
-                            )}
+                            ) : null}
                           </aside>
                         </div>
                       </article>
@@ -641,12 +712,37 @@ function getDialogueMonogram(name: string) {
 
       <section class="section section--compact" id="announces">
         <div class="container footer-panels">
-          <article class="footer-panel">
-            <h3>Анонсы фестиваля</h3>
-            <p>Дальше сюда можно дать Telegram и короткий QR, но сама страница уже должна продавать выбор нескольких событий без дополнительного объяснения.</p>
-            <div class="footer-panel__actions">
-              <a class="button button--primary" href="https://t.me/" target="_blank" rel="noreferrer">
-                Перейти в Telegram
+          <article class="footer-panel footer-panel--telegram">
+            <div class="telegram-card">
+              <div class="telegram-card__content">
+                <span class="telegram-card__eyebrow">Канал анонсов</span>
+                <h3>{TELEGRAM_CHANNEL_NAME}</h3>
+                <p class="telegram-card__handle">{TELEGRAM_CHANNEL_HANDLE}</p>
+                <p>В канале публикуем новые анонсы, изменения программы и короткие напоминания о событиях, чтобы важные обновления не потерялись в общей ленте.</p>
+                <div class="footer-panel__actions telegram-card__actions">
+                  <a class="button button--primary" href={TELEGRAM_ANNOUNCEMENT_URL} target="_blank" rel="noreferrer">
+                    Открыть канал в Telegram
+                  </a>
+                </div>
+              </div>
+
+              <a
+                class="telegram-card__qr"
+                href={TELEGRAM_ANNOUNCEMENT_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Открыть Telegram-канал ${TELEGRAM_CHANNEL_NAME}`}
+              >
+                <img
+                  src={TELEGRAM_QR_CODE_URL}
+                  alt={`QR-код для перехода в Telegram-канал ${TELEGRAM_CHANNEL_NAME}`}
+                  width="250"
+                  height="250"
+                  loading="eager"
+                  decoding="async"
+                />
+                <strong>Сканируйте с телефона</strong>
+                <span>На десктопе QR открывает тот же канал без ручного поиска.</span>
               </a>
             </div>
           </article>

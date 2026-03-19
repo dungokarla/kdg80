@@ -639,6 +639,10 @@ summary {
   gap: 0.55rem;
 }
 
+.footer-panel--telegram {
+  overflow: hidden;
+}
+
 .dialogue-card strong {
   font-family: var(--font-display);
   font-size: 1.25rem;
@@ -1169,11 +1173,52 @@ summary {
   line-height: 1.2;
 }
 
-.event-card__range-info span:nth-of-type(2),
-.event-card__range-info span:nth-of-type(3) {
+.event-card__range-detail {
   color: var(--ink-soft);
   font-size: 0.86rem;
   line-height: 1.35;
+}
+
+.event-card__venue-hours {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.36rem;
+  padding: 0.72rem;
+  border-radius: 0.88rem;
+  background: linear-gradient(180deg, rgba(216, 75, 49, 0.08), rgba(216, 75, 49, 0.03));
+  border: 1px solid rgba(216, 75, 49, 0.16);
+}
+
+.event-card__venue-hours-label {
+  color: var(--accent-deep);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.event-card__venue-hours strong {
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.event-card__venue-hours-note {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.event-card__venue-hours-link {
+  width: fit-content;
+  color: var(--accent-deep);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14rem;
+}
+
+.event-card__venue-hours-link:hover {
+  color: var(--accent);
 }
 
 .event-card__summary-details {
@@ -1288,6 +1333,75 @@ summary {
 
 .event-card__dialogue-person:last-child {
   border-right: 0;
+}
+
+.event-card--special {
+  background:
+    linear-gradient(180deg, rgba(252, 246, 237, 0.96), rgba(246, 236, 223, 0.92));
+}
+
+.event-card--special .event-card__stage {
+  min-height: 12rem;
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 166, 0.3), transparent 32%),
+    linear-gradient(135deg, #2a1d19 0%, #7f2f1d 52%, #d95b3f 100%);
+}
+
+.event-card__visual--special .event-card__overlay {
+  background:
+    linear-gradient(180deg, rgba(12, 10, 8, 0.08) 0%, rgba(12, 10, 8, 0.2) 36%, rgba(12, 10, 8, 0.56) 100%),
+    linear-gradient(120deg, rgba(12, 10, 8, 0.72) 0%, rgba(12, 10, 8, 0.3) 46%, rgba(12, 10, 8, 0.12) 100%);
+}
+
+.event-card__special-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.8rem;
+  align-content: end;
+  min-height: 12rem;
+  padding: 1rem 0.95rem 0.95rem;
+}
+
+.event-card__special-eyebrow,
+.event-card__special-status,
+.event-card__special-meta {
+  margin: 0;
+}
+
+.event-card__special-eyebrow {
+  width: fit-content;
+  min-height: 1.95rem;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  color: rgba(255, 244, 236, 0.92);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 244, 236, 0.24);
+  background: rgba(255, 244, 236, 0.1);
+}
+
+.event-card__special-status {
+  max-width: 12ch;
+  color: #fff7f1;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 0.84;
+  letter-spacing: -0.07em;
+  text-wrap: balance;
+}
+
+.event-card__special-meta {
+  width: fit-content;
+  min-height: 2rem;
+  padding: 0.38rem 0.78rem;
+  border-radius: 999px;
+  color: #fff7f1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(12, 10, 8, 0.22);
+  border: 1px solid rgba(255, 244, 236, 0.18);
 }
 
 .event-card--lecture .event-card__body {
@@ -1433,6 +1547,45 @@ summary {
   gap: 0.65rem;
 }
 
+.telegram-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.telegram-card__content {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.telegram-card__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 1.95rem;
+  padding: 0.3rem 0.72rem;
+  border-radius: 999px;
+  color: var(--accent-deep);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(216, 75, 49, 0.08);
+  border: 1px solid rgba(216, 75, 49, 0.14);
+}
+
+.telegram-card__content .telegram-card__handle {
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.telegram-card__actions {
+  margin-top: 0.7rem;
+}
+
+.telegram-card__qr {
+  display: none;
+}
+
 @media (min-width: 760px) {
   .container {
     width: min(calc(100% - 2rem), var(--container));
@@ -1469,9 +1622,77 @@ summary {
   .event-card__actions {
     padding: 0.9rem 1rem 1rem;
   }
+
+  .event-card__special-shell {
+    min-height: 12.8rem;
+    padding: 1rem 1rem 1rem;
+  }
+
+  .event-card--special .event-card__stage {
+    min-height: 12.8rem;
+  }
 }
 
 @media (min-width: 980px) {
+  .telegram-card {
+    grid-template-columns: minmax(0, 1fr) minmax(10.75rem, 12rem);
+    gap: 1.25rem;
+    align-items: center;
+  }
+
+  .telegram-card__qr {
+    display: grid;
+    justify-items: center;
+    gap: 0.55rem;
+    padding: 0.9rem;
+    border-radius: 1.15rem;
+    color: inherit;
+    text-align: center;
+    text-decoration: none;
+    background:
+      linear-gradient(180deg, rgba(255, 250, 244, 0.92), rgba(255, 250, 244, 0.74)),
+      linear-gradient(180deg, rgba(216, 75, 49, 0.08), rgba(216, 75, 49, 0.03));
+    border: 1px solid rgba(18, 17, 14, 0.08);
+    box-shadow: 0 18px 28px rgba(18, 17, 14, 0.08);
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .telegram-card__qr:hover,
+  .telegram-card__qr:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(216, 75, 49, 0.24);
+    box-shadow: 0 22px 34px rgba(18, 17, 14, 0.12);
+  }
+
+  .telegram-card__qr:focus-visible {
+    outline: 2px solid rgba(216, 75, 49, 0.28);
+    outline-offset: 4px;
+  }
+
+  .telegram-card__qr img {
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: 0.6rem;
+    border-radius: 0.95rem;
+    background: #fffdfa;
+    box-shadow: inset 0 0 0 1px rgba(18, 17, 14, 0.06);
+  }
+
+  .telegram-card__qr strong {
+    font-size: 0.94rem;
+    line-height: 1.2;
+  }
+
+  .telegram-card__qr span {
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
   .hero-mosaic__item--large {
     min-height: 24rem;
   }
@@ -1592,6 +1813,18 @@ summary {
   .event-card--lecture .event-card__visual-title--xxlong {
     max-width: 11.1ch;
     font-size: clamp(1.06rem, 1.68vw, 1.3rem);
+  }
+
+  .event-card__special-shell {
+    min-height: 13.6rem;
+  }
+
+  .event-card__special-status {
+    max-width: 10.5ch;
+  }
+
+  .event-card--special .event-card__stage {
+    min-height: 13.6rem;
   }
 }
 
