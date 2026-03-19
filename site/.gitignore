@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# generated public assets prepared from ../assets
+public/shared-assets/
