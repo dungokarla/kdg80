@@ -17,6 +17,7 @@ const nextEvent = events[0];
 const PRESS_EMAIL = 'press@kgd80.ru';
 const FESTIVAL_REGULATION_URL = '/docs/festival-regulation.pdf';
 const TELEGRAM_ANNOUNCEMENT_URL = 'https://t.me/kenigevents';
+const TELEGRAM_ANNOUNCEMENT_APP_URL = 'tg://resolve?domain=kenigevents';
 const TELEGRAM_CHANNEL_NAME = 'Полюбить Калининград Анонсы';
 const TELEGRAM_CHANNEL_HANDLE = '@kenigevents';
 const TELEGRAM_QR_CODE_URL = '/generated/telegram/kenigevents-qr.svg';
@@ -833,7 +834,12 @@ function getDialogueMonogram(name: string) {
                 <p class="telegram-card__handle">{TELEGRAM_CHANNEL_HANDLE}</p>
                 <p>В канале публикуем новые анонсы, изменения программы и короткие напоминания о событиях, чтобы важные обновления не потерялись в общей ленте.</p>
                 <div class="footer-panel__actions telegram-card__actions">
-                  <a class="button button--primary" href={TELEGRAM_ANNOUNCEMENT_URL} target="_blank" rel="noreferrer">
+                  <a
+                    class="button button--primary"
+                    href={TELEGRAM_ANNOUNCEMENT_URL}
+                    data-telegram-deep-link={TELEGRAM_ANNOUNCEMENT_APP_URL}
+                    data-telegram-web-url={TELEGRAM_ANNOUNCEMENT_URL}
+                  >
                     Открыть канал в Telegram
                   </a>
                 </div>
@@ -879,7 +885,69 @@ function getDialogueMonogram(name: string) {
   </div>
 
   <script is:inline>
+    const telegramAppLinks = Array.from(document.querySelectorAll('[data-telegram-deep-link]'));
     const speakerStrip = document.querySelector('.speaker-strip');
+
+    const shouldUseNativeNavigation = (event) => (
+      event.defaultPrevented
+      || event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+    );
+
+    const handleTelegramAppLink = (event) => {
+      if (shouldUseNativeNavigation(event)) {
+        return;
+      }
+
+      const link = event.currentTarget;
+      if (!(link instanceof HTMLAnchorElement)) {
+        return;
+      }
+
+      const appUrl = link.dataset.telegramDeepLink;
+      const webUrl = link.dataset.telegramWebUrl || link.href;
+      if (!appUrl) {
+        return;
+      }
+
+      event.preventDefault();
+
+      let appOpened = false;
+      let fallbackTimer = 0;
+
+      const cleanup = () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        if (fallbackTimer) {
+          window.clearTimeout(fallbackTimer);
+          fallbackTimer = 0;
+        }
+      };
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') {
+          appOpened = true;
+          cleanup();
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      fallbackTimer = window.setTimeout(() => {
+        cleanup();
+        if (!appOpened) {
+          window.location.href = webUrl;
+        }
+      }, 900);
+
+      window.location.href = appUrl;
+    };
+
+    telegramAppLinks.forEach((link) => {
+      link.addEventListener('click', handleTelegramAppLink);
+    });
 
     const shuffleInPlace = (items) => {
       for (let index = items.length - 1; index > 0; index -= 1) {
