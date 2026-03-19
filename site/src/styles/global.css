@@ -186,11 +186,21 @@ summary {
 .site-header__logo-state--hero {
   padding-block: var(--header-hero-logo-pad-block);
   padding-inline-end: var(--header-hero-logo-pad-right);
+  opacity: 1;
+  transform: translate3d(0, var(--header-hero-logo-offset-y), 0) scale(1);
+}
+
+.site-header__logo-state--festival {
+  opacity: 0;
+  transform: translate3d(0, 0.24rem, 0) scale(0.985);
+}
+
+.site-header[data-scrolled="true"] .site-header__logo-state--hero {
   opacity: 0;
   transform: translate3d(0, calc(var(--header-hero-logo-offset-y) - 0.24rem), 0) scale(0.985);
 }
 
-.site-header__logo-state--festival {
+.site-header[data-scrolled="true"] .site-header__logo-state--festival {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
 }
