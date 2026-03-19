@@ -735,6 +735,69 @@ summary {
   scroll-margin-top: 7rem;
 }
 
+@media (max-width: 759px) {
+  .month-block {
+    content-visibility: visible;
+    contain-intrinsic-size: auto;
+  }
+
+  .event-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 680px;
+    box-shadow: 0 12px 22px rgba(18, 17, 14, 0.08);
+  }
+
+  .site-header {
+    background: rgba(247, 241, 232, 0.96);
+    backdrop-filter: none;
+  }
+
+  .event-card__date {
+    box-shadow: 0 10px 18px rgba(18, 17, 14, 0.1);
+    backdrop-filter: none;
+  }
+
+  .portrait-cycle__image {
+    transition: none;
+    will-change: auto;
+  }
+
+  .speaker-entry__portrait {
+    filter: grayscale(1) contrast(1.03) brightness(0.99);
+  }
+
+  .event-card__portrait::before,
+  .event-card__portrait::after {
+    display: none;
+  }
+
+  .event-card__portrait .portrait-cycle__image,
+  .event-card__portrait .portrait-cycle__image.is-active,
+  .event-card--lecture .event-card__portrait .portrait-cycle__image,
+  .event-card--lecture .event-card__portrait .portrait-cycle__image.is-active {
+    filter: none;
+  }
+
+  .event-card__portrait .portrait-cycle__image,
+  .event-card__portrait .portrait-cycle__image.is-active {
+    transform: translate(
+      calc(-50% + var(--event-portrait-shift-x, 0px)),
+      var(--event-portrait-shift-y, 0px)
+    );
+  }
+
+  .event-card__info {
+    box-shadow: none;
+  }
+
+  .event-card__portrait .portrait-cycle__image,
+  .event-card__portrait .portrait-cycle__image.is-active,
+  .event-card__visual,
+  .speaker-entry__media {
+    contain: paint;
+  }
+}
+
 .event-card__date {
   position: absolute;
   inset: 0.65rem 0.65rem auto;
@@ -1841,6 +1904,20 @@ summary {
 
   .event-card--special .event-card__stage {
     min-height: 13.6rem;
+  }
+}
+
+@media (max-width: 759px) {
+  .event-card__date {
+    box-shadow: 0 10px 18px rgba(18, 17, 14, 0.1);
+    backdrop-filter: none;
+  }
+
+  .event-card__portrait .portrait-cycle__image,
+  .event-card__portrait .portrait-cycle__image.is-active,
+  .event-card--lecture .event-card__portrait .portrait-cycle__image,
+  .event-card--lecture .event-card__portrait .portrait-cycle__image.is-active {
+    filter: none;
   }
 }
 
