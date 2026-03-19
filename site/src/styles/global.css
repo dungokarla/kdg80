@@ -171,6 +171,10 @@ summary {
   will-change: opacity, transform;
 }
 
+.site-header[data-logo-ready="false"] .site-header__logo-state {
+  transition: none;
+}
+
 .site-header__logo img {
   display: block;
   inline-size: 100%;
