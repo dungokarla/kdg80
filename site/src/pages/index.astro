@@ -505,6 +505,7 @@ function getDialogueMonogram(name: string) {
                     const rangeDateParts = event.kind === 'range' ? getRangeDateParts(event.dateLabel) : null;
                     const isDialogueEvent = event.formatLabel.includes('Открытый диалог') && event.dialogueParticipants.length > 0;
                     const isSpecialEvent = event.kind === 'special';
+                    const isRangeEvent = event.kind === 'range';
                     const isLecture = isLectureEvent(event.formatLabel);
                     const openingEvent = isOpeningEvent(event);
                     const stageImage = event.image || (openingEvent ? '/shared-assets/hero-added-09.webp' : '');
@@ -535,7 +536,7 @@ function getDialogueMonogram(name: string) {
                                 <div class="event-card__special-shell">
                                   <p class="event-card__special-eyebrow">Спецсобытие фестиваля</p>
                                   <p class="event-card__special-status">Дата будет объявлена дополнительно</p>
-                                  {event.showingsLabel && <p class="event-card__special-meta">{event.showingsLabel} показа</p>}
+                                  {event.showingsLabel && <p class="event-card__special-meta">{event.showingsLabel}</p>}
                                 </div>
                               </div>
                             ) : (
@@ -663,6 +664,16 @@ function getDialogueMonogram(name: string) {
                               </div>
                             )}
 
+                            {isRangeEvent && (
+                              <details class="event-card__summary-details">
+                                <summary class="event-card__summary-toggle">
+                                  <span class="event-card__summary-text">{cardText}</span>
+                                  <span class="event-card__summary-hint" aria-hidden="true"></span>
+                                </summary>
+                                {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+                              </details>
+                            )}
+
                             {event.relatedEvent && (
                               <div class="event-card__related">
                                 <p class="event-card__related-label">{event.relatedEvent.relationLabel}</p>
@@ -674,7 +685,7 @@ function getDialogueMonogram(name: string) {
                               </div>
                             )}
 
-                            {event.kind === 'range' && (
+                            {isRangeEvent && (
                               <div class="event-card__range-info">
                                 <span class="event-card__range-label">Период экспонирования</span>
                                 <strong>{event.dateLabel}</strong>
@@ -696,56 +707,60 @@ function getDialogueMonogram(name: string) {
                               </div>
                             )}
 
-                            <details class="event-card__summary-details">
-                              <summary class="event-card__summary-toggle">
-                                <span class="event-card__summary-text">{cardText}</span>
-                                <span class="event-card__summary-hint" aria-hidden="true"></span>
-                              </summary>
-                              {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
-                            </details>
+                            {!isRangeEvent && (
+                              <details class="event-card__summary-details">
+                                <summary class="event-card__summary-toggle">
+                                  <span class="event-card__summary-text">{cardText}</span>
+                                  <span class="event-card__summary-hint" aria-hidden="true"></span>
+                                </summary>
+                                {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+                              </details>
+                            )}
 
                             <div class="event-card__meta">
                               <span>{event.venue}</span>
                               <span>{event.address}</span>
-                              <span>{event.durationLabel}</span>
+                              {!isRangeEvent && event.durationLabel && <span>{event.durationLabel}</span>}
                             </div>
                           </div>
 
-                          <aside class="event-card__actions">
-                            {isSpecialEvent ? (
-                              <div class="notice">Дата спектакля будет объявлена позже.</div>
-                            ) : event.registrationUrl ? (
-                              <a
-                                class="button button--primary"
-                                href={event.registrationUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Регистрация
-                              </a>
-                            ) : (
-                              <div class="notice">Дата спектакля будет объявлена позже.</div>
-                            )}
+                          {!isRangeEvent && (
+                            <aside class="event-card__actions">
+                              {isSpecialEvent ? (
+                                <div class="notice">Дата спектакля будет объявлена позже.</div>
+                              ) : event.registrationUrl ? (
+                                <a
+                                  class="button button--primary"
+                                  href={event.registrationUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Регистрация
+                                </a>
+                              ) : (
+                                <div class="notice">Дата спектакля будет объявлена позже.</div>
+                              )}
 
-                            {!isSpecialEvent && event.calendarReady ? (
-                              <details class="calendar-menu">
-                                <summary class="button button--ghost">В календарь</summary>
-                                <div class="calendar-panel">
-                                  <a class="calendar-link" href={event.icsUrl}>ICS</a>
-                                  <a
-                                    class="calendar-link"
-                                    href={event.googleCalendarUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    Google
-                                  </a>
-                                </div>
-                              </details>
-                            ) : !isSpecialEvent ? (
-                              <div class="notice">{event.calendarNote ?? 'Календарь появится позже.'}</div>
-                            ) : null}
-                          </aside>
+                              {!isSpecialEvent && event.calendarReady ? (
+                                <details class="calendar-menu">
+                                  <summary class="button button--ghost">В календарь</summary>
+                                  <div class="calendar-panel">
+                                    <a class="calendar-link" href={event.icsUrl}>ICS</a>
+                                    <a
+                                      class="calendar-link"
+                                      href={event.googleCalendarUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      Google
+                                    </a>
+                                  </div>
+                                </details>
+                              ) : !isSpecialEvent && event.calendarNote ? (
+                                <div class="notice">{event.calendarNote}</div>
+                              ) : null}
+                            </aside>
+                          )}
                         </div>
                       </article>
                     );
