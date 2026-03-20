@@ -448,7 +448,7 @@ function buildHeroVariants(): HeroVariant[] {
       speakerRole: getSpeakerCaption(event.affiliation) || event.formatLabel,
       speakerImage: getSpeakerStripImage(event.speakerLabel, event.speakerImages[0]),
       speakerStyle: getHeroPortraitStyle(event.speakerLabel) ?? '',
-      image: '',
+      image: '/shared-assets/hero-added-03.webp',
     }] satisfies HeroQuoteVariant[];
   });
 
@@ -637,11 +637,10 @@ function getDialogueMonogram(name: string) {
 	                  <div class="hero-showcase__brandbadge" aria-hidden="true">
 	                    <img src="/shared-assets/logo-80-istorii-hero.svg" alt="" width="431" height="373" decoding="async" loading="eager" />
 	                  </div>
-
-	                  <div class="hero-showcase__quote-mark" data-hero-quote-mark hidden={!defaultHeroIsQuote}>“</div>
 	                </div>
 
 	                <div class="hero-showcase__card">
+	                  <div class="hero-showcase__quote-mark" data-hero-quote-mark hidden={!defaultHeroIsQuote}>“</div>
 	                  <p class="hero-showcase__prompt" data-hero-prompt>{defaultHeroVariant.prompt}</p>
 
 	                  <blockquote class="hero-showcase__quote" data-hero-quote-shell hidden={!defaultHeroIsQuote}>
