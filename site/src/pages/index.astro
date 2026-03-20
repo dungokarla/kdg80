@@ -735,46 +735,49 @@ function getDialogueMonogram(name: string) {
 	                </div>
 
 	                <div class="hero-showcase__card">
-	                  <div class="hero-showcase__shape-proxy" data-hero-shape-proxy hidden={!defaultHeroIsQuote} aria-hidden="true"></div>
-	                  <div class="hero-showcase__quote-mark" data-hero-quote-mark hidden={!defaultHeroIsQuote} aria-hidden="true">
-	                    <svg viewBox="0 0 16 16" role="presentation" focusable="false">
-	                      <path d="M5.29289 1.29291L6.70711 2.70712L3 6.41423V7.00001H7V14H1V5.5858L5.29289 1.29291Z"></path>
-	                      <path d="M15 7.00001H11V6.41423L14.7071 2.70712L13.2929 1.29291L9 5.5858V14H15V7.00001Z"></path>
-	                    </svg>
-	                  </div>
-	                  <p class="hero-showcase__prompt" data-hero-prompt>{defaultHeroVariant.prompt}</p>
+		                  <div class="hero-showcase__shape-proxy" data-hero-shape-proxy hidden={!defaultHeroIsQuote} aria-hidden="true"></div>
+		                  <p class="hero-showcase__prompt" data-hero-prompt>{defaultHeroVariant.prompt}</p>
 
-	                  <blockquote class="hero-showcase__quote" data-hero-quote-shell hidden={!defaultHeroIsQuote}>
-	                    <p data-hero-quote>{defaultHeroIsQuote ? defaultHeroVariant.quote : ''}</p>
-	                  </blockquote>
+		                  <div class="hero-showcase__content">
+		                    <div class="hero-showcase__quote-mark" data-hero-quote-mark hidden={!defaultHeroIsQuote} aria-hidden="true">
+		                      <svg viewBox="0 0 16 16" role="presentation" focusable="false">
+		                        <path d="M5.29289 1.29291L6.70711 2.70712L3 6.41423V7.00001H7V14H1V5.5858L5.29289 1.29291Z"></path>
+		                        <path d="M15 7.00001H11V6.41423L14.7071 2.70712L13.2929 1.29291L9 5.5858V14H15V7.00001Z"></path>
+		                      </svg>
+		                    </div>
 
-	                  <h2 class="hero-showcase__title" data-hero-title hidden={!defaultHeroShowsTitle}>{defaultHeroVariant.title}</h2>
+		                    <blockquote class="hero-showcase__quote" data-hero-quote-shell hidden={!defaultHeroIsQuote}>
+		                      <p data-hero-quote>{defaultHeroIsQuote ? defaultHeroVariant.quote : ''}</p>
+		                    </blockquote>
 
-	                  <p class="hero-showcase__body" data-hero-body hidden={!defaultHeroShowsBody}>
-	                    {!defaultHeroIsQuote ? defaultHeroVariant.body : ''}
-	                  </p>
+		                    <h2 class="hero-showcase__title" data-hero-title hidden={!defaultHeroShowsTitle}>{defaultHeroVariant.title}</h2>
 
-	                  <div class="hero-showcase__speaker" data-hero-speaker-shell hidden={!defaultHeroIsQuote}>
-	                    <strong data-hero-speaker-name>{defaultHeroIsQuote ? defaultHeroVariant.speakerName : ''}</strong>
-	                    <span data-hero-speaker-role>{defaultHeroIsQuote ? defaultHeroVariant.speakerRole : ''}</span>
-	                  </div>
+		                    <p class="hero-showcase__body" data-hero-body hidden={!defaultHeroShowsBody}>
+		                      {!defaultHeroIsQuote ? defaultHeroVariant.body : ''}
+		                    </p>
 
-	                  <div class="hero-showcase__actions">
-	                    <a
-	                      class="hero-showcase__event-link"
-	                      data-hero-event-link
-	                      href={defaultHeroIsQuote && defaultHeroVariant.quoteType === 'lecture' ? defaultHeroVariant.eventHref : undefined}
-	                    >
-	                      К лекции
-	                    </a>
-	                    {heroStoryVariants.length > 1 && (
-	                      <button class="hero-showcase__next" type="button" data-hero-next aria-label="Показать другую историю первого экрана">
-	                        Другая история
-	                      </button>
-	                    )}
-	                  </div>
-	                </div>
-	              </section>
+		                    <div class="hero-showcase__speaker" data-hero-speaker-shell hidden={!defaultHeroIsQuote}>
+		                      <strong data-hero-speaker-name>{defaultHeroIsQuote ? defaultHeroVariant.speakerName : ''}</strong>
+		                      <span data-hero-speaker-role>{defaultHeroIsQuote ? defaultHeroVariant.speakerRole : ''}</span>
+		                    </div>
+
+		                    <div class="hero-showcase__actions">
+		                      <a
+		                        class="hero-showcase__event-link"
+		                        data-hero-event-link
+		                        href={defaultHeroIsQuote && defaultHeroVariant.quoteType === 'lecture' ? defaultHeroVariant.eventHref : undefined}
+		                      >
+		                        К лекции
+		                      </a>
+		                      {heroStoryVariants.length > 1 && (
+		                        <button class="hero-showcase__next" type="button" data-hero-next aria-label="Показать другую историю первого экрана">
+		                          Другая история
+		                        </button>
+		                      )}
+		                    </div>
+		                  </div>
+		                </div>
+		              </section>
 		            </aside>
 
 	            <div class="hero__portrait-seam" data-hero-portrait-shell hidden={!defaultHeroIsQuote} aria-hidden="true">
