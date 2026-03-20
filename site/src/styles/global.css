@@ -554,11 +554,17 @@ summary {
   top: 0.15rem;
   left: 0.05rem;
   z-index: 4;
-  color: #130f0d;
-  font-family: var(--font-display);
-  font-size: clamp(3.35rem, 11vw, 4.4rem);
-  line-height: 0.78;
+  width: clamp(3.55rem, 11vw, 4.55rem);
+  height: clamp(3.55rem, 11vw, 4.55rem);
+  color: var(--ink);
   pointer-events: none;
+}
+
+.hero-showcase__quote-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
 }
 
 .hero__portrait-seam {
@@ -607,6 +613,10 @@ summary {
   transition: opacity 220ms ease, transform 260ms ease;
 }
 
+.hero-showcase__shape-proxy {
+  display: none;
+}
+
 .hero-showcase__card {
   position: relative;
   z-index: 3;
@@ -640,6 +650,8 @@ summary {
   background: rgba(255, 244, 238, 0.14);
   border: 1px solid rgba(255, 244, 238, 0.16);
   backdrop-filter: blur(12px);
+  position: relative;
+  z-index: 4;
 }
 
 .hero-showcase[data-hero-quote-type="festival"] .hero-showcase__prompt {
@@ -675,7 +687,7 @@ summary {
   font-size: clamp(1.12rem, 4.85vw, 1.62rem);
   line-height: 0.92;
   letter-spacing: -0.045em;
-  text-wrap: balance;
+  text-wrap: pretty;
 }
 
 .hero-showcase__body {
@@ -692,12 +704,13 @@ summary {
 }
 
 .hero-showcase__speaker strong {
+  color: rgba(255, 224, 214, 0.96);
   font-size: 0.9rem;
   letter-spacing: -0.015em;
 }
 
 .hero-showcase__speaker span {
-  color: rgba(248, 241, 232, 0.68);
+  color: rgba(248, 241, 232, 0.62);
   font-size: 0.66rem;
   line-height: 1.45;
 }
@@ -2170,89 +2183,101 @@ summary {
   }
 
   .hero-showcase {
-    display: grid;
-    grid-template-columns: minmax(40%, 1fr) minmax(18.5rem, 21rem);
-    align-items: stretch;
-    justify-content: stretch;
-    min-height: 29.75rem;
+    display: block;
+    min-height: 28.9rem;
     border-radius: 0 2rem 2rem 0;
   }
 
   .hero-showcase__card {
-    grid-column: 2;
-    align-self: stretch;
-    width: auto;
-    max-width: none;
-    display: grid;
-    grid-auto-flow: row;
-    grid-auto-rows: max-content;
-    align-content: center;
-    padding: 3.35rem 2rem 1.95rem 1.95rem;
-    gap: 0.78rem;
+    display: block;
+    width: 100%;
+    min-height: 100%;
+    padding: 0.9rem 1.45rem 1.6rem 0.88rem;
   }
 
-  .hero-showcase__title {
-    max-width: 18ch;
-    font-size: 1rem;
-    line-height: 1.16;
+  .hero-showcase__card::after {
+    content: "";
+    display: block;
+    clear: both;
   }
 
   .hero-showcase__quote-mark {
-    top: 1rem;
-    left: 1.15rem;
-    font-size: clamp(5.7rem, 6.4vw, 7.35rem);
+    top: 0.74rem;
+    left: var(--hero-quote-mark-left, 6rem);
+    width: clamp(4.8rem, 5.6vw, 6.25rem);
+    height: clamp(4.8rem, 5.6vw, 6.25rem);
     opacity: 0.94;
   }
 
   .hero__portrait-seam {
     top: auto;
     right: auto;
-    bottom: -0.3rem;
-    left: 50%;
+    bottom: -0.12rem;
+    left: 47.9%;
     justify-content: center;
-    width: min(28.5vw, 22.2rem);
-    height: calc(100% + 0.8rem);
+    width: min(29vw, 23.4rem);
+    height: calc(100% + 0.55rem);
     transform: translateX(-50%);
-    --hero-portrait-floor-y: 5.8%;
+    --hero-portrait-floor-y: 4.4%;
   }
 
   .hero__portrait-seam::after {
-    left: 8%;
-    right: 8%;
-    bottom: 0.2rem;
-    height: 1.5rem;
+    left: 6%;
+    right: 6%;
+    bottom: 0.16rem;
+    height: 1.35rem;
   }
 
   .hero-showcase__brandbadge {
     display: none;
   }
 
+  .hero-showcase__shape-proxy {
+    display: none;
+  }
+
   .hero-showcase__prompt {
-    position: relative;
-    top: auto;
-    right: auto;
-    justify-self: start;
-    align-self: start;
+    position: absolute;
+    top: 1rem;
+    right: 1.15rem;
+    float: none;
     min-height: 2rem;
     max-width: max-content;
-    margin-left: 3.95rem;
+    margin: 0;
     padding: 0.36rem 0.92rem;
     font-size: 0.74rem;
   }
 
   .hero-showcase__quote {
-    margin-top: 0.08rem;
+    max-width: var(--hero-copy-width, 13.4rem);
+    margin-top: var(--hero-copy-top, 3.3rem);
+    margin-left: var(--hero-copy-start, 8rem);
+    padding-right: 0;
   }
 
   .hero-showcase__quote p {
-    max-width: 16.25ch;
-    font-size: clamp(1.92rem, 2.02vw, 2.48rem);
+    max-width: none;
+    font-size: clamp(2.14rem, 2.26vw, 2.84rem);
+    line-height: 0.885;
+    letter-spacing: -0.045em;
+    text-wrap: pretty;
+  }
+
+  .hero-showcase[data-hero-quote-size="medium"] .hero-showcase__quote p {
+    font-size: clamp(1.78rem, 1.86vw, 2.22rem);
     line-height: 0.9;
-    letter-spacing: -0.04em;
+  }
+
+  .hero-showcase[data-hero-quote-size="compact"] .hero-showcase__quote p {
+    font-size: clamp(1.54rem, 1.64vw, 1.9rem);
+    line-height: 0.96;
+    letter-spacing: -0.035em;
   }
 
   .hero-showcase__title {
-    max-width: 19ch;
+    max-width: min(16ch, var(--hero-copy-width, 13.4rem));
+    margin-top: 0.7rem;
+    margin-left: var(--hero-copy-start, 8rem);
     font-size: 0.98rem;
     line-height: 1.14;
     color: rgba(255, 246, 241, 0.84);
@@ -2263,25 +2288,30 @@ summary {
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.12rem 0.48rem;
-    max-width: none;
-    margin-top: 0.12rem;
-    padding-top: 0.85rem;
+    max-width: var(--hero-copy-width, 13.4rem);
+    margin-top: 0.78rem;
+    margin-left: var(--hero-copy-start, 8rem);
+    padding-top: 0.8rem;
     border-top: 1px solid rgba(255, 248, 242, 0.28);
   }
 
   .hero-showcase__speaker strong {
-    font-size: 0.98rem;
+    color: rgba(255, 224, 214, 0.96);
+    font-size: 1rem;
     line-height: 1.15;
   }
 
   .hero-showcase__speaker span {
+    color: rgba(248, 241, 232, 0.58);
     font-size: 0.68rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
   .hero-showcase__actions {
-    margin-top: 0.1rem;
+    margin-top: 0.76rem;
+    margin-left: var(--hero-copy-start, 8rem);
+    max-width: var(--hero-copy-width, 13.4rem);
   }
 
   .hero-showcase__next {
@@ -2360,23 +2390,19 @@ summary {
 
 @media (min-width: 980px) {
   .hero-showcase {
-    grid-template-columns: minmax(39%, 1fr) minmax(20.5rem, 23rem);
-    min-height: 30.5rem;
+    min-height: 29.35rem;
   }
 
   .hero-showcase__card {
-    width: auto;
-    max-width: none;
-    padding: 3.6rem 2.3rem 2.05rem 2.2rem;
-    gap: 0.92rem;
+    padding: 0.96rem 1.66rem 1.72rem 0.92rem;
   }
 
   .hero__portrait-seam {
-    left: 50%;
-    width: min(26.5vw, 22rem);
-    height: calc(100% + 0.8rem);
-    bottom: -0.24rem;
-    --hero-portrait-floor-y: 6.7%;
+    left: 47.9%;
+    width: min(30.5vw, 24.6rem);
+    height: calc(100% + 0.72rem);
+    bottom: -0.14rem;
+    --hero-portrait-floor-y: 5.2%;
   }
 
   .hero-showcase__portrait {
@@ -2386,28 +2412,39 @@ summary {
         var(--hero-portrait-shift-x, 0%),
         calc(var(--hero-portrait-shift-y, 0%) + var(--hero-portrait-floor-y, 0%))
       )
-      scale(calc(var(--hero-portrait-scale, 1) * 1.18));
+      scale(calc(var(--hero-portrait-scale, 1) * 1.1));
   }
 
   .hero-showcase__quote-mark {
-    left: 1.35rem;
-    top: 1rem;
+    left: var(--hero-quote-mark-left, 6rem);
+    top: 0.72rem;
   }
 
-  .hero-showcase[data-hero-kind="quote"] .hero-showcase__card {
-    width: auto;
-    max-width: none;
+  .hero-showcase__shape-proxy {
+    display: none;
   }
 
   .hero-showcase[data-hero-kind="quote"] .hero-showcase__quote p {
-    max-width: 17ch;
-    font-size: clamp(2rem, 2.08vw, 2.68rem);
-    line-height: 0.89;
+    max-width: none;
+    font-size: clamp(2.26rem, 2.32vw, 2.96rem);
+    line-height: 0.88;
+  }
+
+  .hero-showcase[data-hero-quote-size="medium"] .hero-showcase__quote p {
+    font-size: clamp(1.84rem, 1.9vw, 2.2rem);
+    line-height: 0.9;
+  }
+
+  .hero-showcase[data-hero-quote-size="compact"] .hero-showcase__quote p {
+    font-size: clamp(1.62rem, 1.58vw, 1.88rem);
+    line-height: 0.96;
   }
 
   .hero-showcase[data-hero-kind="quote"] .hero-showcase__prompt {
     min-height: 2.04rem;
-    margin-left: 4.2rem;
+    top: 1.02rem;
+    right: 1.22rem;
+    margin: 0;
     padding-inline: 0.92rem;
     font-size: 0.78rem;
   }

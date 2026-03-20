@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { prepareSpeakerStripPortraits } from './prepare_speaker_strip_portraits.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const siteRoot = path.resolve(__dirname, '..');
@@ -89,5 +90,6 @@ await removeIfExists(telegramPngPath);
 await ensureDir(sharedAssetsRoot);
 await copyAllowedAssets(assetsRoot, sharedAssetsRoot);
 await copyExtraAssets(EXTRA_SHARED_ASSETS);
+await prepareSpeakerStripPortraits();
 
-console.log('Prepared public assets without png/jpg leakage.');
+console.log('Prepared public assets and regenerated speaker-strip portraits without png/jpg leakage.');

@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import portraitBounds from '../data/portrait-bounds.json';
 import {
   getFestivalEvents,
   getMonthGroups,
@@ -43,11 +44,13 @@ type HeroQuoteVariant = HeroVariantBase & {
   kind: 'quote';
   quoteType: HeroQuoteType;
   quote: string;
+  quoteSize: 'poster' | 'medium' | 'compact';
   title: string;
   speakerName: string;
   speakerRole: string;
   speakerImage: string;
   speakerStyle?: string;
+  speakerSceneStyle?: string;
 };
 type HeroImageVariant = HeroVariantBase & {
   kind: 'image';
@@ -148,13 +151,13 @@ const DIALOGUE_PORTRAIT_STYLE_OVERRIDES: Array<{ match: string; style: string }>
 ];
 
 const HERO_PORTRAIT_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
-  { match: 'Никитин', style: '--hero-portrait-scale: 1.04; --hero-portrait-shift-x: 1%; --hero-portrait-shift-y: 2%;' },
-  { match: 'Мосиенко', style: '--hero-portrait-scale: 1.08; --hero-portrait-shift-x: 2%; --hero-portrait-shift-y: 2%;' },
-  { match: 'Долотова', style: '--hero-portrait-scale: 1.02; --hero-portrait-shift-x: 1%; --hero-portrait-shift-y: 3%;' },
-  { match: 'Анисимов', style: '--hero-portrait-scale: 1.02; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 2%;' },
-  { match: 'Казакова', style: '--hero-portrait-scale: 1.01; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 2%;' },
-  { match: 'Соколова', style: '--hero-portrait-scale: 1.02; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%;' },
-  { match: 'Конюхова', style: '--hero-portrait-scale: 1.01; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 3%;' },
+  { match: 'Никитин', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0.5%; --hero-portrait-shift-y: 1.5%;' },
+  { match: 'Мосиенко', style: '--hero-portrait-scale: 0.97; --hero-portrait-shift-x: 1%; --hero-portrait-shift-y: 1.6%;' },
+  { match: 'Долотова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0.8%; --hero-portrait-shift-y: 1.8%;' },
+  { match: 'Анисимов', style: '--hero-portrait-scale: 0.94; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%;' },
+  { match: 'Казакова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%;' },
+  { match: 'Соколова', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.2%;' },
+  { match: 'Конюхова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.8%;' },
 ];
 
 // Curated from "festival_quotes_ranked.md" and event-level "why go" texts to keep
@@ -384,6 +387,29 @@ function getFestivalPeriodLabel(items: typeof events) {
 }
 
 const festivalPeriodLabel = getFestivalPeriodLabel(events);
+const portraitBoundsMap = portraitBounds as Record<string, {
+  width: number;
+  height: number;
+  visibleLeft: number;
+  visibleTop: number;
+  visibleRight: number;
+  visibleBottom: number;
+}>;
+
+function joinStyleFragments(...parts: Array<string | undefined>) {
+  return parts
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
+function clampMetric(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getPortraitBounds(path: string) {
+  return portraitBoundsMap[path];
+}
 
 function getSpeakerStripImage(name: string, fallback: string) {
   return SPEAKER_STRIP_IMAGE_OVERRIDES.find((entry) => name.includes(entry.match))?.path
@@ -407,6 +433,42 @@ function getSpeakerStripStyle(name: string) {
 
 function getHeroPortraitStyle(name: string) {
   return HERO_PORTRAIT_STYLE_OVERRIDES.find((entry) => name.includes(entry.match))?.style;
+}
+
+function getHeroSceneStyle(imagePath: string) {
+  const bounds = getPortraitBounds(imagePath);
+  if (!bounds) {
+    return '';
+  }
+
+  const ratio = bounds.width / bounds.height;
+  const visibleWidth = bounds.visibleRight - bounds.visibleLeft;
+  const narrowBias = Math.max(0, 0.92 - Math.min(ratio, 0.92));
+  const quoteStart = clampMetric(5.9 + visibleWidth * 1 + (1 - Math.min(ratio, 1)) * 0.5 + narrowBias * 1.8, 6.6, 8.6);
+  const quoteWidth = clampMetric(17.6 - visibleWidth * 1.1 + ratio * 0.4 - narrowBias * 1.6, 14.8, 17.6);
+  const quoteTop = clampMetric(3.38 + (0.92 - Math.min(ratio, 1.2)) * 0.14, 3.24, 3.72);
+  const quoteMarkLeft = clampMetric(quoteStart - 1.55, 4.9, 6.4);
+
+  return [
+    `--hero-copy-start: ${quoteStart.toFixed(2)}rem;`,
+    `--hero-copy-width: ${quoteWidth.toFixed(2)}rem;`,
+    `--hero-copy-top: ${quoteTop.toFixed(2)}rem;`,
+    `--hero-quote-mark-left: ${quoteMarkLeft.toFixed(2)}rem;`,
+  ].join(' ');
+}
+
+function getHeroQuoteSize(value: string) {
+  const compactedLength = value.replace(/\s+/g, ' ').trim().length;
+
+  if (compactedLength > 170) {
+    return 'compact';
+  }
+
+  if (compactedLength > 120) {
+    return 'medium';
+  }
+
+  return 'poster';
 }
 
 function normalizeLookupValue(value: string) {
@@ -444,10 +506,12 @@ function buildHeroVariants(): HeroVariant[] {
       priority: spec.priority,
       title: event.title,
       quote: spec.quote,
+      quoteSize: getHeroQuoteSize(spec.quote),
       speakerName: event.speakerLabel,
       speakerRole: getSpeakerCaption(event.affiliation) || event.formatLabel,
       speakerImage: getSpeakerStripImage(event.speakerLabel, event.speakerImages[0]),
       speakerStyle: getHeroPortraitStyle(event.speakerLabel) ?? '',
+      speakerSceneStyle: getHeroSceneStyle(getSpeakerStripImage(event.speakerLabel, event.speakerImages[0])),
       image: '/shared-assets/hero-added-03.webp',
     }] satisfies HeroQuoteVariant[];
   });
@@ -480,6 +544,8 @@ const defaultHeroVariant = heroStoryVariants[0];
 const defaultHeroIsQuote = isHeroQuoteVariant(defaultHeroVariant);
 const defaultHeroShowsTitle = !defaultHeroIsQuote || defaultHeroVariant.quoteType === 'lecture';
 const defaultHeroShowsBody = !defaultHeroIsQuote;
+const defaultHeroSceneStyle = defaultHeroIsQuote ? defaultHeroVariant.speakerSceneStyle ?? '' : '';
+const defaultHeroQuoteSize = defaultHeroIsQuote ? defaultHeroVariant.quoteSize : 'image';
 const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 
 const speakerShowcasePayload = JSON.stringify(
@@ -618,8 +684,10 @@ function getDialogueMonogram(name: string) {
 	                data-hero-showcase
 	                data-hero-kind={defaultHeroVariant.kind}
 	                data-hero-quote-type={defaultHeroIsQuote ? defaultHeroVariant.quoteType : 'image'}
+	                data-hero-quote-size={defaultHeroQuoteSize}
 	                data-hero-variants={heroVariantsPayload}
 	                data-hero-index="0"
+	                style={defaultHeroSceneStyle}
 	              >
 	                <div class="hero-showcase__media" aria-hidden="true">
 	                  <img
@@ -640,7 +708,13 @@ function getDialogueMonogram(name: string) {
 	                </div>
 
 	                <div class="hero-showcase__card">
-	                  <div class="hero-showcase__quote-mark" data-hero-quote-mark hidden={!defaultHeroIsQuote}>“</div>
+	                  <div class="hero-showcase__shape-proxy" data-hero-shape-proxy hidden={!defaultHeroIsQuote} aria-hidden="true"></div>
+	                  <div class="hero-showcase__quote-mark" data-hero-quote-mark hidden={!defaultHeroIsQuote} aria-hidden="true">
+	                    <svg viewBox="0 0 16 16" role="presentation" focusable="false">
+	                      <path d="M5.29289 1.29291L6.70711 2.70712L3 6.41423V7.00001H7V14H1V5.5858L5.29289 1.29291Z"></path>
+	                      <path d="M15 7.00001H11V6.41423L14.7071 2.70712L13.2929 1.29291L9 5.5858V14H15V7.00001Z"></path>
+	                    </svg>
+	                  </div>
 	                  <p class="hero-showcase__prompt" data-hero-prompt>{defaultHeroVariant.prompt}</p>
 
 	                  <blockquote class="hero-showcase__quote" data-hero-quote-shell hidden={!defaultHeroIsQuote}>
@@ -1323,6 +1397,7 @@ function getDialogueMonogram(name: string) {
 	    const setHeroVariant = (root, variant, deckIndex, total) => {
 	      root.dataset.heroKind = variant.kind;
 	      root.dataset.heroQuoteType = variant.kind === 'quote' ? variant.quoteType : 'image';
+	      root.dataset.heroQuoteSize = variant.kind === 'quote' ? variant.quoteSize : 'image';
 	      root.dataset.heroIndex = String(deckIndex);
 
 	      const heroShell = root.closest('.hero__shell');
@@ -1330,6 +1405,7 @@ function getDialogueMonogram(name: string) {
 	      const quoteMark = root.querySelector('[data-hero-quote-mark]');
 	      const portraitShell = heroShell?.querySelector('[data-hero-portrait-shell]');
 	      const portrait = heroShell?.querySelector('[data-hero-portrait]');
+	      const shapeProxy = root.querySelector('[data-hero-shape-proxy]');
 	      const prompt = root.querySelector('[data-hero-prompt]');
 	      const title = root.querySelector('[data-hero-title]');
 	      const quoteShell = root.querySelector('[data-hero-quote-shell]');
@@ -1341,6 +1417,7 @@ function getDialogueMonogram(name: string) {
 	      const isQuoteVariant = variant.kind === 'quote';
 	      const showsTitle = !isQuoteVariant || variant.quoteType === 'lecture';
 	      const showsBody = !isQuoteVariant && Boolean(variant.body);
+	      root.style.cssText = isQuoteVariant ? variant.speakerSceneStyle || '' : '';
 
 	      if (image instanceof HTMLImageElement) {
 	        image.hidden = isQuoteVariant;
@@ -1373,6 +1450,10 @@ function getDialogueMonogram(name: string) {
 
 	      if (quoteShell instanceof HTMLElement) {
 	        quoteShell.hidden = !isQuoteVariant;
+	      }
+
+	      if (shapeProxy instanceof HTMLElement) {
+	        shapeProxy.hidden = !isQuoteVariant;
 	      }
 
       if (speakerShell instanceof HTMLElement) {
