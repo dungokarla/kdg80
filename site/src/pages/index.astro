@@ -518,17 +518,17 @@ function getDialogueMonogram(name: string) {
 	      <section class="hero">
 	        <div class="container">
 	          <div class="hero__shell">
-	            <div class="hero__copy">
-	              <p class="eyebrow">Просветительский фестиваль Российского общества Знание</p>
-	              <p class="hero__kicker">К 80-летию Калининградской области</p>
-	              <h1 class="hero__brand">
-	                <span class="sr-only">80 историй о главном</span>
-	                <img src="/shared-assets/logo-80-istorii-hero.svg" alt="" width="431" height="373" decoding="async" fetchpriority="high" aria-hidden="true" />
-	              </h1>
-	              <p class="hero__lead">
-	                Фестиваль собирает истории людей, мест и привычек, из которых складывалась новая Калининградская область.
-	                На первом экране можно быстро понять и зачем идти на фестиваль, и с какой лекции начать знакомство с программой.
-	              </p>
+		            <div class="hero__copy">
+		              <p class="eyebrow">Просветительский фестиваль Российского общества Знание</p>
+		              <p class="hero__kicker">К 80-летию Калининградской области</p>
+		              <h1 class="hero__brand">
+		                <span class="sr-only">80 историй о главном</span>
+		                <img src="/shared-assets/logo-80-istorii-hero.svg" alt="" width="431" height="373" decoding="async" fetchpriority="high" aria-hidden="true" />
+		              </h1>
+		              <p class="hero__lead">
+		                Истории людей, мест и привычек, из которых складывалась новая Калининградская область.
+		                Первый экран быстро отвечает, зачем идти на фестиваль и с какой лекции начать.
+		              </p>
 
 	              <div class="hero__meta" aria-label="Ключевые параметры фестиваля">
 	                <span>Калининград</span>
@@ -536,23 +536,11 @@ function getDialogueMonogram(name: string) {
 	                <span>{events.length} событий в программе</span>
 	              </div>
 
-	              <div class="hero__actions">
-	                <a class="button button--primary" href="#program">Смотреть программу</a>
-	                <a class="button button--ghost" href="#announces">Подписаться на анонсы</a>
-	              </div>
-
-	              <article class="hero-ticket">
-	                <p class="hero-ticket__eyebrow">Ближайшее событие</p>
-	                <h2>{nextEvent.title}</h2>
-	                <div class="hero-ticket__meta">
-	                  <span>{nextEvent.dateLabel}</span>
-	                  <span>{nextEvent.timeLabel}</span>
-	                  <span>{nextEvent.venue}</span>
-	                </div>
-	                <p class="hero-ticket__summary">{getCardText(nextEvent)}</p>
-	                <a class="button button--ghost" href={`#event-${nextEvent.slug}`}>К событию</a>
-	              </article>
-	            </div>
+		              <div class="hero__actions">
+		                <a class="button button--primary" href="#program">Смотреть программу</a>
+		                <a class="button button--ghost" href="#announces">Подписаться на анонсы</a>
+		              </div>
+		            </div>
 
 	            <aside class="hero__aside" aria-label="Сильные истории фестиваля">
 	              <section
@@ -581,18 +569,6 @@ function getDialogueMonogram(name: string) {
 	                  </div>
 
 	                  <div class="hero-showcase__quote-mark" data-hero-quote-mark hidden={!defaultHeroIsQuote}>“</div>
-
-	                  <div class="hero-showcase__portrait-shell" data-hero-portrait-shell hidden={!defaultHeroIsQuote}>
-	                    <img
-	                      class="hero-showcase__portrait"
-	                      data-hero-portrait
-	                      src={defaultHeroIsQuote ? defaultHeroVariant.speakerImage : ''}
-                      alt=""
-                      loading="eager"
-                      decoding="async"
-                      style={defaultHeroIsQuote ? defaultHeroVariant.speakerStyle ?? '' : ''}
-                    />
-	                  </div>
 	                </div>
 
 	                <div class="hero-showcase__card">
@@ -622,8 +598,36 @@ function getDialogueMonogram(name: string) {
 	                  </div>
 	                </div>
 	              </section>
-	            </aside>
-	          </div>
+		            </aside>
+
+	            <div class="hero__portrait-seam" data-hero-portrait-shell hidden={!defaultHeroIsQuote} aria-hidden="true">
+	              <img
+	                class="hero-showcase__portrait"
+	                data-hero-portrait
+	                src={defaultHeroIsQuote ? defaultHeroVariant.speakerImage : ''}
+	                alt=""
+	                loading="eager"
+	                decoding="async"
+	                style={defaultHeroIsQuote ? defaultHeroVariant.speakerStyle ?? '' : ''}
+	              />
+	            </div>
+		          </div>
+		        </div>
+		      </section>
+
+	      <section class="hero-upcoming" aria-labelledby="next-event-title">
+	        <div class="container">
+	          <article class="hero-ticket hero-ticket--compact hero-ticket--bar">
+	            <p class="hero-ticket__eyebrow">Ближайшее событие</p>
+	            <h2 id="next-event-title">{nextEvent.title}</h2>
+	            <div class="hero-ticket__meta">
+	              <span>{nextEvent.dateLabel}</span>
+	              <span>{nextEvent.timeLabel}</span>
+	              <span>{nextEvent.venue}</span>
+	            </div>
+	            <p class="hero-ticket__summary">{getCardText(nextEvent)}</p>
+	            <a class="button button--ghost" href={`#event-${nextEvent.slug}`}>К событию</a>
+	          </article>
 	        </div>
 	      </section>
 
@@ -1232,10 +1236,11 @@ function getDialogueMonogram(name: string) {
 	      root.dataset.heroQuoteType = variant.kind === 'quote' ? variant.quoteType : 'image';
 	      root.dataset.heroIndex = String(deckIndex);
 
+	      const heroShell = root.closest('.hero__shell');
 	      const image = root.querySelector('[data-hero-image]');
 	      const quoteMark = root.querySelector('[data-hero-quote-mark]');
-	      const portraitShell = root.querySelector('[data-hero-portrait-shell]');
-	      const portrait = root.querySelector('[data-hero-portrait]');
+	      const portraitShell = heroShell?.querySelector('[data-hero-portrait-shell]');
+	      const portrait = heroShell?.querySelector('[data-hero-portrait]');
 	      const prompt = root.querySelector('[data-hero-prompt]');
 	      const title = root.querySelector('[data-hero-title]');
 	      const quoteShell = root.querySelector('[data-hero-quote-shell]');
