@@ -152,13 +152,14 @@ const DIALOGUE_PORTRAIT_STYLE_OVERRIDES: Array<{ match: string; style: string }>
 ];
 
 const HERO_PORTRAIT_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
-  { match: 'Никитин', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0.5%; --hero-portrait-shift-y: 1.5%;' },
-  { match: 'Мосиенко', style: '--hero-portrait-scale: 0.97; --hero-portrait-shift-x: 1%; --hero-portrait-shift-y: 1.6%;' },
-  { match: 'Долотова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0.8%; --hero-portrait-shift-y: 1.8%;' },
-  { match: 'Анисимов', style: '--hero-portrait-scale: 0.94; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%;' },
-  { match: 'Казакова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%;' },
-  { match: 'Соколова', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.2%;' },
-  { match: 'Конюхова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.8%;' },
+  { match: 'Никитин', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0.5%; --hero-portrait-shift-y: 1.5%; --hero-portrait-scale-mobile: 1.12;' },
+  { match: 'Мосиенко', style: '--hero-portrait-scale: 0.97; --hero-portrait-shift-x: 1%; --hero-portrait-shift-y: 1.6%; --hero-portrait-scale-mobile: 1.2; --hero-portrait-shift-x-mobile: 3.6%;' },
+  { match: 'Долотова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0.8%; --hero-portrait-shift-y: 1.8%; --hero-portrait-scale-mobile: 1.14; --hero-portrait-shift-x-mobile: 1.4%;' },
+  { match: 'Анисимов', style: '--hero-portrait-scale: 0.94; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%; --hero-portrait-scale-mobile: 1.12;' },
+  { match: 'Казакова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%; --hero-portrait-scale-mobile: 1.24; --hero-portrait-shift-x-mobile: 2.1%;' },
+  { match: 'Соколова', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.2%; --hero-portrait-scale-mobile: 1.18; --hero-portrait-shift-x-mobile: 1%;' },
+  { match: 'Конюхова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.8%; --hero-portrait-scale-mobile: 1.18; --hero-portrait-shift-x-mobile: 1.2%;' },
+  { match: 'Надымова', style: '--hero-portrait-scale: 0.94; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.6%; --hero-portrait-scale-mobile: 1.24; --hero-portrait-shift-x-mobile: 2.2%;' },
 ];
 
 // Curated from "festival_quotes_ranked.md" and event-level "why go" texts to keep
@@ -454,6 +455,8 @@ function getHeroSceneStyle(imagePath: string) {
   const headSlice = bounds.slices?.head;
   const shoulderSlice = bounds.slices?.shoulder;
   const chestSlice = bounds.slices?.chest;
+  const waistSlice = bounds.slices?.waist;
+  const headLeft = headSlice?.visibleLeft ?? Math.min(bounds.visibleLeft + visibleWidth * 0.32, 0.6);
   const upperRight = Math.max(
     headSlice?.visibleRight ?? bounds.visibleRight,
     shoulderSlice?.visibleRight ?? bounds.visibleRight,
@@ -463,6 +466,9 @@ function getHeroSceneStyle(imagePath: string) {
     shoulderSlice?.coverage ?? visibleWidth * 0.62,
   );
   const tallBias = Math.max(0, 0.92 - Math.min(ratio, 0.92));
+  const waistCoverage = waistSlice?.coverage ?? visibleWidth * 0.72;
+  const chestCoverage = chestSlice?.coverage ?? visibleWidth * 0.62;
+  const shoulderCoverage = shoulderSlice?.coverage ?? visibleWidth * 0.58;
   const upperIntrusion = Math.max(0, upperRight - 0.62);
   const quoteStart = clampMetric(5.55 + upperIntrusion * 19 + tallBias * 0.9, 6.2, 9.2);
   const quoteWidth = clampMetric(
@@ -470,16 +476,40 @@ function getHeroSceneStyle(imagePath: string) {
     23.4,
     32,
   );
-  const quoteTop = clampMetric(4.36 + tallBias * 0.5 + Math.max(0, upperCoverage - 0.32) * 1.1, 4.34, 4.98);
   const portraitHeadroom = clampMetric(1.7 + tallBias * 8.8, 1.6, 4.8);
   const portraitDrop = clampMetric(2.2 + tallBias * 10.5 + upperIntrusion * 10, 2.1, 7.2);
+  const mobilePortraitHeadroom = clampMetric(0.55 + tallBias * 4.8, 0.55, 2.2);
+  const mobileCopyWidth = clampMetric(60 - Math.max(0, ratio - 0.72) * 32, 47, 59);
+  const mobilePortraitWidth = clampMetric(
+    54 + Math.max(0, ratio - 0.72) * 24 + Math.max(0, 0.72 - ratio) * 6,
+    54,
+    68,
+  );
+  const mobilePortraitScale = clampMetric(
+    1.08 + Math.max(0, 0.72 - ratio) * 0.55 + Math.max(0, ratio - 0.92) * 0.24,
+    1.08,
+    1.28,
+  );
+  const mobilePortraitDrop = clampMetric(5 + Math.max(0, 0.82 - ratio) * 18, 5, 13);
+  const mobilePortraitRight = -clampMetric(
+    11 + Math.max(0, ratio - 0.82) * 24 + Math.max(0, 0.92 - bounds.visibleRight) * 12,
+    11,
+    18,
+  );
+  const mobilePortraitShiftX = clampMetric(Math.max(0, ratio - 0.9) * 8 + Math.max(0, 0.95 - bounds.visibleRight) * 14, 0, 4.2);
 
   return [
     `--hero-copy-start: ${quoteStart.toFixed(2)}rem;`,
     `--hero-copy-width: ${quoteWidth.toFixed(2)}rem;`,
-    `--hero-copy-top: ${quoteTop.toFixed(2)}rem;`,
     `--hero-portrait-headroom: ${portraitHeadroom.toFixed(2)}rem;`,
     `--hero-portrait-drop: ${portraitDrop.toFixed(2)}%;`,
+    `--hero-portrait-headroom-mobile: ${mobilePortraitHeadroom.toFixed(2)}rem;`,
+    `--hero-mobile-copy-width: ${mobileCopyWidth.toFixed(2)}%;`,
+    `--hero-mobile-portrait-width: ${mobilePortraitWidth.toFixed(2)}%;`,
+    `--hero-portrait-scale-mobile: ${mobilePortraitScale.toFixed(3)};`,
+    `--hero-portrait-drop-mobile: ${mobilePortraitDrop.toFixed(2)}%;`,
+    `--hero-mobile-portrait-right: ${mobilePortraitRight.toFixed(2)}%;`,
+    `--hero-portrait-shift-x-mobile: ${mobilePortraitShiftX.toFixed(2)}%;`,
   ].join(' ');
 }
 
@@ -734,6 +764,18 @@ function getDialogueMonogram(name: string) {
 	                  </div>
 	                </div>
 
+	                <div class="hero__portrait-seam" data-hero-portrait-shell hidden={!defaultHeroIsQuote} aria-hidden="true">
+	                  <img
+	                    class="hero-showcase__portrait"
+	                    data-hero-portrait
+	                    src={defaultHeroIsQuote ? defaultHeroVariant.speakerImage : ''}
+	                    alt=""
+	                    loading="eager"
+	                    decoding="async"
+	                    style={defaultHeroIsQuote ? defaultHeroVariant.speakerStyle ?? '' : ''}
+	                  />
+	                </div>
+
 	                <div class="hero-showcase__card">
 		                  <div class="hero-showcase__shape-proxy" data-hero-shape-proxy hidden={!defaultHeroIsQuote} aria-hidden="true"></div>
 		                  <p class="hero-showcase__prompt" data-hero-prompt>{defaultHeroVariant.prompt}</p>
@@ -779,18 +821,6 @@ function getDialogueMonogram(name: string) {
 		                </div>
 		              </section>
 		            </aside>
-
-	            <div class="hero__portrait-seam" data-hero-portrait-shell hidden={!defaultHeroIsQuote} aria-hidden="true">
-	              <img
-	                class="hero-showcase__portrait"
-	                data-hero-portrait
-	                src={defaultHeroIsQuote ? defaultHeroVariant.speakerImage : ''}
-	                alt=""
-	                loading="eager"
-	                decoding="async"
-	                style={defaultHeroIsQuote ? defaultHeroVariant.speakerStyle ?? '' : ''}
-	              />
-	            </div>
 		          </div>
 		        </div>
 		      </section>

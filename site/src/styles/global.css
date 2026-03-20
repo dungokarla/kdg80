@@ -289,7 +289,7 @@ summary {
   overflow: hidden;
   display: grid;
   gap: 0;
-  --hero-mobile-stage-height: clamp(21rem, 78vw, 26rem);
+  --hero-mobile-stage-height: clamp(29rem, 116vw, 35rem);
   border-radius: 2rem;
   background: linear-gradient(180deg, rgba(249, 244, 236, 0.98), rgba(245, 238, 229, 0.98));
   border: 1px solid rgba(18, 17, 14, 0.08);
@@ -309,7 +309,14 @@ summary {
 .hero__aside,
 .hero__portrait-seam {
   position: relative;
+}
+
+.hero__copy {
   z-index: 1;
+}
+
+.hero__portrait-seam {
+  z-index: 2;
 }
 
 .hero__copy {
@@ -450,7 +457,14 @@ summary {
   color: #fff8f4;
   border-radius: 2rem 2rem 0 0;
   background: linear-gradient(180deg, #db4e33 0%, #cf482f 100%);
-  isolation: isolate;
+}
+
+.hero-showcase[data-hero-kind="quote"][data-hero-quote-size="medium"] {
+  min-height: clamp(31rem, 124vw, 36.5rem);
+}
+
+.hero-showcase[data-hero-kind="quote"][data-hero-quote-size="compact"] {
+  min-height: clamp(33rem, 132vw, 38rem);
 }
 
 .hero-showcase::before,
@@ -514,6 +528,9 @@ summary {
 .hero-showcase__media {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
 }
 
 .hero-showcase__backdrop {
@@ -537,7 +554,7 @@ summary {
   position: absolute;
   top: 0.65rem;
   right: 0.65rem;
-  z-index: 3;
+  z-index: 5;
   width: min(3.7rem, 22vw);
   padding: 0.38rem 0.4rem;
   border-radius: 1rem;
@@ -553,7 +570,7 @@ summary {
 
 .hero-showcase__quote-mark {
   position: relative;
-  z-index: 4;
+  z-index: 5;
   width: clamp(3.3rem, 12vw, 4.15rem);
   height: clamp(3.3rem, 12vw, 4.15rem);
   margin: 0 0 0.2rem;
@@ -576,16 +593,15 @@ summary {
 .hero__portrait-seam {
   position: absolute;
   top: 0;
-  right: 0;
+  right: var(--hero-mobile-portrait-right, -12%);
   bottom: auto;
-  z-index: 2;
   display: flex;
   align-items: end;
   justify-content: end;
-  width: min(52%, 14rem);
-  height: calc(var(--hero-mobile-stage-height) + 0.8rem);
+  width: min(var(--hero-mobile-portrait-width, 56%), 15.8rem);
+  height: var(--hero-mobile-stage-height);
   pointer-events: none;
-  --hero-portrait-floor-y: 10.6%;
+  --hero-portrait-floor-y: 0%;
 }
 
 .hero__portrait-seam::after {
@@ -603,19 +619,24 @@ summary {
 
 .hero-showcase__portrait {
   display: block;
-  width: auto;
-  height: calc(100% - var(--hero-portrait-headroom, 0rem));
-  max-width: 100%;
+  width: 100%;
+  height: auto;
+  max-height: calc(var(--hero-mobile-stage-height) * 0.84);
+  max-width: none;
   object-fit: contain;
-  object-position: bottom center;
+  object-position: bottom right;
   filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.34));
   transform:
     translate(
-      var(--hero-portrait-shift-x, 0%),
-      calc(var(--hero-portrait-shift-y, 0%) + var(--hero-portrait-floor-y, 0%) + var(--hero-portrait-drop, 0%))
+      var(--hero-portrait-shift-x-mobile, var(--hero-portrait-shift-x, 0%)),
+      calc(
+        var(--hero-portrait-shift-y-mobile, var(--hero-portrait-shift-y, 0%))
+        + var(--hero-portrait-floor-y, 0%)
+        + var(--hero-portrait-drop-mobile, var(--hero-portrait-drop, 0%))
+      )
     )
-    scale(calc(var(--hero-portrait-scale, 1) * 1.16));
-  transform-origin: bottom center;
+    scale(var(--hero-portrait-scale-mobile, 1.08));
+  transform-origin: bottom right;
   transition: opacity 220ms ease, transform 260ms ease;
 }
 
@@ -637,12 +658,21 @@ summary {
 
 .hero-showcase__content {
   position: relative;
-  z-index: 3;
-  display: grid;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
   gap: 0;
-  width: min(58%, calc(100% - 8.35rem));
-  max-width: min(14rem, calc(100% - 8.35rem));
-  padding-top: 4.85rem;
+  width: 100%;
+  max-width: none;
+  padding-top: 0;
+}
+
+.hero-showcase[data-hero-kind="quote"] .hero-showcase__content {
+  position: absolute;
+  top: 4.1rem;
+  left: 1rem;
+  bottom: 1rem;
+  width: min(var(--hero-mobile-copy-width, 58%), 15.85rem);
 }
 
 .hero-showcase__prompt {
@@ -664,7 +694,7 @@ summary {
   background: rgba(255, 244, 238, 0.14);
   border: 1px solid rgba(255, 244, 238, 0.16);
   backdrop-filter: blur(12px);
-  z-index: 4;
+  z-index: 5;
   margin: 0;
 }
 
@@ -695,12 +725,21 @@ summary {
 
 .hero-showcase__quote p {
   margin: 0;
-  max-width: 12.2ch;
+  max-width: none;
   font-family: var(--font-display);
-  font-size: clamp(1.12rem, 5vw, 1.52rem);
+  font-size: clamp(1.14rem, 5.15vw, 1.46rem);
   line-height: 0.94;
   letter-spacing: -0.045em;
   text-wrap: pretty;
+}
+
+.hero-showcase[data-hero-quote-size="medium"] .hero-showcase__quote p {
+  font-size: clamp(1.04rem, 4.72vw, 1.26rem);
+}
+
+.hero-showcase[data-hero-quote-size="compact"] .hero-showcase__quote p {
+  font-size: clamp(0.96rem, 4.22vw, 1.12rem);
+  line-height: 0.98;
 }
 
 .hero-showcase__body {
@@ -714,7 +753,7 @@ summary {
   display: grid;
   gap: 0.14rem;
   max-width: none;
-  margin-top: 0.58rem;
+  margin-top: 0.7rem;
 }
 
 .hero-showcase__speaker strong {
@@ -734,7 +773,8 @@ summary {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.45rem;
-  margin-top: 0.6rem;
+  margin-top: auto;
+  padding-top: 0.85rem;
 }
 
 .hero-showcase__event-link {
@@ -2229,24 +2269,34 @@ summary {
   .hero-showcase {
     display: block;
     min-height: 28.9rem;
+    overflow: visible;
     border-radius: 0 2rem 2rem 0;
   }
 
   .hero-showcase__card {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    align-items: center;
     width: 100%;
     min-height: 100%;
     padding: 1.1rem 1.45rem 1.8rem 0.88rem;
   }
 
   .hero-showcase__content {
+    position: relative;
+    top: auto;
+    left: auto;
+    bottom: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .hero-showcase[data-hero-kind="quote"] .hero-showcase__content {
     width: min(var(--hero-copy-width, 24rem), calc(100% - var(--hero-copy-start, 8rem) - 1.1rem));
     max-width: none;
-    margin-top: auto;
-    margin-bottom: auto;
     margin-left: var(--hero-copy-start, 8rem);
-    padding-top: 0;
   }
 
   .hero-showcase__quote-mark {
@@ -2257,15 +2307,34 @@ summary {
   }
 
   .hero__portrait-seam {
+    z-index: 4;
     top: auto;
     right: auto;
-    bottom: -0.12rem;
-    left: 47.9%;
+    bottom: -0.22rem;
+    left: 49.3%;
     justify-content: center;
-    width: min(29vw, 23.4rem);
-    height: calc(100% + 0.55rem);
+    width: min(31vw, 24.8rem);
+    height: calc(100% + 0.7rem);
     transform: translateX(-50%);
-    --hero-portrait-floor-y: 4.4%;
+    --hero-portrait-floor-y: 0%;
+  }
+
+  .hero-showcase__portrait {
+    width: auto;
+    height: calc(100% - var(--hero-portrait-headroom-desktop, var(--hero-portrait-headroom, 0rem)));
+    max-height: none;
+    filter: drop-shadow(0 20px 32px rgba(0, 0, 0, 0.22));
+    transform:
+      translate(
+        var(--hero-portrait-shift-x-desktop, var(--hero-portrait-shift-x, 0%)),
+        calc(
+          var(--hero-portrait-shift-y-desktop, var(--hero-portrait-shift-y, 0%))
+          + var(--hero-portrait-floor-y, 0%)
+          + var(--hero-portrait-drop-desktop, var(--hero-portrait-drop, 0%))
+        )
+      )
+      scale(var(--hero-portrait-scale-desktop, var(--hero-portrait-scale, 1)));
+    transform-origin: bottom center;
   }
 
   .hero__portrait-seam::after {
@@ -2300,7 +2369,7 @@ summary {
   }
 
   .hero-showcase__quote p {
-    max-width: 14.5ch;
+    max-width: 15.2ch;
     font-size: clamp(1.84rem, 1.82vw, 2.34rem);
     line-height: 0.94;
     letter-spacing: -0.045em;
@@ -2359,9 +2428,10 @@ summary {
   .hero-showcase__actions {
     flex-direction: row;
     align-items: center;
-    margin-top: 0.62rem;
+    margin-top: 0.68rem;
     width: 100%;
     max-width: none;
+    padding-top: 0;
   }
 
   .hero-showcase__next {
@@ -2448,22 +2518,29 @@ summary {
   }
 
   .hero__portrait-seam {
-    left: 47.9%;
-    width: min(30.5vw, 24.6rem);
-    height: calc(100% + 0.72rem);
-    bottom: -0.14rem;
-    --hero-portrait-floor-y: 5.2%;
+    left: 49.4%;
+    width: min(32vw, 25.5rem);
+    height: calc(100% + 0.9rem);
+    bottom: -0.24rem;
+    --hero-portrait-floor-y: 0%;
   }
 
   .hero-showcase__portrait {
+    width: auto;
     filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.24));
-    max-height: min(100%, 26rem);
+    height: calc(100% - var(--hero-portrait-headroom-desktop, var(--hero-portrait-headroom, 0rem)));
+    max-height: none;
     transform:
       translate(
-        var(--hero-portrait-shift-x, 0%),
-        calc(var(--hero-portrait-shift-y, 0%) + var(--hero-portrait-floor-y, 0%) + var(--hero-portrait-drop, 0%))
+        var(--hero-portrait-shift-x-desktop, var(--hero-portrait-shift-x, 0%)),
+        calc(
+          var(--hero-portrait-shift-y-desktop, var(--hero-portrait-shift-y, 0%))
+          + var(--hero-portrait-floor-y, 0%)
+          + var(--hero-portrait-drop-desktop, var(--hero-portrait-drop, 0%))
+        )
       )
-      scale(calc(var(--hero-portrait-scale, 1) * 0.98));
+      scale(var(--hero-portrait-scale-desktop, calc(var(--hero-portrait-scale, 1) * 1.02)));
+    transform-origin: bottom center;
   }
 
   .hero-showcase__shape-proxy {
