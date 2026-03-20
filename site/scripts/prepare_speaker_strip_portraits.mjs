@@ -16,10 +16,10 @@ const portraitBoundsOut = path.join(siteRoot, 'src', 'data', 'portrait-bounds.js
 
 const imageSuffixes = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 const correctedSuffixes = ['исправлено'];
-const targetHeight = 1500;
+const targetHeight = 1400;
 const topPadding = 24;
 const sidePadding = 24;
-const webpQuality = 92;
+const webpQuality = 90;
 const portraitSlices = {
   head: 0.22,
   shoulder: 0.34,
@@ -216,6 +216,10 @@ async function renderSpeakerStripPortrait(sourcePath, targetPath, geometry) {
       '-crop',
       `${geometry.crop.width}x${geometry.crop.height}+${geometry.crop.left}+${geometry.crop.top}`,
       '+repage',
+      '-filter',
+      'LanczosSharp',
+      '-define',
+      'filter:blur=0.96',
       '-resize',
       `x${targetHeight}`,
       ')',

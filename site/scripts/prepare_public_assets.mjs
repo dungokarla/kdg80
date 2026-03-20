@@ -1,8 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { prepareSpeakerStripPortraits } from './prepare_speaker_strip_portraits.mjs';
 
+const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const siteRoot = path.resolve(__dirname, '..');
 const workspaceRoot = path.resolve(siteRoot, '..');
@@ -12,6 +15,7 @@ const publicRoot = path.join(siteRoot, 'public');
 const sharedAssetsRoot = path.join(publicRoot, 'shared-assets');
 const festivalMediaPath = path.join(publicRoot, 'festival-media');
 const telegramPngPath = path.join(publicRoot, 'generated', 'telegram', 'kenigevents-qr.png');
+const generatedRoot = path.join(publicRoot, 'generated');
 
 const ALLOWED_EXTENSIONS = new Set(['.webp', '.svg', '.woff2', '.otf', '.txt']);
 const EXTRA_SHARED_ASSETS = [
@@ -28,6 +32,29 @@ const EXTRA_SHARED_ASSETS = [
     destinationPath: path.join(sharedAssetsRoot, 'logo-80-istorii-hero.svg'),
   },
 ];
+const NORMALIZATION_SPECS = [
+  {
+    label: 'speakers',
+    root: path.join(generatedRoot, 'speakers'),
+    maxWidth: 960,
+    maxHeight: 1050,
+    quality: 90,
+  },
+  {
+    label: 'lecture-portraits',
+    root: path.join(generatedRoot, 'lecture-portraits'),
+    maxWidth: 960,
+    maxHeight: 640,
+    quality: 90,
+  },
+  {
+    label: 'events',
+    root: path.join(generatedRoot, 'events'),
+    maxWidth: 1400,
+    maxHeight: 1400,
+    quality: 90,
+  },
+];
 
 async function removeIfExists(targetPath) {
   try {
@@ -42,6 +69,15 @@ async function removeIfExists(targetPath) {
 
 async function ensureDir(targetPath) {
   await fs.mkdir(targetPath, { recursive: true });
+}
+
+async function pathExists(targetPath) {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function copyAllowedAssets(sourceDir, destinationDir) {
@@ -84,6 +120,86 @@ async function copyExtraAssets(items) {
   }
 }
 
+async function listWebpFiles(rootDir) {
+  if (!await pathExists(rootDir)) {
+    return [];
+  }
+
+  const entries = await fs.readdir(rootDir, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile() && path.extname(entry.name).toLowerCase() === '.webp')
+    .map((entry) => path.join(rootDir, entry.name))
+    .sort();
+}
+
+async function getImageSize(targetPath) {
+  const { stdout } = await execFileAsync('identify', ['-format', '%w %h', targetPath], {
+    cwd: workspaceRoot,
+  });
+  const [widthText, heightText] = stdout.trim().split(/\s+/u);
+  return {
+    width: Number.parseInt(widthText, 10),
+    height: Number.parseInt(heightText, 10),
+  };
+}
+
+async function normalizeWebpInPlace(targetPath, spec) {
+  const { width, height } = await getImageSize(targetPath);
+  if (width <= spec.maxWidth && height <= spec.maxHeight) {
+    return false;
+  }
+
+  const tempPath = `${targetPath}.tmp.webp`;
+
+  try {
+    await execFileAsync(
+      'convert',
+      [
+        targetPath,
+        '-filter',
+        'LanczosSharp',
+        '-define',
+        'filter:blur=0.96',
+        '-resize',
+        `${spec.maxWidth}x${spec.maxHeight}>`,
+        '-strip',
+        '-define',
+        'webp:method=6',
+        '-define',
+        'webp:alpha-quality=100',
+        '-quality',
+        String(spec.quality),
+        tempPath,
+      ],
+      { cwd: workspaceRoot },
+    );
+    await fs.rename(tempPath, targetPath);
+    return true;
+  } catch (error) {
+    await removeIfExists(tempPath);
+    throw error;
+  }
+}
+
+async function normalizeGeneratedMedia() {
+  const report = [];
+
+  for (const spec of NORMALIZATION_SPECS) {
+    const files = await listWebpFiles(spec.root);
+    let normalized = 0;
+
+    for (const filePath of files) {
+      if (await normalizeWebpInPlace(filePath, spec)) {
+        normalized += 1;
+      }
+    }
+
+    report.push(`${spec.label}:${normalized}/${files.length}`);
+  }
+
+  return report.join(', ');
+}
+
 await removeIfExists(sharedAssetsRoot);
 await removeIfExists(festivalMediaPath);
 await removeIfExists(telegramPngPath);
@@ -91,5 +207,6 @@ await ensureDir(sharedAssetsRoot);
 await copyAllowedAssets(assetsRoot, sharedAssetsRoot);
 await copyExtraAssets(EXTRA_SHARED_ASSETS);
 await prepareSpeakerStripPortraits();
+const normalizationReport = await normalizeGeneratedMedia();
 
-console.log('Prepared public assets and regenerated speaker-strip portraits without png/jpg leakage.');
+console.log(`Prepared public assets, regenerated speaker-strip portraits, normalized oversized media (${normalizationReport}).`);

@@ -4,611 +4,611 @@
       "head": {
         "y": 0.2198,
         "visibleLeft": 0.3579,
-        "visibleRight": 0.6495,
-        "coverage": 0.2916
+        "visibleRight": 0.6471,
+        "coverage": 0.2892
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.3721,
-        "visibleRight": 0.6495,
-        "coverage": 0.2774
+        "visibleLeft": 0.3717,
+        "visibleRight": 0.6493,
+        "coverage": 0.2777
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.4323,
-        "visibleRight": 0.634,
-        "coverage": 0.2016
+        "visibleLeft": 0.4338,
+        "visibleRight": 0.6312,
+        "coverage": 0.1974
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1861,
-        "visibleRight": 0.8579,
-        "coverage": 0.6719
+        "visibleLeft": 0.1873,
+        "visibleRight": 0.8568,
+        "coverage": 0.6696
       }
     },
-    "width": 1478,
-    "height": 1524,
-    "visibleLeft": 0.0589,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9838,
+    "width": 1383,
+    "height": 1424,
+    "visibleLeft": 0.06,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9826,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/anisimov-andrey.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.4236,
-        "visibleRight": 0.6779,
-        "coverage": 0.2544
+        "visibleLeft": 0.4225,
+        "visibleRight": 0.6765,
+        "coverage": 0.254
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2206,
-        "visibleRight": 0.9649,
-        "coverage": 0.7444
+        "visibleLeft": 0.2233,
+        "visibleRight": 0.9626,
+        "coverage": 0.7393
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1003,
-        "visibleRight": 0.9236,
-        "coverage": 0.8233
+        "visibleLeft": 0.1043,
+        "visibleRight": 0.9211,
+        "coverage": 0.8168
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0301,
-        "visibleRight": 0.8509,
-        "coverage": 0.8208
+        "visibleLeft": 0.0321,
+        "visibleRight": 0.8489,
+        "coverage": 0.8168
       }
     },
-    "width": 798,
-    "height": 1524,
-    "visibleLeft": 0.0301,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9699,
+    "width": 748,
+    "height": 1424,
+    "visibleLeft": 0.0321,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9679,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/boyko-andrey.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3687,
-        "visibleRight": 0.5893,
-        "coverage": 0.2206
+        "visibleLeft": 0.3711,
+        "visibleRight": 0.5897,
+        "coverage": 0.2186
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1103,
-        "visibleRight": 0.8624,
-        "coverage": 0.7521
+        "visibleLeft": 0.1121,
+        "visibleRight": 0.861,
+        "coverage": 0.7489
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0515,
-        "visibleRight": 0.9034,
-        "coverage": 0.8519
+        "visibleLeft": 0.0538,
+        "visibleRight": 0.9013,
+        "coverage": 0.8475
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0305,
-        "visibleRight": 0.9359,
-        "coverage": 0.9055
+        "visibleLeft": 0.0314,
+        "visibleRight": 0.9339,
+        "coverage": 0.9025
       }
     },
-    "width": 952,
-    "height": 1524,
-    "visibleLeft": 0.0252,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9748,
+    "width": 892,
+    "height": 1424,
+    "visibleLeft": 0.0269,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9731,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/bystrova-larisa.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2594,
-        "visibleRight": 0.6867,
-        "coverage": 0.4273
+        "visibleLeft": 0.2552,
+        "visibleRight": 0.6873,
+        "coverage": 0.4321
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1475,
-        "visibleRight": 0.7762,
-        "coverage": 0.6287
+        "visibleLeft": 0.1488,
+        "visibleRight": 0.7731,
+        "coverage": 0.6243
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0641,
-        "visibleRight": 0.883,
-        "coverage": 0.8189
+        "visibleLeft": 0.0662,
+        "visibleRight": 0.8817,
+        "coverage": 0.8154
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0275,
-        "visibleRight": 0.9532,
-        "coverage": 0.9257
+        "visibleLeft": 0.0282,
+        "visibleRight": 0.9511,
+        "coverage": 0.9229
       }
     },
-    "width": 983,
-    "height": 1524,
-    "visibleLeft": 0.0244,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9756,
+    "width": 921,
+    "height": 1424,
+    "visibleLeft": 0.0261,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9739,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/dolotova-inga.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2926,
-        "visibleRight": 0.6518,
-        "coverage": 0.3592
+        "visibleLeft": 0.2925,
+        "visibleRight": 0.6517,
+        "coverage": 0.3591
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.3693,
-        "visibleRight": 0.8052,
-        "coverage": 0.4359
+        "visibleLeft": 0.3699,
+        "visibleRight": 0.8029,
+        "coverage": 0.4329
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.2639,
-        "visibleRight": 0.9317,
-        "coverage": 0.6678
+        "visibleLeft": 0.2664,
+        "visibleRight": 0.9307,
+        "coverage": 0.6643
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.3246,
-        "visibleRight": 0.9764,
-        "coverage": 0.6518
+        "visibleLeft": 0.3249,
+        "visibleRight": 0.9748,
+        "coverage": 0.6499
       }
     },
-    "width": 1186,
-    "height": 1524,
-    "visibleLeft": 0.2563,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9798,
+    "width": 1111,
+    "height": 1424,
+    "visibleLeft": 0.2574,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9784,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/efremov-leonid.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2179,
-        "visibleRight": 0.7189,
-        "coverage": 0.5009
+        "visibleLeft": 0.2185,
+        "visibleRight": 0.718,
+        "coverage": 0.4995
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.0566,
-        "visibleRight": 0.8623,
-        "coverage": 0.8057
+        "visibleLeft": 0.0584,
+        "visibleRight": 0.86,
+        "coverage": 0.8016
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0377,
-        "visibleRight": 0.9406,
-        "coverage": 0.9028
+        "visibleLeft": 0.0393,
+        "visibleRight": 0.9386,
+        "coverage": 0.8993
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1774,
-        "visibleRight": 0.9726,
-        "coverage": 0.7953
+        "visibleLeft": 0.1782,
+        "visibleRight": 0.9728,
+        "coverage": 0.7946
       }
     },
-    "width": 1060,
-    "height": 1524,
-    "visibleLeft": 0.0226,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9774,
+    "width": 993,
+    "height": 1424,
+    "visibleLeft": 0.0242,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9758,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/zhadobko-sergey.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3543,
+        "visibleLeft": 0.3551,
         "visibleRight": 0.6439,
-        "coverage": 0.2896
+        "coverage": 0.2888
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.4129,
-        "visibleRight": 0.7498,
-        "coverage": 0.3368
+        "visibleLeft": 0.4159,
+        "visibleRight": 0.7458,
+        "coverage": 0.3299
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1934,
-        "visibleRight": 0.9388,
-        "coverage": 0.7454
+        "visibleLeft": 0.1925,
+        "visibleRight": 0.9364,
+        "coverage": 0.7439
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.189,
-        "visibleRight": 0.9685,
-        "coverage": 0.7795
+        "visibleLeft": 0.1888,
+        "visibleRight": 0.9664,
+        "coverage": 0.7776
       }
     },
-    "width": 1143,
-    "height": 1524,
-    "visibleLeft": 0.1557,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.979,
+    "width": 1070,
+    "height": 1424,
+    "visibleLeft": 0.157,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9776,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/ilyushkina-ekaterina.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2202,
-        "visibleRight": 0.5077,
-        "coverage": 0.2875
+        "visibleLeft": 0.2213,
+        "visibleRight": 0.5078,
+        "coverage": 0.2865
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2342,
-        "visibleRight": 0.5332,
-        "coverage": 0.2991
+        "visibleLeft": 0.2353,
+        "visibleRight": 0.5326,
+        "coverage": 0.2973
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0788,
-        "visibleRight": 0.5997,
-        "coverage": 0.5209
+        "visibleLeft": 0.0809,
+        "visibleRight": 0.5995,
+        "coverage": 0.5186
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0193,
-        "visibleRight": 0.5804,
-        "coverage": 0.5611
+        "visibleLeft": 0.0198,
+        "visibleRight": 0.5805,
+        "coverage": 0.5607
       }
     },
-    "width": 1294,
-    "height": 1524,
-    "visibleLeft": 0.0185,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.6066,
+    "width": 1211,
+    "height": 1424,
+    "visibleLeft": 0.0198,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.6061,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/kazakova-natalya.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2608,
-        "visibleRight": 0.6905,
-        "coverage": 0.4297
+        "visibleLeft": 0.2621,
+        "visibleRight": 0.6894,
+        "coverage": 0.4273
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1894,
-        "visibleRight": 0.816,
-        "coverage": 0.6266
+        "visibleLeft": 0.1952,
+        "visibleRight": 0.8095,
+        "coverage": 0.6143
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0931,
-        "visibleRight": 0.9145,
-        "coverage": 0.8214
+        "visibleLeft": 0.0958,
+        "visibleRight": 0.9134,
+        "coverage": 0.8176
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0281,
-        "visibleRight": 0.9729,
-        "coverage": 0.9448
+        "visibleLeft": 0.03,
+        "visibleRight": 0.9711,
+        "coverage": 0.9411
       }
     },
-    "width": 924,
-    "height": 1524,
-    "visibleLeft": 0.026,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.974,
+    "width": 866,
+    "height": 1424,
+    "visibleLeft": 0.0277,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9723,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/kolbaneva-svetlana-ispravleno.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.1836,
-        "visibleRight": 0.6881,
-        "coverage": 0.5044
+        "visibleLeft": 0.1842,
+        "visibleRight": 0.6871,
+        "coverage": 0.503
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.0752,
-        "visibleRight": 0.8473,
-        "coverage": 0.7721
+        "visibleLeft": 0.0803,
+        "visibleRight": 0.8453,
+        "coverage": 0.7651
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0365,
-        "visibleRight": 0.9336,
-        "coverage": 0.8971
+        "visibleLeft": 0.0366,
+        "visibleRight": 0.9315,
+        "coverage": 0.8949
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0752,
-        "visibleRight": 0.9723,
-        "coverage": 0.8971
+        "visibleLeft": 0.0767,
+        "visibleRight": 0.9705,
+        "coverage": 0.8937
       }
     },
-    "width": 904,
-    "height": 1524,
-    "visibleLeft": 0.0265,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9735,
+    "width": 847,
+    "height": 1424,
+    "visibleLeft": 0.0283,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9717,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/kretinin-gennadiy.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.379,
-        "visibleRight": 0.705,
-        "coverage": 0.326
+        "visibleLeft": 0.3784,
+        "visibleRight": 0.7046,
+        "coverage": 0.3262
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.4202,
-        "visibleRight": 0.7531,
-        "coverage": 0.3329
+        "visibleLeft": 0.4225,
+        "visibleRight": 0.7494,
+        "coverage": 0.327
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1823,
-        "visibleRight": 0.912,
-        "coverage": 0.7297
+        "visibleLeft": 0.1837,
+        "visibleRight": 0.9111,
+        "coverage": 0.7274
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1142,
-        "visibleRight": 0.9532,
-        "coverage": 0.8391
+        "visibleLeft": 0.1154,
+        "visibleRight": 0.9522,
+        "coverage": 0.8369
       }
     },
-    "width": 1454,
-    "height": 1524,
-    "visibleLeft": 0.0165,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9835,
+    "width": 1361,
+    "height": 1424,
+    "visibleLeft": 0.0176,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9824,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/krimmel-natalya.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.0657,
-        "visibleRight": 0.5878,
-        "coverage": 0.5221
+        "visibleLeft": 0.0663,
+        "visibleRight": 0.5855,
+        "coverage": 0.5191
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.172,
-        "visibleRight": 0.6571,
-        "coverage": 0.4851
+        "visibleLeft": 0.1735,
+        "visibleRight": 0.6518,
+        "coverage": 0.4783
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0406,
-        "visibleRight": 0.8519,
-        "coverage": 0.8112
+        "visibleLeft": 0.0408,
+        "visibleRight": 0.8495,
+        "coverage": 0.8087
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1302,
-        "visibleRight": 0.9594,
-        "coverage": 0.8292
+        "visibleLeft": 0.1301,
+        "visibleRight": 0.9592,
+        "coverage": 0.8291
       }
     },
-    "width": 837,
-    "height": 1524,
-    "visibleLeft": 0.0287,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9713,
+    "width": 784,
+    "height": 1424,
+    "visibleLeft": 0.0306,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9694,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/levkova-olga.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.1044,
-        "visibleRight": 0.7146,
-        "coverage": 0.6102
+        "visibleLeft": 0.104,
+        "visibleRight": 0.7141,
+        "coverage": 0.6101
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.0835,
-        "visibleRight": 0.7854,
-        "coverage": 0.7019
+        "visibleLeft": 0.0854,
+        "visibleRight": 0.7834,
+        "coverage": 0.698
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0302,
-        "visibleRight": 0.9026,
-        "coverage": 0.8724
+        "visibleLeft": 0.0309,
+        "visibleRight": 0.901,
+        "coverage": 0.87
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.065,
-        "visibleRight": 0.9664,
-        "coverage": 0.9014
+        "visibleLeft": 0.0668,
+        "visibleRight": 0.9653,
+        "coverage": 0.8985
       }
     },
-    "width": 862,
-    "height": 1524,
-    "visibleLeft": 0.0278,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9722,
+    "width": 808,
+    "height": 1424,
+    "visibleLeft": 0.0297,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9703,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/levchenkov-andrey.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3489,
-        "visibleRight": 0.6625,
-        "coverage": 0.3136
+        "visibleLeft": 0.348,
+        "visibleRight": 0.6633,
+        "coverage": 0.3153
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2945,
-        "visibleRight": 0.6606,
-        "coverage": 0.3662
+        "visibleLeft": 0.298,
+        "visibleRight": 0.6592,
+        "coverage": 0.3612
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0411,
-        "visibleRight": 0.9398,
-        "coverage": 0.8987
+        "visibleLeft": 0.0418,
+        "visibleRight": 0.9378,
+        "coverage": 0.8959
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0258,
-        "visibleRight": 0.9551,
-        "coverage": 0.9293
+        "visibleLeft": 0.0265,
+        "visibleRight": 0.9531,
+        "coverage": 0.9265
       }
     },
-    "width": 1046,
-    "height": 1524,
-    "visibleLeft": 0.0229,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9771,
+    "width": 980,
+    "height": 1424,
+    "visibleLeft": 0.0245,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9755,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/litvinovich-irina.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3487,
-        "visibleRight": 0.7649,
-        "coverage": 0.4162
+        "visibleLeft": 0.3493,
+        "visibleRight": 0.7635,
+        "coverage": 0.4142
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1946,
-        "visibleRight": 0.8054,
-        "coverage": 0.6108
+        "visibleLeft": 0.1969,
+        "visibleRight": 0.8031,
+        "coverage": 0.6062
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1125,
-        "visibleRight": 0.9258,
-        "coverage": 0.8133
+        "visibleLeft": 0.1152,
+        "visibleRight": 0.9244,
+        "coverage": 0.8091
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.036,
-        "visibleRight": 0.9618,
-        "coverage": 0.9258
+        "visibleLeft": 0.0372,
+        "visibleRight": 0.9616,
+        "coverage": 0.9244
       }
     },
-    "width": 889,
-    "height": 1524,
-    "visibleLeft": 0.027,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.973,
+    "width": 833,
+    "height": 1424,
+    "visibleLeft": 0.0288,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9712,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/mankevich-dmitriy.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3424,
-        "visibleRight": 0.6265,
-        "coverage": 0.2841
+        "visibleLeft": 0.3427,
+        "visibleRight": 0.6257,
+        "coverage": 0.283
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.3974,
-        "visibleRight": 0.6129,
-        "coverage": 0.2155
+        "visibleLeft": 0.3973,
+        "visibleRight": 0.6121,
+        "coverage": 0.2148
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.158,
-        "visibleRight": 0.8739,
-        "coverage": 0.7159
+        "visibleLeft": 0.1603,
+        "visibleRight": 0.8721,
+        "coverage": 0.7118
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0766,
-        "visibleRight": 0.9354,
-        "coverage": 0.8587
+        "visibleLeft": 0.0776,
+        "visibleRight": 0.9344,
+        "coverage": 0.8568
       }
     },
-    "width": 1253,
-    "height": 1524,
-    "visibleLeft": 0.0192,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9808,
+    "width": 1173,
+    "height": 1424,
+    "visibleLeft": 0.0205,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9795,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/markovets-mihail.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3857,
-        "visibleRight": 0.674,
-        "coverage": 0.2883
+        "visibleLeft": 0.3853,
+        "visibleRight": 0.6735,
+        "coverage": 0.2882
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2084,
-        "visibleRight": 0.8356,
-        "coverage": 0.6272
+        "visibleLeft": 0.2108,
+        "visibleRight": 0.8333,
+        "coverage": 0.6225
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0542,
-        "visibleRight": 0.9633,
-        "coverage": 0.9091
+        "visibleLeft": 0.0549,
+        "visibleRight": 0.9608,
+        "coverage": 0.9059
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0487,
-        "visibleRight": 0.9054,
-        "coverage": 0.8567
+        "visibleLeft": 0.05,
+        "visibleRight": 0.9059,
+        "coverage": 0.8559
       }
     },
-    "width": 1089,
-    "height": 1524,
-    "visibleLeft": 0.022,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.978,
+    "width": 1020,
+    "height": 1424,
+    "visibleLeft": 0.0235,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9765,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/mashinskaya-ekaterina.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.4076,
-        "visibleRight": 0.6558,
-        "coverage": 0.2482
+        "visibleLeft": 0.4083,
+        "visibleRight": 0.656,
+        "coverage": 0.2477
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.3943,
-        "visibleRight": 0.6811,
-        "coverage": 0.2869
+        "visibleLeft": 0.3954,
+        "visibleRight": 0.6802,
+        "coverage": 0.2848
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.2568,
-        "visibleRight": 0.8252,
-        "coverage": 0.5684
+        "visibleLeft": 0.2577,
+        "visibleRight": 0.8244,
+        "coverage": 0.5667
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1955,
-        "visibleRight": 0.9139,
-        "coverage": 0.7185
+        "visibleLeft": 0.197,
+        "visibleRight": 0.9122,
+        "coverage": 0.7152
       }
     },
-    "width": 1499,
-    "height": 1524,
-    "visibleLeft": 0.1714,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.984,
+    "width": 1401,
+    "height": 1424,
+    "visibleLeft": 0.172,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9829,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/mosienko-evgeniy.webp": {
@@ -616,645 +616,645 @@
       "head": {
         "y": 0.2198,
         "visibleLeft": 0.2782,
-        "visibleRight": 0.6316,
-        "coverage": 0.3534
+        "visibleRight": 0.6334,
+        "coverage": 0.3552
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2763,
-        "visibleRight": 0.6078,
-        "coverage": 0.3315
+        "visibleLeft": 0.2768,
+        "visibleRight": 0.6079,
+        "coverage": 0.3311
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.3383,
-        "visibleRight": 0.5796,
-        "coverage": 0.2412
+        "visibleLeft": 0.3391,
+        "visibleRight": 0.5798,
+        "coverage": 0.2406
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1497,
-        "visibleRight": 0.6604,
-        "coverage": 0.5107
+        "visibleLeft": 0.1508,
+        "visibleRight": 0.6602,
+        "coverage": 0.5094
       }
     },
-    "width": 1596,
-    "height": 1524,
-    "visibleLeft": 0.015,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.8565,
+    "width": 1492,
+    "height": 1424,
+    "visibleLeft": 0.0161,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.8566,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/nadymova-valeriya.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.4977,
-        "visibleRight": 0.7914,
-        "coverage": 0.2937
+        "visibleLeft": 0.4975,
+        "visibleRight": 0.7898,
+        "coverage": 0.2923
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.4429,
-        "visibleRight": 0.7879,
-        "coverage": 0.345
+        "visibleLeft": 0.4465,
+        "visibleRight": 0.7861,
+        "coverage": 0.3396
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.162,
-        "visibleRight": 0.9697,
-        "coverage": 0.8077
+        "visibleLeft": 0.1629,
+        "visibleRight": 0.9677,
+        "coverage": 0.8047
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0501,
-        "visibleRight": 0.951,
-        "coverage": 0.9009
+        "visibleLeft": 0.0522,
+        "visibleRight": 0.9515,
+        "coverage": 0.8993
       }
     },
-    "width": 858,
-    "height": 1524,
-    "visibleLeft": 0.0501,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.972,
+    "width": 804,
+    "height": 1424,
+    "visibleLeft": 0.0522,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9701,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/nizhegorodtseva-evgeniya.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3012,
-        "visibleRight": 0.6357,
-        "coverage": 0.3345
+        "visibleLeft": 0.3031,
+        "visibleRight": 0.6352,
+        "coverage": 0.3321
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2925,
-        "visibleRight": 0.6935,
-        "coverage": 0.4011
+        "visibleLeft": 0.2937,
+        "visibleRight": 0.6932,
+        "coverage": 0.3994
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1699,
-        "visibleRight": 0.7907,
-        "coverage": 0.6208
+        "visibleLeft": 0.1712,
+        "visibleRight": 0.7895,
+        "coverage": 0.6183
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1156,
-        "visibleRight": 0.7102,
-        "coverage": 0.5946
+        "visibleLeft": 0.1169,
+        "visibleRight": 0.71,
+        "coverage": 0.5931
       }
     },
-    "width": 1142,
-    "height": 1524,
-    "visibleLeft": 0.021,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.8065,
+    "width": 1069,
+    "height": 1424,
+    "visibleLeft": 0.0225,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.8054,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/nikitin-nikita.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3569,
-        "visibleRight": 0.6903,
+        "visibleLeft": 0.357,
+        "visibleRight": 0.6904,
         "coverage": 0.3333
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.3097,
-        "visibleRight": 0.7275,
-        "coverage": 0.4177
+        "visibleLeft": 0.3119,
+        "visibleRight": 0.7209,
+        "coverage": 0.409
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1237,
-        "visibleRight": 0.8927,
-        "coverage": 0.769
+        "visibleLeft": 0.1246,
+        "visibleRight": 0.8907,
+        "coverage": 0.7661
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0815,
-        "visibleRight": 0.9292,
-        "coverage": 0.8476
+        "visibleLeft": 0.0833,
+        "visibleRight": 0.9281,
+        "coverage": 0.8448
       }
     },
-    "width": 1398,
-    "height": 1524,
-    "visibleLeft": 0.0172,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9828,
+    "width": 1308,
+    "height": 1424,
+    "visibleLeft": 0.0183,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9817,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/perkusov-nikolay.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2089,
-        "visibleRight": 0.5604,
-        "coverage": 0.3515
+        "visibleLeft": 0.2102,
+        "visibleRight": 0.561,
+        "coverage": 0.3508
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1523,
-        "visibleRight": 0.6268,
-        "coverage": 0.4744
+        "visibleLeft": 0.1568,
+        "visibleRight": 0.6225,
+        "coverage": 0.4657
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0283,
-        "visibleRight": 0.8118,
-        "coverage": 0.7835
+        "visibleLeft": 0.029,
+        "visibleRight": 0.8095,
+        "coverage": 0.7805
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0751,
-        "visibleRight": 0.9728,
-        "coverage": 0.8977
+        "visibleLeft": 0.0743,
+        "visibleRight": 0.971,
+        "coverage": 0.8966
       }
     },
-    "width": 919,
-    "height": 1524,
-    "visibleLeft": 0.0261,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9739,
+    "width": 861,
+    "height": 1424,
+    "visibleLeft": 0.0279,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9721,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/popadin-aleksandr.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.4327,
-        "visibleRight": 0.6762,
-        "coverage": 0.2436
+        "visibleLeft": 0.4321,
+        "visibleRight": 0.6753,
+        "coverage": 0.2431
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.4622,
-        "visibleRight": 0.8638,
-        "coverage": 0.4017
+        "visibleLeft": 0.4628,
+        "visibleRight": 0.8619,
+        "coverage": 0.399
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.3389,
-        "visibleRight": 0.9493,
-        "coverage": 0.6104
+        "visibleLeft": 0.3393,
+        "visibleRight": 0.9475,
+        "coverage": 0.6082
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.323,
-        "visibleRight": 0.9728,
-        "coverage": 0.6498
+        "visibleLeft": 0.3223,
+        "visibleRight": 0.9717,
+        "coverage": 0.6494
       }
     },
-    "width": 1322,
-    "height": 1524,
-    "visibleLeft": 0.2943,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9818,
+    "width": 1238,
+    "height": 1424,
+    "visibleLeft": 0.2948,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9806,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/sarnits-artur.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2734,
-        "visibleRight": 0.4694,
-        "coverage": 0.196
+        "visibleLeft": 0.2737,
+        "visibleRight": 0.4682,
+        "coverage": 0.1945
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1286,
-        "visibleRight": 0.5615,
-        "coverage": 0.4329
+        "visibleLeft": 0.1297,
+        "visibleRight": 0.5618,
+        "coverage": 0.4322
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0713,
-        "visibleRight": 0.648,
-        "coverage": 0.5766
+        "visibleLeft": 0.0726,
+        "visibleRight": 0.6477,
+        "coverage": 0.575
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0163,
-        "visibleRight": 0.8984,
-        "coverage": 0.8821
+        "visibleLeft": 0.0174,
+        "visibleRight": 0.8974,
+        "coverage": 0.88
       }
     },
-    "width": 1781,
-    "height": 1524,
-    "visibleLeft": 0.0135,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9865,
+    "width": 1666,
+    "height": 1424,
+    "visibleLeft": 0.0144,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9856,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/selin-igor-1.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2883,
-        "visibleRight": 0.5437,
-        "coverage": 0.2555
+        "visibleLeft": 0.2887,
+        "visibleRight": 0.5435,
+        "coverage": 0.2548
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1869,
-        "visibleRight": 0.8469,
-        "coverage": 0.66
+        "visibleLeft": 0.1921,
+        "visibleRight": 0.845,
+        "coverage": 0.6529
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0984,
-        "visibleRight": 0.9165,
-        "coverage": 0.8181
+        "visibleLeft": 0.0998,
+        "visibleRight": 0.9151,
+        "coverage": 0.8153
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0239,
-        "visibleRight": 0.9751,
-        "coverage": 0.9513
+        "visibleLeft": 0.0255,
+        "visibleRight": 0.9735,
+        "coverage": 0.948
       }
     },
-    "width": 1006,
-    "height": 1524,
-    "visibleLeft": 0.0239,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9761,
+    "width": 942,
+    "height": 1424,
+    "visibleLeft": 0.0255,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9745,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/selin-igor-2.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3088,
-        "visibleRight": 0.5641,
-        "coverage": 0.2553
+        "visibleLeft": 0.3082,
+        "visibleRight": 0.5633,
+        "coverage": 0.2551
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.0793,
-        "visibleRight": 0.8652,
-        "coverage": 0.7859
+        "visibleLeft": 0.0847,
+        "visibleRight": 0.8643,
+        "coverage": 0.7796
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0545,
-        "visibleRight": 0.9436,
-        "coverage": 0.8891
+        "visibleLeft": 0.0561,
+        "visibleRight": 0.9408,
+        "coverage": 0.8847
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0402,
-        "visibleRight": 0.9685,
-        "coverage": 0.9283
+        "visibleLeft": 0.0418,
+        "visibleRight": 0.9673,
+        "coverage": 0.9255
       }
     },
-    "width": 1046,
-    "height": 1524,
-    "visibleLeft": 0.0229,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9771,
+    "width": 980,
+    "height": 1424,
+    "visibleLeft": 0.0245,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9755,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/sivkova-svetlana.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.4196,
-        "visibleRight": 0.7632,
-        "coverage": 0.3436
+        "visibleLeft": 0.419,
+        "visibleRight": 0.7624,
+        "coverage": 0.3434
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2625,
-        "visibleRight": 0.8546,
-        "coverage": 0.592
+        "visibleLeft": 0.2651,
+        "visibleRight": 0.8503,
+        "coverage": 0.5852
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0927,
-        "visibleRight": 0.9331,
-        "coverage": 0.8404
+        "visibleLeft": 0.0948,
+        "visibleRight": 0.9299,
+        "coverage": 0.8352
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0386,
-        "visibleRight": 0.9627,
-        "coverage": 0.9241
+        "visibleLeft": 0.0385,
+        "visibleRight": 0.9602,
+        "coverage": 0.9217
       }
     },
-    "width": 777,
-    "height": 1524,
-    "visibleLeft": 0.0309,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9691,
+    "width": 728,
+    "height": 1424,
+    "visibleLeft": 0.033,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.967,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/sitnikova-natalya.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3662,
-        "visibleRight": 0.8816,
-        "coverage": 0.5154
+        "visibleLeft": 0.3666,
+        "visibleRight": 0.8799,
+        "coverage": 0.5133
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.3682,
-        "visibleRight": 0.9413,
-        "coverage": 0.5731
+        "visibleLeft": 0.3688,
+        "visibleRight": 0.9394,
+        "coverage": 0.5707
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.195,
-        "visibleRight": 0.9015,
-        "coverage": 0.7065
+        "visibleLeft": 0.1966,
+        "visibleRight": 0.9001,
+        "coverage": 0.7035
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0279,
-        "visibleRight": 0.8886,
-        "coverage": 0.8607
+        "visibleLeft": 0.0298,
+        "visibleRight": 0.8874,
+        "coverage": 0.8576
       }
     },
-    "width": 1005,
-    "height": 1524,
-    "visibleLeft": 0.0239,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9761,
+    "width": 941,
+    "height": 1424,
+    "visibleLeft": 0.0255,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9745,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/skrebtsova-anastasiya.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.1716,
-        "visibleRight": 0.7966,
-        "coverage": 0.625
+        "visibleLeft": 0.1747,
+        "visibleRight": 0.7953,
+        "coverage": 0.6206
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.4191,
-        "visibleRight": 0.6998,
-        "coverage": 0.2806
+        "visibleLeft": 0.4198,
+        "visibleRight": 0.6988,
+        "coverage": 0.279
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1801,
-        "visibleRight": 0.9167,
-        "coverage": 0.7365
+        "visibleLeft": 0.1838,
+        "visibleRight": 0.914,
+        "coverage": 0.7301
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0931,
-        "visibleRight": 0.924,
-        "coverage": 0.8309
+        "visibleLeft": 0.0965,
+        "visibleRight": 0.9244,
+        "coverage": 0.8279
       }
     },
-    "width": 816,
-    "height": 1524,
-    "visibleLeft": 0.0564,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9706,
+    "width": 767,
+    "height": 1424,
+    "visibleLeft": 0.06,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9687,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/sokolova-svetlana.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3657,
-        "visibleRight": 0.7618,
-        "coverage": 0.3961
+        "visibleLeft": 0.367,
+        "visibleRight": 0.7607,
+        "coverage": 0.3937
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2971,
-        "visibleRight": 0.7029,
-        "coverage": 0.4059
+        "visibleLeft": 0.2984,
+        "visibleRight": 0.7035,
+        "coverage": 0.4051
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0955,
-        "visibleRight": 0.8992,
-        "coverage": 0.8037
+        "visibleLeft": 0.0982,
+        "visibleRight": 0.897,
+        "coverage": 0.7989
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0294,
-        "visibleRight": 0.9607,
-        "coverage": 0.9313
+        "visibleLeft": 0.0315,
+        "visibleRight": 0.9581,
+        "coverage": 0.9266
       }
     },
-    "width": 1121,
-    "height": 1524,
-    "visibleLeft": 0.0214,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9786,
+    "width": 1049,
+    "height": 1424,
+    "visibleLeft": 0.0229,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9771,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/tatyana-konyuhova.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3073,
-        "visibleRight": 0.6777,
-        "coverage": 0.3703
+        "visibleLeft": 0.3071,
+        "visibleRight": 0.676,
+        "coverage": 0.3689
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.3066,
-        "visibleRight": 0.6162,
-        "coverage": 0.3096
+        "visibleLeft": 0.3055,
+        "visibleRight": 0.6143,
+        "coverage": 0.3087
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1784,
-        "visibleRight": 0.8801,
-        "coverage": 0.7016
+        "visibleLeft": 0.1796,
+        "visibleRight": 0.8797,
+        "coverage": 0.7001
       },
       "waist": {
         "y": 0.6201,
         "visibleLeft": 0.1379,
-        "visibleRight": 0.913,
-        "coverage": 0.7751
+        "visibleRight": 0.9126,
+        "coverage": 0.7747
       }
     },
-    "width": 1334,
-    "height": 1524,
-    "visibleLeft": 0.0855,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.982,
+    "width": 1247,
+    "height": 1424,
+    "visibleLeft": 0.0858,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9808,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/udovenko-tatyana.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.4067,
-        "visibleRight": 0.7185,
-        "coverage": 0.3118
+        "visibleLeft": 0.4065,
+        "visibleRight": 0.7182,
+        "coverage": 0.3117
       },
       "shoulder": {
         "y": 0.3399,
         "visibleLeft": 0.3865,
-        "visibleRight": 0.7543,
-        "coverage": 0.3678
+        "visibleRight": 0.7548,
+        "coverage": 0.3682
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.3686,
-        "visibleRight": 0.7745,
-        "coverage": 0.4059
+        "visibleLeft": 0.3691,
+        "visibleRight": 0.7731,
+        "coverage": 0.404
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0187,
-        "visibleRight": 0.7737,
-        "coverage": 0.7551
+        "visibleLeft": 0.02,
+        "visibleRight": 0.7739,
+        "coverage": 0.7539
       }
     },
-    "width": 1286,
-    "height": 1524,
-    "visibleLeft": 0.0187,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.7799,
+    "width": 1203,
+    "height": 1424,
+    "visibleLeft": 0.02,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.7797,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/tsedrik-mihail.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3566,
-        "visibleRight": 0.6685,
-        "coverage": 0.3119
+        "visibleLeft": 0.3559,
+        "visibleRight": 0.669,
+        "coverage": 0.3131
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.2849,
-        "visibleRight": 0.6927,
-        "coverage": 0.4078
+        "visibleLeft": 0.2893,
+        "visibleRight": 0.6938,
+        "coverage": 0.4046
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0885,
-        "visibleRight": 0.8939,
-        "coverage": 0.8054
+        "visibleLeft": 0.0895,
+        "visibleRight": 0.8917,
+        "coverage": 0.8022
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.0559,
-        "visibleRight": 0.9404,
-        "coverage": 0.8845
+        "visibleLeft": 0.0577,
+        "visibleRight": 0.9394,
+        "coverage": 0.8817
       }
     },
-    "width": 1074,
-    "height": 1524,
-    "visibleLeft": 0.0223,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9777,
+    "width": 1006,
+    "height": 1424,
+    "visibleLeft": 0.0239,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9761,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/yartsev-andrey-2.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.1515,
-        "visibleRight": 0.665,
-        "coverage": 0.5135
+        "visibleLeft": 0.1534,
+        "visibleRight": 0.6644,
+        "coverage": 0.511
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.0976,
-        "visibleRight": 0.9076,
-        "coverage": 0.81
+        "visibleLeft": 0.1,
+        "visibleRight": 0.9068,
+        "coverage": 0.8068
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0488,
-        "visibleRight": 0.8999,
-        "coverage": 0.8511
+        "visibleLeft": 0.0507,
+        "visibleRight": 0.8973,
+        "coverage": 0.8466
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.104,
-        "visibleRight": 0.8434,
-        "coverage": 0.7394
+        "visibleLeft": 0.1041,
+        "visibleRight": 0.8411,
+        "coverage": 0.737
       }
     },
-    "width": 779,
-    "height": 1524,
-    "visibleLeft": 0.0308,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9692,
+    "width": 730,
+    "height": 1424,
+    "visibleLeft": 0.0329,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.9671,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/yartsev-andrey-3.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.3226,
+        "visibleLeft": 0.3244,
         "visibleRight": 0.5792,
-        "coverage": 0.2565
+        "coverage": 0.2548
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1012,
-        "visibleRight": 0.6834,
-        "coverage": 0.5822
+        "visibleLeft": 0.1028,
+        "visibleRight": 0.6831,
+        "coverage": 0.5803
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.1182,
-        "visibleRight": 0.8146,
-        "coverage": 0.6964
+        "visibleLeft": 0.1199,
+        "visibleRight": 0.8137,
+        "coverage": 0.6938
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1323,
-        "visibleRight": 0.7024,
-        "coverage": 0.5701
+        "visibleLeft": 0.1338,
+        "visibleRight": 0.7013,
+        "coverage": 0.5675
       }
     },
-    "width": 998,
-    "height": 1524,
-    "visibleLeft": 0.024,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.8156,
+    "width": 934,
+    "height": 1424,
+    "visibleLeft": 0.0257,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.8148,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/yartsev-andrey.webp": {
     "slices": {
       "head": {
         "y": 0.2198,
-        "visibleLeft": 0.2577,
-        "visibleRight": 0.6985,
-        "coverage": 0.4407
+        "visibleLeft": 0.2582,
+        "visibleRight": 0.6951,
+        "coverage": 0.4368
       },
       "shoulder": {
         "y": 0.3399,
-        "visibleLeft": 0.1237,
-        "visibleRight": 0.9369,
-        "coverage": 0.8131
+        "visibleLeft": 0.1264,
+        "visibleRight": 0.9354,
+        "coverage": 0.8091
       },
       "chest": {
         "y": 0.4803,
-        "visibleLeft": 0.0335,
-        "visibleRight": 0.8827,
-        "coverage": 0.8492
+        "visibleLeft": 0.0357,
+        "visibleRight": 0.8805,
+        "coverage": 0.8448
       },
       "waist": {
         "y": 0.6201,
-        "visibleLeft": 0.1327,
-        "visibleRight": 0.857,
-        "coverage": 0.7242
+        "visibleLeft": 0.136,
+        "visibleRight": 0.8558,
+        "coverage": 0.7198
       }
     },
-    "width": 776,
-    "height": 1524,
-    "visibleLeft": 0.0309,
-    "visibleTop": 0.0157,
-    "visibleRight": 0.9691,
+    "width": 728,
+    "height": 1424,
+    "visibleLeft": 0.033,
+    "visibleTop": 0.0169,
+    "visibleRight": 0.967,
     "visibleBottom": 1
   }
 }
