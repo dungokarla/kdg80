@@ -10,6 +10,15 @@
 - Do not ask the user to clarify what `Opus` means unless they explicitly contrast it with another model.
 - If a tool, script, or agent needs a model name, map `Opus` directly to `opus`.
 
+## Opus Consultation Wait Policy
+
+- When the user explicitly asks to use `Opus` for consultation, do not use short exploratory timeouts that are likely to cut off a valid response.
+- Default to a generous wait budget for `Claude Opus` consultations. Prefer a single well-scoped request with a timeout in the several-minutes range rather than repeated short retries.
+- For substantial site, UX, frontend, or strategy consultations, prefer waiting up to `10 minutes` before treating the run as stalled, unless the user asked for a faster cut-off.
+- Do not retry `Opus` with a shorter timeout after an earlier timeout. If a rerun is needed, keep or increase the wait budget and improve the prompt instead of shrinking the limit.
+- Avoid repeated paid consultation attempts that are unlikely to finish. Make one deliberate request, wait properly, and only launch another run if the previous result is clearly unusable or the user asks for another angle.
+- If `Opus` appears blocked or unhealthy, report that transparently to the user, including the actual timeout used, instead of silently replacing the consultation with the agent's own opinion.
+
 ## Skill Usage Policy
 
 - For any interface, frontend, layout, visual, UX, landing page, or design-related work, always use the `ui-ux-pro-max` skill.
