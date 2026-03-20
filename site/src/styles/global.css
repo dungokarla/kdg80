@@ -2152,15 +2152,38 @@ summary {
 @media (min-width: 980px) {
   .hero-showcase {
     min-height: 37rem;
+    overflow: visible;
   }
 
   .hero-showcase__card {
-    max-width: min(52%, 23rem);
-    padding: 1.35rem;
+    justify-self: end;
+    align-content: center;
+    max-width: min(48%, 22rem);
+    padding: 1.35rem 1.35rem 1.35rem 0;
   }
 
   .hero-showcase__portrait-shell {
-    width: min(54%, 23rem);
+    left: -5.75rem;
+    right: auto;
+    justify-content: flex-start;
+    width: min(54%, 22rem);
+    height: calc(100% - 1.5rem);
+    bottom: 0;
+    pointer-events: none;
+  }
+
+  .hero-showcase__portrait {
+    object-position: bottom center;
+    filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.28));
+  }
+
+  .hero-showcase__quote-mark {
+    left: 0.2rem;
+    top: 1rem;
+  }
+
+  .hero-showcase[data-hero-kind="quote"] .hero-showcase__card {
+    max-width: min(46%, 21rem);
   }
 
   .telegram-card {
