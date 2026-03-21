@@ -157,7 +157,7 @@ const HERO_PORTRAIT_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
   { match: 'Долотова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0.8%; --hero-portrait-shift-y: 1.8%; --hero-portrait-scale-mobile: 1.14; --hero-portrait-shift-x-mobile: 1.4%;' },
   { match: 'Анисимов', style: '--hero-portrait-scale: 0.94; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%; --hero-portrait-scale-mobile: 1.12;' },
   { match: 'Казакова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.5%; --hero-portrait-scale-mobile: 1.24; --hero-portrait-shift-x-mobile: 2.1%;' },
-  { match: 'Соколова', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.2%; --hero-portrait-scale-mobile: 1.18; --hero-portrait-shift-x-mobile: 1%;' },
+  { match: 'Соколова', style: '--hero-portrait-scale: 0.95; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.2%; --hero-portrait-scale-mobile: 1.3; --hero-portrait-shift-x-mobile: 1.2%;' },
   { match: 'Конюхова', style: '--hero-portrait-scale: 0.93; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.8%; --hero-portrait-scale-mobile: 1.18; --hero-portrait-shift-x-mobile: 1.2%;' },
   { match: 'Надымова', style: '--hero-portrait-scale: 0.94; --hero-portrait-shift-x: 0%; --hero-portrait-shift-y: 1.6%; --hero-portrait-scale-mobile: 1.24; --hero-portrait-shift-x-mobile: 2.2%;' },
 ];
@@ -599,7 +599,7 @@ const fallbackHeroVariant: HeroImageVariant = {
 const heroStoryVariants = heroVariants.length ? heroVariants : [fallbackHeroVariant];
 const defaultHeroVariant = heroStoryVariants[0];
 const defaultHeroIsQuote = isHeroQuoteVariant(defaultHeroVariant);
-const defaultHeroShowsTitle = !defaultHeroIsQuote || defaultHeroVariant.quoteType === 'lecture';
+const defaultHeroShowsTitle = !defaultHeroIsQuote;
 const defaultHeroShowsBody = !defaultHeroIsQuote;
 const defaultHeroSceneStyle = defaultHeroIsQuote ? defaultHeroVariant.speakerSceneStyle ?? '' : '';
 const defaultHeroQuoteSize = defaultHeroIsQuote ? defaultHeroVariant.quoteSize : 'image';
@@ -1483,7 +1483,7 @@ function getDialogueMonogram(name: string) {
 	      const speakerRole = root.querySelector('[data-hero-speaker-role]');
 	      const eventLink = root.querySelector('[data-hero-event-link]');
 	      const isQuoteVariant = variant.kind === 'quote';
-	      const showsTitle = !isQuoteVariant || variant.quoteType === 'lecture';
+	      const showsTitle = !isQuoteVariant;
 	      const showsBody = !isQuoteVariant && Boolean(variant.body);
 	      root.style.cssText = isQuoteVariant ? variant.speakerSceneStyle || '' : '';
 
