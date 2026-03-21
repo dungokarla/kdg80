@@ -31,7 +31,6 @@
 - For substantial implementation, debugging, code review, or strategy consultations, prefer a wait budget in the several-minutes range before treating the run as stalled.
 - If Gemini fails because of auth, model selection, CLI initialization, or environment issues, report the actual command pattern and the concrete error instead of silently replacing the consultation with the agent's own opinion.
 
-
 ## Skill Usage Policy
 
 - For any interface, frontend, layout, visual, UX, landing page, or design-related work, always use the `ui-ux-pro-max` skill.
