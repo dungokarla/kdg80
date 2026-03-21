@@ -64,6 +64,9 @@
 - The proposal must name the requirement document(s) to be changed and list the concrete edits the agent wants to make to those requirements.
 - Only after the user confirms the requirement changes may the implementation work begin.
 - The goal is to keep the requirements documentation current and prevent important approved behavior from being accidentally lost during later iterations.
+- Maintain explicit status markers in the canonical requirements documents for requirement readiness and confirmation state.
+- After the user reports a defect or asks for a correction, update the affected requirement items to `Not done` or `Not confirmed by user` in the requirement document instead of leaving them implicitly green.
+- Do not mark a requirement item as fully done based only on internal checks. Internal validation may justify `Not confirmed by user`, but explicit user confirmation after manual testing is required before the requirement is marked done.
 
 ## Git / Push Policy
 
