@@ -540,6 +540,10 @@ function getHeroQuoteSize(value: string) {
   return 'poster';
 }
 
+function getWordParts(value: string) {
+  return value.trim().split(/\s+/u).filter(Boolean);
+}
+
 function normalizeLookupValue(value: string) {
   return value.replace(/\s+/g, ' ').trim().toLowerCase();
 }
@@ -628,6 +632,7 @@ const defaultHeroShowsTitle = defaultHeroIsMyth;
 const defaultHeroShowsBody = defaultHeroIsMyth;
 const defaultHeroSceneStyle = defaultHeroIsQuote ? defaultHeroVariant.speakerSceneStyle ?? '' : '';
 const defaultHeroQuoteSize = defaultHeroIsQuote ? defaultHeroVariant.quoteSize : 'image';
+const defaultHeroWordParts = defaultHeroIsMyth ? getWordParts(defaultHeroVariant.title) : [];
 const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 
 const speakerShowcasePayload = JSON.stringify(
@@ -723,8 +728,15 @@ const speakerShowcasePayload = JSON.stringify(
                       <p data-hero-quote>{defaultHeroIsQuote ? defaultHeroVariant.quote : ''}</p>
                     </blockquote>
 
-                    <h2 class="hero-showcase__title" data-hero-title hidden={!defaultHeroShowsTitle}>
-                      {defaultHeroIsMyth ? defaultHeroVariant.title : ''}
+                    <h2 class="hero-showcase__title word-reveal" data-hero-title hidden={!defaultHeroShowsTitle}>
+                      {defaultHeroIsMyth
+                        ? defaultHeroWordParts.map((word, index) => (
+                          <>
+                            <span class="word-reveal__word" style={`--word-index: ${index};`}>{word}</span>
+                            {index < defaultHeroWordParts.length - 1 && ' '}
+                          </>
+                        ))
+                        : ''}
                     </h2>
 
                     <p class="hero-showcase__body" data-hero-body hidden={!defaultHeroShowsBody}>
@@ -747,6 +759,7 @@ const speakerShowcasePayload = JSON.stringify(
                       <a
                         class="hero-showcase__theme-link"
                         data-hero-theme-link
+                        data-hero-theme-cta
                         href={defaultHeroIsMyth ? defaultHeroVariant.themeHref : undefined}
                         hidden={!defaultHeroIsMyth}
                       >
@@ -904,13 +917,11 @@ const speakerShowcasePayload = JSON.stringify(
   </div>
 
   <script is:inline>
-    const siteHeader = document.querySelector('.site-header');
     const heroShowcase = document.querySelector('[data-hero-showcase]');
-    const heroBrand = document.querySelector('.hero__brand');
     const speakerStrip = document.querySelector('.speaker-strip');
     const interestChooser = document.querySelector('[data-interest-chooser]');
+    const interestZone = document.querySelector('[data-interest-zone]');
     const programSection = document.querySelector('#program');
-    let headerStateFrame = 0;
 
     const shuffleInPlace = (items) => {
       const next = [...items];
@@ -921,62 +932,28 @@ const speakerShowcasePayload = JSON.stringify(
       return next;
     };
 
-    const getHeaderScrollThreshold = () => {
-      if (!(siteHeader instanceof HTMLElement)) {
-        return 24;
-      }
-
-      const isDesktopHeader = window.matchMedia('(min-width: 760px)').matches;
-      if (!isDesktopHeader && heroBrand instanceof HTMLElement) {
-        const heroBrandTop = heroBrand.getBoundingClientRect().top + window.scrollY;
-        return Math.max(heroBrandTop - siteHeader.offsetHeight - 8, 24);
-      }
-
-      return siteHeader.offsetHeight + 24;
-    };
-
-    const syncHeaderLogoState = () => {
-      if (!(siteHeader instanceof HTMLElement)) {
+    const syncInterestChooserState = () => {
+      if (!(interestChooser instanceof HTMLElement) || !(interestZone instanceof HTMLElement) || !(programSection instanceof HTMLElement)) {
         return;
       }
 
-      siteHeader.dataset.scrolled = window.scrollY > getHeaderScrollThreshold() ? 'true' : 'false';
+      const rootStyle = getComputedStyle(document.documentElement);
+      const headerHeight = Number.parseFloat(rootStyle.getPropertyValue('--site-header-height')) || 64;
+      const stickTop = headerHeight + 8;
+      const zoneTop = interestZone.getBoundingClientRect().top;
+      const programTop = programSection.getBoundingClientRect().top;
+      const isProgramActive = programTop <= stickTop + 28;
+      const isChooserStuck = zoneTop <= stickTop && !isProgramActive;
+
+      interestChooser.dataset.hidden = isProgramActive ? 'true' : 'false';
+      interestChooser.dataset.stuck = isChooserStuck ? 'true' : 'false';
     };
 
-    const requestHeaderLogoStateSync = () => {
-      if (headerStateFrame) {
-        return;
-      }
-
-      headerStateFrame = window.requestAnimationFrame(() => {
-        headerStateFrame = 0;
-        syncHeaderLogoState();
-      });
-    };
-
-    syncHeaderLogoState();
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        if (siteHeader instanceof HTMLElement) {
-          siteHeader.dataset.logoReady = 'true';
-        }
-      });
-    });
-    window.addEventListener('load', requestHeaderLogoStateSync);
-    window.addEventListener('hashchange', requestHeaderLogoStateSync);
-    window.addEventListener('scroll', requestHeaderLogoStateSync, { passive: true });
-    window.addEventListener('resize', requestHeaderLogoStateSync);
-
-    if (interestChooser instanceof HTMLElement && programSection instanceof HTMLElement && 'IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries) => {
-        const programVisible = entries.some((entry) => entry.isIntersecting);
-        interestChooser.dataset.hidden = programVisible ? 'true' : 'false';
-      }, {
-        rootMargin: '-96px 0px 0px 0px',
-        threshold: 0,
-      });
-
-      observer.observe(programSection);
+    if (interestChooser instanceof HTMLElement && interestZone instanceof HTMLElement && programSection instanceof HTMLElement) {
+      syncInterestChooserState();
+      window.addEventListener('load', syncInterestChooserState);
+      window.addEventListener('scroll', syncInterestChooserState, { passive: true });
+      window.addEventListener('resize', syncInterestChooserState);
     }
 
     const buildWeightedDeck = (variants) => {
@@ -1037,89 +1014,128 @@ const speakerShowcasePayload = JSON.stringify(
       return deck;
     };
 
-	    let heroSwitchTimer = 0;
-      let heroAutoplayTimer = 0;
+    let heroSwitchTimer = 0;
+    let heroAutoplayTimer = 0;
 
-	    const setHeroVariant = (root, variant, deckIndex, total) => {
-	      root.dataset.heroKind = variant.kind;
-	      root.dataset.heroQuoteType = variant.kind === 'quote' ? variant.quoteType : 'myth';
-	      root.dataset.heroQuoteSize = variant.kind === 'quote' ? variant.quoteSize : 'image';
-	      root.dataset.heroIndex = String(deckIndex);
+    const setWordRevealText = (element, text, animate) => {
+      if (!(element instanceof HTMLElement)) {
+        return;
+      }
 
-	      const heroShell = root.closest('.hero__shell');
-	      const quoteMark = root.querySelector('[data-hero-quote-mark]');
-	      const portraitShell = heroShell?.querySelector('[data-hero-portrait-shell]');
-	      const portrait = heroShell?.querySelector('[data-hero-portrait]');
-	      const shapeProxy = root.querySelector('[data-hero-shape-proxy]');
-	      const prompt = root.querySelector('[data-hero-prompt]');
-	      const title = root.querySelector('[data-hero-title]');
-	      const quoteShell = root.querySelector('[data-hero-quote-shell]');
-	      const quote = root.querySelector('[data-hero-quote]');
-	      const body = root.querySelector('[data-hero-body]');
-	      const speakerShell = root.querySelector('[data-hero-speaker-shell]');
-	      const speakerName = root.querySelector('[data-hero-speaker-name]');
-	      const speakerRole = root.querySelector('[data-hero-speaker-role]');
-	      const eventLink = root.querySelector('[data-hero-event-link]');
-	      const themeLink = root.querySelector('[data-hero-theme-link]');
-	      const isQuoteVariant = variant.kind === 'quote';
-	      const isMythVariant = variant.kind === 'myth';
-	      const showsTitle = isMythVariant;
-	      const showsBody = isMythVariant && Boolean(variant.body);
-	      root.style.cssText = isQuoteVariant ? variant.speakerSceneStyle || '' : '';
+      const words = String(text ?? '').trim().split(/\s+/u).filter(Boolean);
+      element.textContent = '';
+      element.classList.add('word-reveal');
 
-	      if (prompt instanceof HTMLElement) {
-	        prompt.textContent = variant.prompt;
-	      }
+      if (!words.length) {
+        return;
+      }
 
-	      if (title instanceof HTMLElement) {
-	        title.hidden = !showsTitle;
-	        title.textContent = showsTitle ? variant.title : '';
-	      }
+      const fragment = document.createDocumentFragment();
+      words.forEach((word, index) => {
+        const span = document.createElement('span');
+        span.className = 'word-reveal__word';
+        span.style.setProperty('--word-index', String(index));
+        span.textContent = word;
+        if (!animate) {
+          span.dataset.static = 'true';
+        }
+        fragment.append(span);
+        if (index < words.length - 1) {
+          fragment.append(document.createTextNode(' '));
+        }
+      });
 
-	      if (body instanceof HTMLElement) {
-	        body.hidden = !showsBody;
-	        body.textContent = showsBody ? variant.body : '';
-	      }
+      element.append(fragment);
+    };
 
-	      if (quoteMark instanceof HTMLElement) {
-	        quoteMark.hidden = !isQuoteVariant;
-	      }
+    const setHeroVariant = (root, variant, deckIndex, total) => {
+      root.dataset.heroKind = variant.kind;
+      root.dataset.heroQuoteType = variant.kind === 'quote' ? variant.quoteType : 'myth';
+      root.dataset.heroQuoteSize = variant.kind === 'quote' ? variant.quoteSize : 'image';
+      root.dataset.heroIndex = String(deckIndex);
 
-	      if (quoteShell instanceof HTMLElement) {
-	        quoteShell.hidden = !isQuoteVariant;
-	      }
+      const heroShell = root.closest('.hero__shell');
+      const quoteMark = root.querySelector('[data-hero-quote-mark]');
+      const portraitShell = heroShell?.querySelector('[data-hero-portrait-shell]');
+      const portrait = heroShell?.querySelector('[data-hero-portrait]');
+      const shapeProxy = root.querySelector('[data-hero-shape-proxy]');
+      const prompt = root.querySelector('[data-hero-prompt]');
+      const title = root.querySelector('[data-hero-title]');
+      const quoteShell = root.querySelector('[data-hero-quote-shell]');
+      const quote = root.querySelector('[data-hero-quote]');
+      const body = root.querySelector('[data-hero-body]');
+      const speakerShell = root.querySelector('[data-hero-speaker-shell]');
+      const speakerName = root.querySelector('[data-hero-speaker-name]');
+      const speakerRole = root.querySelector('[data-hero-speaker-role]');
+      const eventLink = root.querySelector('[data-hero-event-link]');
+      const themeLink = root.querySelector('[data-hero-theme-link]');
+      const isQuoteVariant = variant.kind === 'quote';
+      const isMythVariant = variant.kind === 'myth';
+      const showsTitle = isMythVariant;
+      const showsBody = isMythVariant && Boolean(variant.body);
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-	      if (shapeProxy instanceof HTMLElement) {
-	        shapeProxy.hidden = !isQuoteVariant;
-	      }
+      root.style.cssText = isQuoteVariant ? variant.speakerSceneStyle || '' : '';
+
+      if (prompt instanceof HTMLElement) {
+        prompt.textContent = variant.prompt;
+      }
+
+      if (title instanceof HTMLElement) {
+        title.hidden = !showsTitle;
+        if (showsTitle) {
+          setWordRevealText(title, variant.title, !prefersReducedMotion);
+        } else {
+          title.textContent = '';
+        }
+      }
+
+      if (body instanceof HTMLElement) {
+        body.hidden = !showsBody;
+        body.textContent = showsBody ? variant.body : '';
+      }
+
+      if (quoteMark instanceof HTMLElement) {
+        quoteMark.hidden = !isQuoteVariant;
+      }
+
+      if (quoteShell instanceof HTMLElement) {
+        quoteShell.hidden = !isQuoteVariant;
+      }
+
+      if (shapeProxy instanceof HTMLElement) {
+        shapeProxy.hidden = !isQuoteVariant;
+      }
 
       if (speakerShell instanceof HTMLElement) {
         speakerShell.hidden = !isQuoteVariant;
       }
 
-	      if (portraitShell instanceof HTMLElement) {
-	        portraitShell.hidden = !isQuoteVariant;
-	      }
+      if (portraitShell instanceof HTMLElement) {
+        portraitShell.hidden = !isQuoteVariant;
+      }
 
-	      if (eventLink instanceof HTMLAnchorElement) {
-	        const eventHref = isQuoteVariant
-	          ? (variant.quoteType === 'lecture' && variant.eventHref ? variant.eventHref : '#program')
-	          : variant.eventHref;
-	        eventLink.href = eventHref;
-	        eventLink.textContent = isQuoteVariant ? 'К лекции' : 'К событию';
-	      }
+      if (eventLink instanceof HTMLAnchorElement) {
+        const eventHref = isQuoteVariant
+          ? (variant.quoteType === 'lecture' && variant.eventHref ? variant.eventHref : '#program')
+          : variant.eventHref;
+        eventLink.href = eventHref;
+        eventLink.textContent = isQuoteVariant ? 'К лекции' : 'К событию';
+      }
 
-	      if (themeLink instanceof HTMLAnchorElement) {
-	        themeLink.hidden = !isMythVariant;
-	        if (isMythVariant) {
-	          themeLink.href = variant.themeHref;
-	        }
-	      }
+      if (themeLink instanceof HTMLAnchorElement) {
+        themeLink.hidden = !isMythVariant;
+        if (isMythVariant) {
+          themeLink.href = variant.themeHref;
+        } else {
+          themeLink.removeAttribute('href');
+        }
+      }
 
-	      if (isQuoteVariant) {
-	        if (quote instanceof HTMLElement) {
-	          quote.textContent = variant.quote;
-	        }
+      if (isQuoteVariant) {
+        if (quote instanceof HTMLElement) {
+          quote.textContent = variant.quote;
+        }
 
         if (speakerName instanceof HTMLElement) {
           speakerName.textContent = variant.speakerName;
@@ -1130,11 +1146,11 @@ const speakerShowcasePayload = JSON.stringify(
           speakerRole.hidden = !variant.speakerRole;
         }
 
-	        if (portrait instanceof HTMLImageElement) {
-	          portrait.src = variant.speakerImage;
-	          portrait.style.cssText = variant.speakerStyle || '';
-	        }
-	      } else if (isMythVariant) {
+        if (portrait instanceof HTMLImageElement) {
+          portrait.src = variant.speakerImage;
+          portrait.style.cssText = variant.speakerStyle || '';
+        }
+      } else if (isMythVariant) {
         if (quote instanceof HTMLElement) {
           quote.textContent = '';
         }
@@ -1147,12 +1163,12 @@ const speakerShowcasePayload = JSON.stringify(
           speakerRole.textContent = '';
         }
 
-	        if (portrait instanceof HTMLImageElement) {
-	          portrait.removeAttribute('src');
-	          portrait.style.cssText = '';
-	        }
-	      }
-	    };
+        if (portrait instanceof HTMLImageElement) {
+          portrait.removeAttribute('src');
+          portrait.style.cssText = '';
+        }
+      }
+    };
 
     const queueHeroVariant = (root, variant, deckIndex, total) => {
       if (heroSwitchTimer) {
@@ -1165,7 +1181,7 @@ const speakerShowcasePayload = JSON.stringify(
         setHeroVariant(root, variant, deckIndex, total);
         root.dataset.switching = 'false';
         heroSwitchTimer = 0;
-      }, 140);
+      }, 220);
     };
 
     const hydrateHeroShowcase = () => {
@@ -1183,10 +1199,11 @@ const speakerShowcasePayload = JSON.stringify(
 
         let deck = buildWeightedDeck(variants);
         let deckIndex = 0;
+        let userInteracted = false;
         const isMobile = window.matchMedia('(max-width: 759px), (pointer: coarse)').matches;
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const startAutoplay = () => {
-          if (isMobile || prefersReducedMotion || deck.length < 2) {
+          if (isMobile || prefersReducedMotion || deck.length < 2 || userInteracted) {
             return;
           }
 
@@ -1210,11 +1227,13 @@ const speakerShowcasePayload = JSON.stringify(
 
         if (nextButton instanceof HTMLButtonElement && variants.length > 1) {
           nextButton.addEventListener('click', () => {
+            userInteracted = true;
+            if (heroAutoplayTimer) {
+              window.clearTimeout(heroAutoplayTimer);
+              heroAutoplayTimer = 0;
+            }
             deckIndex = (deckIndex + 1) % deck.length;
             queueHeroVariant(heroShowcase, variants[deck[deckIndex]], deckIndex, variants.length);
-            if (!isMobile) {
-              startAutoplay();
-            }
           });
         }
 

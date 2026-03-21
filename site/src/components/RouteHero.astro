@@ -10,35 +10,26 @@ const { route, programHref } = Astro.props;
 const variants = route.heroMyths.length ? route.heroMyths : route.myths;
 const defaultVariant = variants[0];
 const variantsPayload = JSON.stringify(variants);
+const defaultWords = defaultVariant ? getWordParts(defaultVariant.text) : [];
+
+function getWordParts(value: string) {
+  return value.trim().split(/\s+/u).filter(Boolean);
+}
 ---
 
 <section class="route-hero" data-route-hero data-route-variants={variantsPayload} data-route-index="0">
   <div class="container route-hero__shell">
-    <div class="route-hero__copy">
-      <p class="route-hero__eyebrow">Маршрут по интересам</p>
-      <h1>{route.title}</h1>
-      <p class="route-hero__description">{route.description}</p>
-      <div class="route-hero__meta">
-        <span>{route.events.length} событий в подборке</span>
-        <span>{Math.max(route.heroMyths.length, route.myths.length)} мифов в ротации</span>
-      </div>
-      <div class="route-hero__static-actions">
-        <a class="button button--ghost" href={programHref}>К программе</a>
-      </div>
-    </div>
-
     {defaultVariant && (
       <div class="route-hero__myth-card" data-route-hero-card>
-        <div class="route-hero__ambient" aria-hidden="true">
-          {defaultVariant.ambientImage && (
-            <img data-route-hero-image src={defaultVariant.ambientImage} alt="" loading="eager" decoding="async" />
-          )}
-        </div>
-
         <div class="route-hero__myth-body">
           <p class="route-hero__myth-label">Миф:</p>
-          <a class="route-hero__myth-link" data-route-hero-link href={defaultVariant.eventHref}>
-            {defaultVariant.text}
+          <a class="route-hero__myth-link word-reveal" data-route-hero-link data-word-reveal href={defaultVariant.eventHref}>
+            {defaultWords.map((word, index) => (
+              <>
+                <span class="word-reveal__word" style={`--word-index: ${index};`}>{word}</span>
+                {index < defaultWords.length - 1 && ' '}
+              </>
+            ))}
           </a>
           <p class="route-hero__speaker-line" data-route-hero-context>{defaultVariant.speakerLine}</p>
 
@@ -51,6 +42,18 @@ const variantsPayload = JSON.stringify(variants);
         </div>
       </div>
     )}
+
+    <div class="route-hero__copy">
+      <p class="route-hero__eyebrow">Маршрут по интересам</p>
+      <h1>{route.title}</h1>
+      <p class="route-hero__description">{route.description}</p>
+      <div class="route-hero__meta">
+        <span>{route.events.length} событий в подборке</span>
+      </div>
+      <div class="route-hero__static-actions">
+        <a class="button button--ghost" href={programHref}>К программе</a>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -66,26 +69,47 @@ const variantsPayload = JSON.stringify(variants);
     return deck;
   };
 
+  const setWordRevealText = (element, text, animate) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+
+    const words = String(text ?? '').trim().split(/\s+/u).filter(Boolean);
+    element.textContent = '';
+    element.classList.add('word-reveal');
+
+    if (!words.length) {
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    words.forEach((word, index) => {
+      const span = document.createElement('span');
+      span.className = 'word-reveal__word';
+      span.style.setProperty('--word-index', String(index));
+      span.textContent = word;
+      if (!animate) {
+        span.dataset.static = 'true';
+      }
+      fragment.append(span);
+      if (index < words.length - 1) {
+        fragment.append(document.createTextNode(' '));
+      }
+    });
+
+    element.append(fragment);
+  };
+
   const setRouteHeroVariant = (root, variant, index) => {
     root.dataset.routeIndex = String(index);
-    const image = root.querySelector('[data-route-hero-image]');
     const mythLink = root.querySelector('[data-route-hero-link]');
     const speakerLine = root.querySelector('[data-route-hero-context]');
     const cta = root.querySelector('[data-route-hero-cta]');
-
-    if (image instanceof HTMLImageElement) {
-      if (variant.ambientImage) {
-        image.hidden = false;
-        image.src = variant.ambientImage;
-      } else {
-        image.hidden = true;
-        image.removeAttribute('src');
-      }
-    }
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (mythLink instanceof HTMLAnchorElement) {
-      mythLink.textContent = variant.text;
       mythLink.href = variant.eventHref;
+      setWordRevealText(mythLink, variant.text, !reducedMotion);
     }
 
     if (speakerLine instanceof HTMLElement) {
@@ -103,20 +127,22 @@ const variantsPayload = JSON.stringify(variants);
       if (Array.isArray(variants) && variants.length > 1) {
         const nextButton = routeHero.querySelector('[data-route-hero-next]');
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isMobile = window.matchMedia('(max-width: 759px), (pointer: coarse)').matches;
         let deck = buildDeck(variants);
         let deckIndex = 0;
         let timer = 0;
+        let userInteracted = false;
 
         const goToIndex = (nextDeckIndex) => {
           routeHero.dataset.switching = 'true';
           window.setTimeout(() => {
             setRouteHeroVariant(routeHero, variants[deck[nextDeckIndex]], nextDeckIndex);
             routeHero.dataset.switching = 'false';
-          }, prefersReducedMotion ? 0 : 130);
+          }, prefersReducedMotion ? 0 : 220);
         };
 
         const queueNext = () => {
-          if (prefersReducedMotion) {
+          if (prefersReducedMotion || isMobile || userInteracted) {
             return;
           }
 
@@ -140,13 +166,17 @@ const variantsPayload = JSON.stringify(variants);
 
         if (nextButton instanceof HTMLButtonElement) {
           nextButton.addEventListener('click', () => {
+            userInteracted = true;
+            if (timer) {
+              window.clearTimeout(timer);
+              timer = 0;
+            }
             deckIndex += 1;
             if (deckIndex >= deck.length) {
               deck = buildDeck(variants);
               deckIndex = 0;
             }
             goToIndex(deckIndex);
-            queueNext();
           });
         }
 
@@ -160,10 +190,11 @@ const variantsPayload = JSON.stringify(variants);
         routeHero.addEventListener('mouseleave', () => {
           queueNext();
         });
+      } else if (Array.isArray(variants) && variants.length === 1) {
+        setRouteHeroVariant(routeHero, variants[0], 0);
       }
     } catch (error) {
       console.error('Route hero hydration failed', error);
     }
   }
 </script>
-

@@ -203,7 +203,7 @@ const temporalState = getEventTemporalState(event, now);
       {isSpecialEvent ? (
         <div class={`event-card__visual ${stageImage ? 'event-card__visual--special' : 'event-card__visual--plain event-card__visual--special'}`}>
           {stageImage && (
-            <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" />
+            <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" fetchpriority="low" />
           )}
           <div class="event-card__overlay"></div>
         </div>
@@ -252,6 +252,7 @@ const temporalState = getEventTemporalState(event, now);
                         alt={participant.name}
                         loading="lazy"
                         decoding="async"
+                        fetchpriority="low"
                         style={getDialoguePortraitStyle(participant.name)}
                       />
                     ) : (
@@ -267,7 +268,7 @@ const temporalState = getEventTemporalState(event, now);
             <>
               <div class={`event-card__visual ${stageImage ? '' : 'event-card__visual--plain'}`}>
                 {stageImage && (
-                  <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" />
+                  <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" fetchpriority="low" />
                 )}
                 <div class="event-card__overlay"></div>
 
@@ -290,6 +291,7 @@ const temporalState = getEventTemporalState(event, now);
                     alt={event.speakerLabel}
                     loading="lazy"
                     decoding="async"
+                    fetchpriority="low"
                   />
                   {portraitImages.length > 1 && (
                     <img
@@ -298,6 +300,7 @@ const temporalState = getEventTemporalState(event, now);
                       alt={event.speakerLabel}
                       loading="lazy"
                       decoding="async"
+                      fetchpriority="low"
                       aria-hidden="true"
                     />
                   )}
@@ -473,4 +476,3 @@ const temporalState = getEventTemporalState(event, now);
     )}
   </div>
 </article>
-

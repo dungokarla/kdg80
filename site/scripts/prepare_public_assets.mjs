@@ -36,23 +36,23 @@ const NORMALIZATION_SPECS = [
   {
     label: 'speakers',
     root: path.join(generatedRoot, 'speakers'),
-    maxWidth: 960,
-    maxHeight: 1050,
-    quality: 90,
+    maxWidth: 840,
+    maxHeight: 920,
+    quality: 84,
   },
   {
     label: 'lecture-portraits',
     root: path.join(generatedRoot, 'lecture-portraits'),
-    maxWidth: 960,
-    maxHeight: 640,
-    quality: 90,
+    maxWidth: 760,
+    maxHeight: 560,
+    quality: 84,
   },
   {
     label: 'events',
     root: path.join(generatedRoot, 'events'),
-    maxWidth: 1400,
-    maxHeight: 1400,
-    quality: 90,
+    maxWidth: 1200,
+    maxHeight: 1200,
+    quality: 82,
   },
 ];
 

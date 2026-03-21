@@ -16,10 +16,10 @@ const portraitBoundsOut = path.join(siteRoot, 'src', 'data', 'portrait-bounds.js
 
 const imageSuffixes = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 const correctedSuffixes = ['исправлено'];
-const targetHeight = 1400;
-const topPadding = 24;
-const sidePadding = 24;
-const webpQuality = 90;
+const targetHeight = 1180;
+const topPadding = 20;
+const sidePadding = 20;
+const webpQuality = 84;
 const portraitSlices = {
   head: 0.22,
   shoulder: 0.34,

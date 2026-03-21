@@ -22,9 +22,10 @@ const {
 } = Astro.props;
 
 const logoHref = isHome ? '#top' : '/';
+const headerKind = isHome ? 'home' : (currentRouteSlug ? 'route' : 'default');
 ---
 
-<header class="site-header" data-scrolled="false" data-logo-ready="false">
+<header class="site-header" data-site-header data-header-kind={headerKind} data-scrolled="false" data-logo-ready="false">
   <div class="container site-header__row">
     <a class="site-header__logo" href={logoHref} aria-label="Российское общество Знание, фестиваль 80 историй о главном">
       <span class="site-header__logo-shell" aria-hidden="true">
@@ -39,7 +40,7 @@ const logoHref = isHome ? '#top' : '/';
 
     <nav class="site-header__nav" aria-label="Быстрые разделы">
       <details class="site-header__route-menu">
-        <summary>По интересам</summary>
+        <summary><span class="site-header__route-summary-label" data-mobile-label="Темы">По интересам</span></summary>
         <div class="site-header__route-panel">
           {routeItems.map((item) => (
             <a
@@ -62,3 +63,76 @@ const logoHref = isHome ? '#top' : '/';
   </div>
 </header>
 
+<script is:inline>
+  (() => {
+    const siteHeader = document.querySelector('[data-site-header]');
+    if (!(siteHeader instanceof HTMLElement) || siteHeader.dataset.enhanced === 'true') {
+      return;
+    }
+
+    siteHeader.dataset.enhanced = 'true';
+
+    let headerStateFrame = 0;
+
+    const syncHeaderHeight = () => {
+      document.documentElement.style.setProperty('--site-header-height', `${siteHeader.offsetHeight}px`);
+    };
+
+    const getHomeThreshold = () => {
+      const heroBrand = document.querySelector('.hero__brand');
+      const isDesktopHeader = window.matchMedia('(min-width: 760px)').matches;
+      if (!isDesktopHeader && heroBrand instanceof HTMLElement) {
+        const heroBrandTop = heroBrand.getBoundingClientRect().top + window.scrollY;
+        return Math.max(heroBrandTop - siteHeader.offsetHeight - 8, 24);
+      }
+
+      return siteHeader.offsetHeight + 24;
+    };
+
+    const getRouteThreshold = () => {
+      const routeHero = document.querySelector('.route-hero');
+      if (routeHero instanceof HTMLElement) {
+        const routeHeroTop = routeHero.getBoundingClientRect().top + window.scrollY;
+        return Math.max(routeHeroTop + 36, 28);
+      }
+
+      return siteHeader.offsetHeight + 24;
+    };
+
+    const syncHeaderLogoState = () => {
+      syncHeaderHeight();
+
+      const headerKind = siteHeader.dataset.headerKind ?? 'default';
+      const threshold = headerKind === 'home'
+        ? getHomeThreshold()
+        : headerKind === 'route'
+          ? getRouteThreshold()
+          : siteHeader.offsetHeight + 24;
+
+      siteHeader.dataset.scrolled = window.scrollY > threshold ? 'true' : 'false';
+    };
+
+    const requestHeaderLogoStateSync = () => {
+      if (headerStateFrame) {
+        return;
+      }
+
+      headerStateFrame = window.requestAnimationFrame(() => {
+        headerStateFrame = 0;
+        syncHeaderLogoState();
+      });
+    };
+
+    syncHeaderLogoState();
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        siteHeader.dataset.logoReady = 'true';
+      });
+    });
+
+    window.addEventListener('load', requestHeaderLogoStateSync);
+    window.addEventListener('hashchange', requestHeaderLogoStateSync);
+    window.addEventListener('scroll', requestHeaderLogoStateSync, { passive: true });
+    window.addEventListener('resize', requestHeaderLogoStateSync);
+  })();
+</script>
