@@ -6,19 +6,24 @@ Feature: Festival registration system
   Background:
     Given the public website uses a dedicated HTTPS API endpoint for registration
     And the registration backend is deployed on Fly.io
+    And the website registration form submits directly to the Fly.io API
     And the database stores personal data only as encrypted payloads plus blind indexes
-    And ticket artifacts are published as static HTML and PDF files
+    And ticket artifacts are published as static HTML, PDF and ICS files
 
   @happy_path @playwright @telethon
   Scenario: Successful registration for an open event
     Given an event "scientific-library-open" is open for registration with available seats
     When the visitor submits valid full name, email and Russian phone for that event
     Then the registration is created
-    And the visitor sees the ticket page at "/ticket/<public_hash>"
+    And the visitor sees the ticket page at "/ticket/<public_hash>" on the main site domain
     And the ticket page shows a 6-character short ticket ID
+    And the ticket page shows the full venue address
+    And the ticket page invites the visitor to add the event to a calendar
+    And the ticket page offers Google Calendar, Apple Calendar and ICS options
     And the ticket page offers "Download PDF"
     And the ticket page says "Printing the ticket is not required"
-    And the operator receives a Telegram notification with visitor name, event, date, time and remaining seats
+    And the ticket page does not offer self-service cancellation
+    And the superadmin receives a Telegram notification with visitor name, event, date, time and remaining seats
 
   @dedupe
   Scenario: Duplicate registration is blocked inside the same event
@@ -64,8 +69,9 @@ Feature: Festival registration system
     When a visitor successfully registers for that event
     Then the backend generates a static HTML ticket page from a lightweight template
     And the backend generates a PDF ticket from the same ticket view-model
+    And the backend generates an ICS calendar file from the same event data
     And the backend generates a long public hash and a unique 6-character short ticket ID
-    And both artifacts are uploaded to the configured bucket
+    And all generated artifacts are uploaded to the configured bucket
     And the database stores only the artifact URLs and encrypted personal payload
 
   @telegram_outage
@@ -84,13 +90,15 @@ Feature: Festival registration system
     Given no Telegram admin exists yet
     When user "first-admin" sends "/start" to the bot
     Then "first-admin" becomes superadmin
+    And the bot shows button navigation after "/start"
+    And the bot supports the "/help" command
     When user "second-user" sends "/start" to the bot
     Then "second-user" does not become admin automatically
     When the superadmin grants operator role to "second-user"
-    Then "second-user" can open event reports and exports
+    Then "second-user" can open event reports and event-level exports
 
   @operator_tools
-  Scenario: Operator receives report and emergency export access
+  Scenario: Operator receives report access and superadmin keeps emergency export access
     Given an operator exists in the system
     And registrations already exist for event "tretyakovka-open"
     When the operator requests the event report in Telegram
@@ -98,16 +106,18 @@ Feature: Festival registration system
     And the Telegram interface shows masked email and phone
     And the bot can generate an XLSX file with event, name, email, phone and ticket link
     When Telegram remains unavailable for a long period
-    Then the operator can use the protected emergency export endpoint
+    Then the superadmin can use the protected emergency export endpoint
 
   @registration_switch
   Scenario: Registration is opened and closed from Telegram
     Given event "science-center-open" exists in the system
     And registration for that event is closed
-    When a privileged Telegram user sends the open-registration command for "science-center-open"
+    When the superadmin sends the open-registration command for "science-center-open"
     Then registration for "science-center-open" becomes open in the internal system
-    When the privileged Telegram user sends the close-registration command for "science-center-open"
+    When the superadmin sends the close-registration command for "science-center-open"
     Then registration for "science-center-open" becomes closed
+    When an operator sends the open-registration command for "science-center-open"
+    Then the command is rejected
 
   @privacy
   Scenario: Personal data is not stored in plaintext inside the database
