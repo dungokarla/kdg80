@@ -436,6 +436,7 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
   });
 
   return {
+    bot,
     async ensureWebhook() {
       const webhookUrl = `${deps.appBaseUrl.replace(/\/+$/u, '')}${deps.webhookPath}`;
       await bot.api.setWebhook(webhookUrl, {

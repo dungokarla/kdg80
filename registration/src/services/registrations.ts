@@ -5,6 +5,7 @@ import { computeFingerprint, encryptPii } from '../lib/crypto';
 import { createPublicHash, createShortTicketId } from '../lib/ticket';
 import type { StoragePublisher } from '../lib/storage';
 import { publishTicketArtifacts } from './ticket-artifacts';
+import { enqueueRegistrationCreated } from './telegram-outbox';
 import { derivePublicState } from '../lib/public-state';
 
 type RegistrationDeps = {
@@ -157,6 +158,13 @@ export async function createRegistration(payload: RegistrationPayload, deps: Reg
     )
   `);
 
+  const readSeatsTaken = deps.db.prepare(`
+    SELECT seats_taken
+    FROM events
+    WHERE id = ?
+    LIMIT 1
+  `);
+
   const reserveAndInsert = deps.db.transaction(() => {
     const seatUpdate = reserveSeat.run({ eventId: event.id });
     if (seatUpdate.changes === 0) {
@@ -180,15 +188,24 @@ export async function createRegistration(payload: RegistrationPayload, deps: Reg
     const registrationId = Number(registrationResult.lastInsertRowid);
     const publicHash = createPublicHash();
     const shortTicketId = createShortTicketId();
+    const seatsRow = readSeatsTaken.get(event.id) as { seats_taken: number };
 
     return {
       registrationId,
+      eventId: event.id,
       publicHash,
       shortTicketId,
+      seatsLeftAfter: Math.max(event.capacity - seatsRow.seats_taken, 0),
     };
   });
 
-  let created: { registrationId: number; publicHash: string; shortTicketId: string };
+  let created: {
+    registrationId: number;
+    eventId: number;
+    publicHash: string;
+    shortTicketId: string;
+    seatsLeftAfter: number;
+  };
 
   try {
     created = reserveAndInsert();
@@ -230,6 +247,12 @@ export async function createRegistration(payload: RegistrationPayload, deps: Reg
     publicUrl: artifacts.ticketUrl,
     pdfUrl: artifacts.pdfUrl,
     icsUrl: artifacts.icsUrl,
+  });
+
+  enqueueRegistrationCreated(deps.db, {
+    registrationId: created.registrationId,
+    eventId: created.eventId,
+    seatsLeftAfter: created.seatsLeftAfter,
   });
 
   return {

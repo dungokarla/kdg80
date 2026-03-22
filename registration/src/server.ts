@@ -11,6 +11,7 @@ import { registerRegistrationApi } from './api/registration';
 import { createStoragePublisher } from './lib/storage';
 import { syncCatalog } from './services/catalog';
 import { registerTelegramBot } from './services/telegram-bot';
+import { startTelegramOutboxWorker } from './services/telegram-outbox';
 
 const config = loadConfig();
 const db = createDatabase(config.sqlitePath);
@@ -104,4 +105,13 @@ await app.listen({
 
 if (telegramBot) {
   await telegramBot.ensureWebhook();
+
+  if (config.piiPrivateKeyPemBase64) {
+    startTelegramOutboxWorker({
+      db,
+      bot: telegramBot.bot,
+      logger: app.log,
+      privateKeyPemBase64: config.piiPrivateKeyPemBase64,
+    });
+  }
 }

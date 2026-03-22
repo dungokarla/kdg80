@@ -12,6 +12,7 @@ type AppConfig = {
   consentVersion: string;
   consentTextHash: string;
   piiPublicKeyPemBase64: string | null;
+  piiPrivateKeyPemBase64: string | null;
   piiFingerprintSecret: string | null;
   telegramBotToken: string | null;
   telegramWebhookSecret: string | null;
@@ -65,6 +66,7 @@ export function loadConfig(): AppConfig {
   const consentVersion = process.env.CONSENT_VERSION?.trim() || 'draft-1';
   const consentTextHash = process.env.CONSENT_TEXT_HASH?.trim() || 'dev-draft';
   const piiPublicKeyPemBase64 = process.env.PII_PUBLIC_KEY_PEM_B64?.trim() || null;
+  const piiPrivateKeyPemBase64 = process.env.PII_PRIVATE_KEY_PEM_B64?.trim() || null;
   const piiFingerprintSecret = process.env.PII_FINGERPRINT_SECRET?.trim() || null;
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || null;
   const telegramWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null;
@@ -91,6 +93,7 @@ export function loadConfig(): AppConfig {
     consentVersion,
     consentTextHash,
     piiPublicKeyPemBase64,
+    piiPrivateKeyPemBase64,
     piiFingerprintSecret,
     telegramBotToken,
     telegramWebhookSecret,
