@@ -81,11 +81,11 @@ export function loadConfig(): AppConfig {
   const emergencyExportToken = process.env.EMERGENCY_EXPORT_TOKEN?.trim() || null;
   const ticketsPrefix = (process.env.TICKETS_PREFIX?.trim() || 'tickets').replace(/^\/+|\/+$/gu, '');
   const exportsPrefix = (process.env.EXPORTS_PREFIX?.trim() || 'exports').replace(/^\/+|\/+$/gu, '');
-  const s3Bucket = process.env.S3_BUCKET?.trim() || null;
-  const s3Endpoint = trimTrailingSlash(process.env.S3_ENDPOINT?.trim() || '');
-  const s3Region = process.env.S3_REGION?.trim() || null;
-  const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID?.trim() || null;
-  const s3SecretAccessKey = process.env.S3_SECRET_ACCESS_KEY?.trim() || null;
+  const s3Bucket = process.env.S3_BUCKET?.trim() || process.env.YC_BUCKET_NAME?.trim() || null;
+  const s3Endpoint = trimTrailingSlash(process.env.S3_ENDPOINT?.trim() || process.env.YC_S3_ENDPOINT?.trim() || '');
+  const s3Region = process.env.S3_REGION?.trim() || process.env.YC_REGION?.trim() || null;
+  const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID?.trim() || process.env.YC_ACCESS_KEY_ID?.trim() || null;
+  const s3SecretAccessKey = process.env.S3_SECRET_ACCESS_KEY?.trim() || process.env.YC_SECRET_ACCESS_KEY?.trim() || null;
   const s3ForcePathStyle = parseBoolean(process.env.S3_FORCE_PATH_STYLE, true);
   const storageDriver = s3Bucket && s3Endpoint && s3Region && s3AccessKeyId && s3SecretAccessKey ? 's3' : 'local';
 
