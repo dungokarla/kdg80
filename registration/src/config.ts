@@ -13,6 +13,9 @@ type AppConfig = {
   consentTextHash: string;
   piiPublicKeyPemBase64: string | null;
   piiFingerprintSecret: string | null;
+  telegramBotToken: string | null;
+  telegramWebhookSecret: string | null;
+  telegramWebhookPath: string;
   ticketsPrefix: string;
   exportsPrefix: string;
   storageDriver: 'local' | 's3';
@@ -63,6 +66,9 @@ export function loadConfig(): AppConfig {
   const consentTextHash = process.env.CONSENT_TEXT_HASH?.trim() || 'dev-draft';
   const piiPublicKeyPemBase64 = process.env.PII_PUBLIC_KEY_PEM_B64?.trim() || null;
   const piiFingerprintSecret = process.env.PII_FINGERPRINT_SECRET?.trim() || null;
+  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || null;
+  const telegramWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null;
+  const telegramWebhookPath = process.env.TELEGRAM_WEBHOOK_PATH?.trim() || '/api/v1/telegram/webhook';
   const ticketsPrefix = (process.env.TICKETS_PREFIX?.trim() || 'tickets').replace(/^\/+|\/+$/gu, '');
   const exportsPrefix = (process.env.EXPORTS_PREFIX?.trim() || 'exports').replace(/^\/+|\/+$/gu, '');
   const s3Bucket = process.env.S3_BUCKET?.trim() || null;
@@ -86,6 +92,9 @@ export function loadConfig(): AppConfig {
     consentTextHash,
     piiPublicKeyPemBase64,
     piiFingerprintSecret,
+    telegramBotToken,
+    telegramWebhookSecret,
+    telegramWebhookPath,
     ticketsPrefix,
     exportsPrefix,
     storageDriver,

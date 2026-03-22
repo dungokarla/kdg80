@@ -10,6 +10,7 @@ import { registerPublicApi } from './api/public';
 import { registerRegistrationApi } from './api/registration';
 import { createStoragePublisher } from './lib/storage';
 import { syncCatalog } from './services/catalog';
+import { registerTelegramBot } from './services/telegram-bot';
 
 const config = loadConfig();
 const db = createDatabase(config.sqlitePath);
@@ -38,6 +39,15 @@ const app = Fastify({
   trustProxy: true,
   bodyLimit: 64 * 1024,
 });
+const telegramBot = config.telegramBotToken && config.telegramWebhookSecret
+  ? registerTelegramBot(app, {
+      db,
+      token: config.telegramBotToken,
+      webhookSecret: config.telegramWebhookSecret,
+      appBaseUrl: config.appBaseUrl,
+      webhookPath: config.telegramWebhookPath,
+    })
+  : null;
 
 await app.register(cors, {
   origin: (origin, callback) => {
@@ -91,3 +101,7 @@ await app.listen({
   host: config.host,
   port: config.port,
 });
+
+if (telegramBot) {
+  await telegramBot.ensureWebhook();
+}
