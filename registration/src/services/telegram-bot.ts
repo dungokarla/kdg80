@@ -633,9 +633,10 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
     }
 
     if (admin.role !== 'superadmin') {
-      await ctx.reply('Раздел экспорта доступен только суперадмину.', {
+      await ctx.reply('Для оператора доступны event-level выгрузки внутри карточек событий. Откройте раздел «События» и выберите нужное событие.', {
         reply_markup: buildMainKeyboard(admin.role),
       });
+      await sendEventList(ctx, deps.db, admin.role, 'all', 1);
       return;
     }
 
