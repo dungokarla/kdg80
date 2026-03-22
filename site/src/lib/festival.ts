@@ -1163,6 +1163,61 @@ function normalizeEventLocation(venue: string, address: string) {
   return { venue, address };
 }
 
+function applyEventLocationOverride(title: string, location: { venue: string; address: string }) {
+  if (includesAnyNormalized(title, ['Этюды той весны'])) {
+    return {
+      venue: 'Секретная локация',
+      address: 'Секретная локация',
+    };
+  }
+
+  return location;
+}
+
+function createProvisionalZooExcursion(events: FestivalEvent[]) {
+  const zooLecture = events.find((event) =>
+    includesAnyNormalized(
+      event.title,
+      ['Право на существование: зоопарки в современном мире. Перспективы развития Калининградского зоопарка'],
+    ),
+  );
+
+  if (!zooLecture) {
+    return null;
+  }
+
+  return {
+    ...zooLecture,
+    slug: 'premera-novoy-tematicheskoy-ekskursii-po-kaliningradskomu-zooparku',
+    title: 'Премьера новой тематической экскурсии по Калининградскому зоопарку',
+    format: 'Экскурсия',
+    formatLabel: 'Экскурсия',
+    accessLabel: '',
+    dateLabel: 'Июнь 2026',
+    monthLabel: 'Скоро',
+    monthAnchor: 'soon',
+    timeLabel: 'Точное время будет объявлено',
+    durationLabel: 'Продолжительность уточняется',
+    venue: 'Калининградский зоопарк',
+    address: 'проспект Мира, 26',
+    speakerLabel: '',
+    affiliation: '',
+    heroRole: '',
+    summary: 'Премьера новой тематической экскурсии по зоопарку, которая лучше раскроет, что появилось в зоопарке в советское время, познакомит с историей зоопарка того периода и покажет вживую, как менялся зоопарк после немецкой эпохи.',
+    whyGo: 'Экскурсия задумывается как весёлая и полная необычных зоопарковых историй прогулка по советскому слою Калининградского зоопарка.',
+    registrationUrl: undefined,
+    calendarReady: false,
+    googleCalendarUrl: undefined,
+    icsUrl: undefined,
+    calendarNote: 'Точная дата и время экскурсии будут объявлены позже.',
+    kind: 'special' as const,
+    isoStart: undefined,
+    showingsLabel: 'Премьера экскурсии в июне',
+    speakerImages: [],
+    speakerLectureLinks: [],
+  } satisfies FestivalEvent;
+}
+
 function attachRelatedEvents(events: FestivalEvent[]) {
   for (const binding of RELATED_EVENT_BINDINGS) {
     const lecture = events.find((event) =>
@@ -1274,9 +1329,12 @@ function parseSections() {
     const timeLabel = sanitizeTimeLabel(
       extractField(body, 'Время') || extractField(body, 'Режим посещения') || extractField(body, 'Время посещения') || 'Время будет объявлено',
     );
-    const normalizedLocation = normalizeEventLocation(
-      applyExhibitionLocationOverride(title, kind, rawVenue),
-      address,
+    const normalizedLocation = applyEventLocationOverride(
+      title,
+      normalizeEventLocation(
+        applyExhibitionLocationOverride(title, kind, rawVenue),
+        address,
+      ),
     );
 
     const exactDate = parseExactDate(dateLabel, timeLabel);
@@ -1325,6 +1383,11 @@ function parseSections() {
       isoStart: exactDate?.isoStart ?? rangeDate?.isoStart,
       speakerLectureLinks: [],
     });
+  }
+
+  const provisionalZooExcursion = createProvisionalZooExcursion(events);
+  if (provisionalZooExcursion) {
+    events.push(provisionalZooExcursion);
   }
 
   return sortEvents(attachRelatedEvents(events));

@@ -192,10 +192,11 @@ const specialServiceLabels = isSpecialEvent
     ].filter(Boolean)
   : [];
 const temporalState = getEventTemporalState(event, now);
+const hasActionRow = !isRangeEvent && !isSpecialEvent;
 ---
 
 <article
-  class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''} ${isSpecialEvent ? 'event-card--special' : ''}`}
+  class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''} ${isSpecialEvent ? 'event-card--special' : ''} ${!hasActionRow ? 'event-card--no-actions' : ''}`}
   id={`event-${event.slug}`}
   data-temporal-state={temporalState}
 >
@@ -415,16 +416,20 @@ const temporalState = getEventTemporalState(event, now);
       {isSpecialEvent && specialServiceLabels.length > 0 && (
         <div class="event-card__service-meta" aria-label="Информация о событии">
           {specialServiceLabels.map((label) => (
-            <span>{label}</span>
+            <span class={label.length <= 22
+              ? 'event-card__meta-pill event-card__meta-pill--compact'
+              : 'event-card__meta-pill event-card__meta-pill--wide'}>
+              {label}
+            </span>
           ))}
         </div>
       )}
 
       {!isRangeEvent && (
         <div class="event-card__meta">
-          <span>{event.venue}</span>
-          <span>{event.address}</span>
-          {event.durationLabel && <span>{event.durationLabel}</span>}
+          <span class="event-card__meta-pill event-card__meta-pill--compact">{event.venue}</span>
+          {event.durationLabel && <span class="event-card__meta-pill event-card__meta-pill--compact">{event.durationLabel}</span>}
+          <span class="event-card__meta-pill event-card__meta-pill--wide">{event.address}</span>
         </div>
       )}
 
@@ -438,7 +443,7 @@ const temporalState = getEventTemporalState(event, now);
       )}
     </div>
 
-    {!isRangeEvent && !isSpecialEvent && (
+    {hasActionRow && (
       <aside class="event-card__actions">
         {temporalState === 'past' ? (
           <div class="button button--ghost button--disabled event-card__past-state" aria-disabled="true">Событие прошло</div>

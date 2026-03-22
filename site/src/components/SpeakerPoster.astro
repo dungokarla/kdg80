@@ -27,11 +27,6 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
             <p class="speaker-poster__eyebrow">Люди фестиваля</p>
             <p class="speaker-poster__stamp">Калининград / 2026 / 80 историй о главном</p>
           </div>
-          {remainingCount > 0 && (
-            <button class="speaker-poster__refresh" type="button" data-speaker-load>
-              Другие спикеры
-            </button>
-          )}
         </div>
 
         <h2>
@@ -42,6 +37,14 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
         <p class="speaker-poster__note">
           Эксперты, руководители организаций, авторы книг, учёные, краеведы и гиды.
         </p>
+
+        {remainingCount > 0 && (
+          <div class="speaker-poster__actions">
+            <button class="speaker-poster__refresh" type="button" data-speaker-load>
+              Другие спикеры
+            </button>
+          </div>
+        )}
       </div>
 
       <div class="speaker-strip" data-speaker-strip>

@@ -697,6 +697,7 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
         <div class="container">
           <div class="hero__shell">
             <div class="hero__copy">
+              <p class="hero__site-label">Официальный сайт фестиваля</p>
               <p class="eyebrow">Просветительский фестиваль Российского общества Знание</p>
               <p class="hero__kicker">К 80-летию Калининградской области</p>
               <h1 class="hero__brand">
@@ -1245,16 +1246,32 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
         let deck = buildWeightedDeck(variants);
         let deckIndex = 0;
         let userInteracted = false;
+        let heroHovered = false;
+        let heroInViewport = true;
+        let pageVisible = document.visibilityState === 'visible';
         const isMobile = window.matchMedia('(max-width: 759px), (pointer: coarse)').matches;
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const stopAutoplay = () => {
+          if (heroAutoplayTimer) {
+            window.clearTimeout(heroAutoplayTimer);
+            heroAutoplayTimer = 0;
+          }
+        };
+        const canAutoplay = () =>
+          !isMobile
+          && !prefersReducedMotion
+          && deck.length >= 2
+          && !userInteracted
+          && !heroHovered
+          && heroInViewport
+          && pageVisible;
         const startAutoplay = () => {
-          if (isMobile || prefersReducedMotion || deck.length < 2 || userInteracted) {
+          if (!canAutoplay()) {
+            stopAutoplay();
             return;
           }
 
-          if (heroAutoplayTimer) {
-            window.clearTimeout(heroAutoplayTimer);
-          }
+          stopAutoplay();
 
           heroAutoplayTimer = window.setTimeout(() => {
             deckIndex += 1;
@@ -1273,24 +1290,41 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
         if (nextButton instanceof HTMLButtonElement && variants.length > 1) {
           nextButton.addEventListener('click', () => {
             userInteracted = true;
-            if (heroAutoplayTimer) {
-              window.clearTimeout(heroAutoplayTimer);
-              heroAutoplayTimer = 0;
-            }
+            stopAutoplay();
             deckIndex = (deckIndex + 1) % deck.length;
             queueHeroVariant(heroShowcase, variants[deck[deckIndex]], deckIndex, variants.length);
           });
         }
 
         heroShowcase.addEventListener('mouseenter', () => {
-          if (heroAutoplayTimer) {
-            window.clearTimeout(heroAutoplayTimer);
-            heroAutoplayTimer = 0;
-          }
+          heroHovered = true;
+          stopAutoplay();
         });
 
         heroShowcase.addEventListener('mouseleave', () => {
+          heroHovered = false;
           startAutoplay();
+        });
+
+        const heroObserver = new IntersectionObserver((entries) => {
+          const nextState = entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.35);
+          heroInViewport = nextState;
+          if (heroInViewport) {
+            startAutoplay();
+          } else {
+            stopAutoplay();
+          }
+        }, { threshold: [0, 0.35, 0.6] });
+
+        heroObserver.observe(heroShowcase);
+
+        document.addEventListener('visibilitychange', () => {
+          pageVisible = document.visibilityState === 'visible';
+          if (pageVisible) {
+            startAutoplay();
+          } else {
+            stopAutoplay();
+          }
         });
       } catch (error) {
         console.error('Hero showcase randomizer failed', error);

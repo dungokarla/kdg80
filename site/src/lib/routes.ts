@@ -240,50 +240,12 @@ function createSpeakerLine(event: FestivalEvent, _mythText: string) {
   return `— это заблуждение разбирает ${rolePart} на событии «${event.title}».`;
 }
 
-function createProvisionalZooExcursion(events: FestivalEvent[]) {
-  const zooLecture = events.find((event) =>
-    normalizeFestivalLookup(event.title) === normalizeFestivalLookup('Право на существование: зоопарки в современном мире. Перспективы развития Калининградского зоопарка'),
-  );
-
-  if (!zooLecture) {
-    return null;
-  }
-
-  return {
-    ...zooLecture,
-    slug: 'premera-novoy-tematicheskoy-ekskursii-po-kaliningradskomu-zooparku',
-    title: 'Премьера новой тематической экскурсии по Калининградскому зоопарку',
-    format: 'Экскурсия',
-    formatLabel: 'Экскурсия',
-    accessLabel: '',
-    dateLabel: 'Июнь 2026',
-    monthLabel: 'Июнь',
-    monthAnchor: 'june',
-    timeLabel: 'Точное время будет объявлено',
-    durationLabel: 'Продолжительность уточняется',
-    venue: 'Калининградский зоопарк',
-    address: 'проспект Мира, 26',
-    summary: 'Премьера новой тематической экскурсии по зоопарку, которая лучше раскроет, что появилось в зоопарке в советское время, познакомит с историей зоопарка того периода и покажет вживую, как менялся зоопарк после немецкой эпохи.',
-    whyGo: 'Экскурсия задумывается как весёлая и полная необычных зоопарковых историй прогулка по советскому слою Калининградского зоопарка.',
-    registrationUrl: undefined,
-    calendarReady: false,
-    googleCalendarUrl: undefined,
-    icsUrl: undefined,
-    calendarNote: 'Точная дата и время экскурсии будут объявлены позже.',
-    kind: 'special' as const,
-    isoStart: undefined,
-    showingsLabel: 'Премьера экскурсии в июне',
-    speakerLectureLinks: [],
-  } satisfies FestivalEvent;
-}
-
 function buildRoutes() {
   const events = getFestivalEvents();
   const eventIndex = getFestivalEventIndex(events);
   const routeSections = parseRouteSections();
   const mythsByEvent = parseMythsByEvent();
   const shortlistPriority = parseHomepageShortlistPriority();
-  const provisionalZooExcursion = createProvisionalZooExcursion(events);
 
   const routes = ROUTE_SPECS.map((spec) => {
     const section = routeSections.get(spec.title);
@@ -291,11 +253,6 @@ function buildRoutes() {
 
     for (const eventTitle of section?.eventTitles ?? []) {
       const lookup = normalizeFestivalLookup(eventTitle);
-      if (eventTitle === 'Премьера новой тематической экскурсии по Калининградскому зоопарку' && provisionalZooExcursion) {
-        collectedEvents.push(provisionalZooExcursion);
-        continue;
-      }
-
       const event = eventIndex.get(lookup);
       if (event) {
         collectedEvents.push(event);
