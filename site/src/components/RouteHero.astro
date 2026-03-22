@@ -3,17 +3,35 @@ import type { FestivalRoute } from '../lib/routes';
 
 interface Props {
   route: FestivalRoute;
-  programHref: string;
+  routeProgramHref: string;
 }
 
-const { route, programHref } = Astro.props;
+const { route, routeProgramHref } = Astro.props;
 const variants = route.heroMyths.length ? route.heroMyths : route.myths;
 const defaultVariant = variants[0];
 const variantsPayload = JSON.stringify(variants);
 const defaultWords = defaultVariant ? getWordParts(defaultVariant.text) : [];
+const defaultSpeakerLineParts = defaultVariant ? getMythContextParts(defaultVariant.speakerLine) : null;
 
 function getWordParts(value: string) {
   return value.trim().split(/\s+/u).filter(Boolean);
+}
+
+function getMythContextParts(value: string) {
+  const match = value.match(/заблуждени[а-я]*/iu);
+  if (!match || typeof match.index !== 'number') {
+    return {
+      before: value,
+      accent: '',
+      after: '',
+    };
+  }
+
+  return {
+    before: value.slice(0, match.index),
+    accent: match[0],
+    after: value.slice(match.index + match[0].length),
+  };
 }
 ---
 
@@ -22,7 +40,7 @@ function getWordParts(value: string) {
     {defaultVariant && (
       <div class="route-hero__myth-card" data-route-hero-card>
         <div class="route-hero__myth-body">
-          <p class="route-hero__myth-label">Миф:</p>
+          <p class="route-hero__myth-label">Заблуждение</p>
           <a class="route-hero__myth-link word-reveal" data-route-hero-link data-word-reveal href={defaultVariant.eventHref}>
             {defaultWords.map((word, index) => (
               <>
@@ -31,7 +49,17 @@ function getWordParts(value: string) {
               </>
             ))}
           </a>
-          <p class="route-hero__speaker-line" data-route-hero-context>{defaultVariant.speakerLine}</p>
+          <p class="route-hero__speaker-line" data-route-hero-context>
+            {defaultSpeakerLineParts
+              ? (
+                <>
+                  {defaultSpeakerLineParts.before}
+                  {defaultSpeakerLineParts.accent && <span class="myth-context__accent">{defaultSpeakerLineParts.accent}</span>}
+                  {defaultSpeakerLineParts.after}
+                </>
+              )
+              : defaultVariant.speakerLine}
+          </p>
 
           <div class="route-hero__actions">
             <a class="button button--primary" data-route-hero-cta href={defaultVariant.eventHref}>К событию</a>
@@ -51,7 +79,7 @@ function getWordParts(value: string) {
         <span>{route.events.length} событий в подборке</span>
       </div>
       <div class="route-hero__static-actions">
-        <a class="button button--ghost" href={programHref}>К программе</a>
+        <a class="button button--ghost" href={routeProgramHref}>К программе маршрута</a>
       </div>
     </div>
   </div>
@@ -100,6 +128,28 @@ function getWordParts(value: string) {
     element.append(fragment);
   };
 
+  const setMythContextText = (element, text) => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+
+    const value = String(text ?? '');
+    const match = value.match(/заблуждени[а-я]*/iu);
+    element.textContent = '';
+
+    if (!match || typeof match.index !== 'number') {
+      element.textContent = value;
+      return;
+    }
+
+    element.append(document.createTextNode(value.slice(0, match.index)));
+    const accent = document.createElement('span');
+    accent.className = 'myth-context__accent';
+    accent.textContent = match[0];
+    element.append(accent);
+    element.append(document.createTextNode(value.slice(match.index + match[0].length)));
+  };
+
   const setRouteHeroVariant = (root, variant, index) => {
     root.dataset.routeIndex = String(index);
     const mythLink = root.querySelector('[data-route-hero-link]');
@@ -113,7 +163,7 @@ function getWordParts(value: string) {
     }
 
     if (speakerLine instanceof HTMLElement) {
-      speakerLine.textContent = variant.speakerLine;
+      setMythContextText(speakerLine, variant.speakerLine);
     }
 
     if (cta instanceof HTMLAnchorElement) {

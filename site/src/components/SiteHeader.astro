@@ -40,7 +40,10 @@ const headerKind = isHome ? 'home' : (currentRouteSlug ? 'route' : 'default');
 
     <nav class="site-header__nav" aria-label="Быстрые разделы">
       <details class="site-header__route-menu">
-        <summary><span class="site-header__route-summary-label" data-mobile-label="Темы">По интересам</span></summary>
+        <summary aria-label="Темы">
+          <span class="site-header__route-summary-icon" aria-hidden="true"></span>
+          <span class="site-header__route-summary-label" data-mobile-label="Темы">По интересам</span>
+        </summary>
         <div class="site-header__route-panel">
           {routeItems.map((item) => (
             <a
@@ -55,7 +58,7 @@ const headerKind = isHome ? 'home' : (currentRouteSlug ? 'route' : 'default');
       </details>
       <a href={speakersHref}>Спикеры</a>
       <a href={programHref}>Программа</a>
-      <a href={dialoguesHref}>Диалоги</a>
+      <a href={dialoguesHref}>Открытые диалоги</a>
       <a href={pressHref}>СМИ</a>
     </nav>
 

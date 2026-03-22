@@ -544,6 +544,23 @@ function getWordParts(value: string) {
   return value.trim().split(/\s+/u).filter(Boolean);
 }
 
+function getMythContextParts(value: string) {
+  const match = value.match(/заблуждени[а-я]*/iu);
+  if (!match || typeof match.index !== 'number') {
+    return {
+      before: value,
+      accent: '',
+      after: '',
+    };
+  }
+
+  return {
+    before: value.slice(0, match.index),
+    accent: match[0],
+    after: value.slice(match.index + match[0].length),
+  };
+}
+
 function normalizeLookupValue(value: string) {
   return value.replace(/\s+/g, ' ').trim().toLowerCase();
 }
@@ -592,8 +609,8 @@ function buildHeroVariants(): HeroVariant[] {
   const mythVariants = homepageHeroMyths.map((myth) => ({
     id: myth.id,
     kind: 'myth',
-    prompt: 'Миф:',
-    label: 'Миф:',
+    prompt: 'Заблуждение',
+    label: 'Заблуждение',
     title: myth.text,
     body: myth.speakerLine,
     eventHref: myth.eventHref,
@@ -616,8 +633,8 @@ const heroVariants = buildHeroVariants();
 const fallbackHeroVariant: HeroMythVariant = {
   id: 'fallback',
   kind: 'myth',
-  prompt: 'Миф:',
-  label: 'Миф:',
+  prompt: 'Заблуждение',
+  label: 'Заблуждение',
   title: 'Советский Калининград — это только фон без живых человеческих историй.',
   body: '— этот маршрут по фестивалю собран как раз для того, чтобы увидеть, как из людей, мест и привычек складывалась новая область.',
   eventHref: programHref,
@@ -633,6 +650,7 @@ const defaultHeroShowsBody = defaultHeroIsMyth;
 const defaultHeroSceneStyle = defaultHeroIsQuote ? defaultHeroVariant.speakerSceneStyle ?? '' : '';
 const defaultHeroQuoteSize = defaultHeroIsQuote ? defaultHeroVariant.quoteSize : 'image';
 const defaultHeroWordParts = defaultHeroIsMyth ? getWordParts(defaultHeroVariant.title) : [];
+const defaultHeroMythContext = defaultHeroIsMyth ? getMythContextParts(defaultHeroVariant.body) : null;
 const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 
 const speakerShowcasePayload = JSON.stringify(
@@ -649,7 +667,7 @@ const speakerShowcasePayload = JSON.stringify(
 
 <Layout
   title="80 историй о главном | Фестиваль Российского общества Знание"
-  description="Просветительский фестиваль к 80-летию Калининградской области: лекции, диалоги, выставки и сильные истории о людях, памяти и культурном коде региона."
+  description="Просветительский фестиваль к 80-летию Калининградской области: лекции, открытые диалоги, выставки и сильные истории о людях, памяти и культурном коде региона."
 >
   <div class="page">
     <div id="top" aria-hidden="true"></div>
@@ -740,7 +758,15 @@ const speakerShowcasePayload = JSON.stringify(
                     </h2>
 
                     <p class="hero-showcase__body" data-hero-body hidden={!defaultHeroShowsBody}>
-                      {defaultHeroIsMyth ? defaultHeroVariant.body : ''}
+                      {defaultHeroIsMyth && defaultHeroMythContext
+                        ? (
+                          <>
+                            {defaultHeroMythContext.before}
+                            {defaultHeroMythContext.accent && <span class="myth-context__accent">{defaultHeroMythContext.accent}</span>}
+                            {defaultHeroMythContext.after}
+                          </>
+                        )
+                        : ''}
                     </p>
 
                     <div class="hero-showcase__speaker" data-hero-speaker-shell hidden={!defaultHeroIsQuote}>
@@ -1048,6 +1074,28 @@ const speakerShowcasePayload = JSON.stringify(
       element.append(fragment);
     };
 
+    const setMythContextText = (element, text) => {
+      if (!(element instanceof HTMLElement)) {
+        return;
+      }
+
+      const value = String(text ?? '');
+      const match = value.match(/заблуждени[а-я]*/iu);
+      element.textContent = '';
+
+      if (!match || typeof match.index !== 'number') {
+        element.textContent = value;
+        return;
+      }
+
+      element.append(document.createTextNode(value.slice(0, match.index)));
+      const accent = document.createElement('span');
+      accent.className = 'myth-context__accent';
+      accent.textContent = match[0];
+      element.append(accent);
+      element.append(document.createTextNode(value.slice(match.index + match[0].length)));
+    };
+
     const setHeroVariant = (root, variant, deckIndex, total) => {
       root.dataset.heroKind = variant.kind;
       root.dataset.heroQuoteType = variant.kind === 'quote' ? variant.quoteType : 'myth';
@@ -1092,7 +1140,11 @@ const speakerShowcasePayload = JSON.stringify(
 
       if (body instanceof HTMLElement) {
         body.hidden = !showsBody;
-        body.textContent = showsBody ? variant.body : '';
+        if (showsBody) {
+          setMythContextText(body, variant.body);
+        } else {
+          body.textContent = '';
+        }
       }
 
       if (quoteMark instanceof HTMLElement) {

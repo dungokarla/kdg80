@@ -105,8 +105,8 @@ const SOURCE_TITLE_ALIASES: Record<string, string> = {
 
 const HOMEPAGE_DIALOGUES_ITEM: RouteNavItem = {
   id: 'dialogues',
-  title: 'Паблик-токи и дискуссии',
-  navLabel: 'Паблик-токи и дискуссии',
+  title: 'Открытые диалоги',
+  navLabel: 'Открытые диалоги',
   href: '/#dialogues',
   isShortcut: true,
 };
@@ -230,11 +230,11 @@ function parseHomepageShortlistPriority() {
   return priorities;
 }
 
-function createSpeakerLine(event: FestivalEvent, mythText: string) {
+function createSpeakerLine(event: FestivalEvent, _mythText: string) {
   const role = event.heroRole || event.affiliation;
   const speaker = event.speakerLabel || 'спикер фестиваля';
   const rolePart = role ? `${speaker}, ${role}` : speaker;
-  return `— об этом заблуждении расскажет ${rolePart} на событии «${event.title}».`;
+  return `— это заблуждение разбирает ${rolePart} на событии «${event.title}».`;
 }
 
 function createProvisionalZooExcursion(events: FestivalEvent[]) {
@@ -439,7 +439,7 @@ const ROUTE_SECTION_RULES: Array<{ id: string; title: string; match: (event: Fes
   },
   {
     id: 'dialogues',
-    title: 'Паблик-токи',
+    title: 'Открытые диалоги',
     match: (event) => normalizeFestivalLookup(event.formatLabel).includes(normalizeFestivalLookup('Открытый диалог')),
   },
   {

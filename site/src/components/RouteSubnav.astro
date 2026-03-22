@@ -7,7 +7,6 @@ interface Props {
 }
 
 const { items, currentRouteSlug } = Astro.props;
-const currentRoute = items.find((item) => item.slug === currentRouteSlug);
 ---
 
 <section class="route-subnav" data-route-subnav aria-label="Переключение маршрутов">
@@ -25,7 +24,12 @@ const currentRoute = items.find((item) => item.slug === currentRouteSlug);
     </div>
 
     <details class="route-subnav__mobile">
-      <summary>{currentRoute ? `Маршрут: ${currentRoute.navLabel}` : 'Все маршруты'}</summary>
+      <summary>
+        <span class="route-subnav__mobile-summary-copy">
+          <strong>Другие темы</strong>
+          <small>Сменить маршрут</small>
+        </span>
+      </summary>
       <div class="route-subnav__mobile-panel">
         {items.map((item) => (
           <a
@@ -33,7 +37,7 @@ const currentRoute = items.find((item) => item.slug === currentRouteSlug);
             href={item.href}
             aria-current={item.slug === currentRouteSlug ? 'page' : undefined}
           >
-            {item.title}
+            {item.navLabel}
           </a>
         ))}
       </div>
