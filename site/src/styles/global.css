@@ -2655,8 +2655,17 @@ summary {
 }
 
 @media (min-width: 980px) {
+  .hero__shell {
+    min-height: 38.125rem;
+  }
+
+  .hero__copy,
+  .hero__aside {
+    min-height: 38.125rem;
+  }
+
   .hero-showcase {
-    min-height: 29.35rem;
+    min-height: 38.125rem;
   }
 
   .hero-showcase__card {
