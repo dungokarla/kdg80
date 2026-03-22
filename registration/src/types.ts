@@ -45,3 +45,18 @@ export type PublicEventStateView = {
   ctaNotice?: string;
   opensAt: string | null;
 };
+
+export type RegistrationPayload = {
+  eventSlug: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  consentAccepted: boolean;
+  testRunId?: string;
+};
+
+export type TicketArtifacts = {
+  ticketUrl: string;
+  pdfUrl: string;
+  icsUrl: string;
+};
