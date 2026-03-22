@@ -1052,6 +1052,11 @@ summary {
   padding-top: 1.2rem;
 }
 
+.section--dialogues {
+  padding-top: 1.15rem;
+  scroll-margin-top: calc(var(--site-header-height, 4.25rem) + 1.7rem);
+}
+
 .section__header {
   display: grid;
   gap: 0.6rem;
@@ -1344,6 +1349,10 @@ summary {
   contain-intrinsic-size: 1px 380px;
 }
 
+.section__header--dialogues {
+  margin-bottom: 1.15rem;
+}
+
 .dialogue-card,
 .footer-panel {
   padding: 1rem;
@@ -1353,29 +1362,46 @@ summary {
   box-shadow: var(--shadow);
 }
 
-.program-dialogues {
-  display: grid;
+.dialogue-strip--feature {
+  grid-template-columns: 1fr;
   gap: 0.9rem;
-  margin-bottom: 1.2rem;
-}
-
-.program-dialogues__head {
-  display: grid;
-  gap: 0.3rem;
-}
-
-.program-dialogues__head h3 {
-  margin: 0;
-  max-width: 18ch;
-  font-family: var(--font-display);
-  font-size: clamp(1.38rem, 3.4vw, 2rem);
-  line-height: 0.95;
-  letter-spacing: -0.045em;
 }
 
 .dialogue-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
   gap: 0.35rem;
+  min-height: 11.6rem;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.dialogue-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(180deg, rgba(252, 246, 237, 0.9), rgba(244, 236, 226, 0.92)),
+    url("/generated/dialogues/publick-talk.webp") center/cover no-repeat;
+  transform: scale(1.03);
+}
+
+.dialogue-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 52%;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(252, 246, 237, 0.42));
+}
+
+.dialogue-card:hover,
+.dialogue-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(216, 75, 49, 0.24);
+  box-shadow: 0 22px 42px rgba(18, 17, 14, 0.12);
 }
 
 .footer-panel {
@@ -1388,9 +1414,11 @@ summary {
 }
 
 .dialogue-card strong {
+  max-width: 14ch;
   font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-size: clamp(1.4rem, 4.4vw, 1.95rem);
   line-height: 0.98;
+  letter-spacing: -0.045em;
 }
 
 .dialogue-card__meta,
@@ -2717,6 +2745,10 @@ summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .dialogue-strip--feature {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .event-card__stage {
     min-height: 17.1rem;
   }
@@ -2956,6 +2988,10 @@ summary {
 
   .dialogue-strip {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .dialogue-strip--feature {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .event-card__stage {
@@ -3820,6 +3856,10 @@ summary {
     --header-hero-logo-pad-block: 0.2rem;
     --header-hero-logo-pad-right: clamp(2.35rem, 8vw, 3.25rem);
     --site-header-mobile-route-slot: 4.8rem;
+  }
+
+  .section--dialogues {
+    scroll-margin-top: calc(var(--site-header-height, 4.25rem) + 3rem);
   }
 
   .site-header__row {

@@ -834,6 +834,33 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 
       <InterestChooser items={routeItems} />
 
+      {openDialogues.length > 0 && (
+        <section class="section section--dialogues" id="dialogues" aria-labelledby="dialogues-title">
+          <div class="container">
+            <div class="section__header section__header--split section__header--dialogues">
+              <div>
+                <p class="section__eyebrow">Открытые диалоги</p>
+                <h2 id="dialogues-title">Дискуссии с экспертами и теми, кто жил или хорошо знает советскую эпоху.</h2>
+              </div>
+              <p class="section__text">
+                На каждую встречу приглашены 3-4 гостя. Вместе с модератором они обсудят тему,
+                а по регламенту можно будет задавать вопросы из зала. Будет действительно интересно.
+              </p>
+            </div>
+
+            <div class="dialogue-strip dialogue-strip--feature">
+              {openDialogues.map((event) => (
+                <a class="dialogue-card dialogue-card--feature" href={`#event-${event.slug}`}>
+                  <span class="dialogue-card__meta">{event.dateLabel}</span>
+                  <strong>{event.title}</strong>
+                  <span>{event.venue}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section class="section section--program" id="program">
         <div class="container">
           <div class="section__header section__header--split">
@@ -846,25 +873,6 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
               а на первый план выходят дата, афиша события и заметный человек.
             </p>
           </div>
-
-          {openDialogues.length > 0 && (
-            <section class="program-dialogues" id="dialogues" aria-labelledby="dialogues-title">
-              <div class="program-dialogues__head">
-                <p class="section__eyebrow">Открытые диалоги</p>
-                <h3 id="dialogues-title">Пять разговоров, где важны спор, опыт и столкновение взглядов.</h3>
-              </div>
-
-              <div class="dialogue-strip dialogue-strip--program">
-                {openDialogues.map((event) => (
-                  <a class="dialogue-card" href={`#event-${event.slug}`}>
-                    <span class="dialogue-card__meta">{event.dateLabel}</span>
-                    <strong>{event.title}</strong>
-                    <span>{event.venue}</span>
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
 
           <div class="month-nav-wrap">
             <nav class="month-nav" aria-label="Навигация по месяцам">
