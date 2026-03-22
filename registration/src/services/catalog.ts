@@ -1,12 +1,22 @@
 import type Database from 'better-sqlite3';
-import { getFestivalEvents, type FestivalEvent } from '../../../site/src/lib/festival.ts';
 import { derivePublicState, getCtaCopy } from '../lib/public-state';
+import festivalEvents from '../data/festival-events.json';
 import type {
   CatalogEventSeed,
   HallSeed,
   PublicEventStateView,
   RegistrationPublicState,
 } from '../types';
+
+type FestivalEvent = {
+  slug: string;
+  title: string;
+  durationLabel: string;
+  venue: string;
+  address: string;
+  kind: 'dated' | 'range' | 'special';
+  isoStart: string | null;
+};
 
 type EventRow = {
   slug: string;
@@ -145,7 +155,7 @@ function toCatalogSeed(event: FestivalEvent): CatalogEventSeed | null {
 }
 
 function getCatalogSeeds() {
-  return getFestivalEvents()
+  return (festivalEvents as FestivalEvent[])
     .map(toCatalogSeed)
     .filter((item): item is CatalogEventSeed => Boolean(item));
 }

@@ -1,0 +1,479 @@
+[
+  {
+    "slug": "otkrytie-festivalya-80-istoriy-o-glavnom",
+    "title": "Открытие фестиваля «80 историй о главном»",
+    "durationLabel": "55 минут",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-03-28T14:00:00"
+  },
+  {
+    "slug": "vishtynetskaya-vozvyshennost-kak-osvaivali-s-1945-goda-sovremennost-i-perspektivy",
+    "title": "Виштынецкая возвышенность: как осваивали с 1945 года, современность и перспективы",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-04-02T18:30:00"
+  },
+  {
+    "slug": "lyudi-kotoryh-unesli-ptitsy-biostantsiya-rybachiy-v-sovetskoe-vremya",
+    "title": "Люди, которых унесли птицы (Биостанция Рыбачий в советское время)",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-04-03T16:00:00"
+  },
+  {
+    "slug": "sovetskoe-monumentalnoe-iskusstvo-na-territorii-kaliningradskoy-oblasti",
+    "title": "Советское монументальное искусство на территории Калининградской области",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-04-03T18:30:00"
+  },
+  {
+    "slug": "priroda-chemodana",
+    "title": "Природа чемодана",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-04-07T18:30:00"
+  },
+  {
+    "slug": "pravo-na-suschestvovanie-zooparki-v-sovremennom-mire-perspektivy-razvitiya-kaliningradskogo-zooparka",
+    "title": "Право на существование: зоопарки в современном мире. Перспективы развития Калининградского зоопарка",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-04-08T16:00:00"
+  },
+  {
+    "slug": "nostalgicheskiy-razgovor",
+    "title": "Ностальгический разговор",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-04-10T18:30:00"
+  },
+  {
+    "slug": "most-kotoryy-soedinyaet-vremena-dvuhyarusnyy-most-proshloe-nastoyaschee-i-buduschee",
+    "title": "Мост, который соединяет времена. Двухъярусный мост: прошлое, настоящее и будущее",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-04-11T15:00:00"
+  },
+  {
+    "slug": "kaliningradskaya-oblast-glazami-turistov-togda-i-seychas",
+    "title": "Калининградская область глазами туристов: тогда и сейчас",
+    "durationLabel": "45 минут",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-04-14T18:30:00"
+  },
+  {
+    "slug": "razgovory-o-more",
+    "title": "Разговоры о море",
+    "durationLabel": "45 минут",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-04-16T16:00:00"
+  },
+  {
+    "slug": "kaliningradskaya-oblast-vdohnovenie-dlya-pisateley",
+    "title": "Калининградская область — вдохновение для писателей",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-04-17T18:30:00"
+  },
+  {
+    "slug": "chto-tait-v-sebe-glavnoe-pamyatnoe-mesto-kaliningrada-memorial-1200-gvardeytsev",
+    "title": "Что таит в себе главное памятное место Калининграда, мемориал 1200 гвардейцев",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-04-18T18:30:00"
+  },
+  {
+    "slug": "privychki-kaliningradtsev-ty-nastoyaschiy-kaliningradets-esli-kaliningradtsy-glazami-gostey",
+    "title": "Привычки калининградцев / Ты настоящий калининградец, если... / Калининградцы глазами гостей",
+    "durationLabel": "45 минут",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-04-21T18:30:00"
+  },
+  {
+    "slug": "geografiya-issledovaniy-mirovogo-okeana-kaliningradskimi-okeanologami-v-sovetskoe-vremya",
+    "title": "География исследований Мирового океана калининградскими океанологами в советское время",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-04-22T16:00:00"
+  },
+  {
+    "slug": "vosstanovlenie-yantarnogo-karera-i-yantarnyy-kombinat-v-poslevoennye-gody",
+    "title": "Восстановление янтарного карьера и Янтарный комбинат в послевоенные годы",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-04-23T18:30:00"
+  },
+  {
+    "slug": "ryba-na-kazhdom-stole-v-restorane-i-doma-prazdnichnyy-stol-po-kaliningradski",
+    "title": "Рыба на каждом столе: в ресторане и дома. Праздничный стол по-калининградски",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-04-24T18:30:00"
+  },
+  {
+    "slug": "kaliningrad-2125-kakim-mozhet-stat-gorod-cherez-sto-let",
+    "title": "Калининград 2125: каким может стать город через сто лет",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-04-25T18:30:00"
+  },
+  {
+    "slug": "vydayuschiesya-lyudi-sovetskogo-kaliningrada",
+    "title": "Выдающиеся люди советского Калининграда",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-04-28T18:30:00"
+  },
+  {
+    "slug": "golubye-ladoni-goroda-k-vosstanovlenie-vodoprovodnoy-sistemy-v-poslevoennom-kaliningrade",
+    "title": "Голубые ладони города К. Восстановление водопроводной системы в послевоенном Калининграде",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-04-29T15:00:00"
+  },
+  {
+    "slug": "istoriya-stanovleniya-i-razvitiya-malyh-gorodov-kaliningradskoy-oblasti-na-primere-p-zheleznodorozhnyy",
+    "title": "История становления и развития малых городов Калининградской области на примере п. Железнодорожный",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-05-05T16:00:00"
+  },
+  {
+    "slug": "denezhnoe-obraschenie-v-poslevoennyy-period-1945-1947",
+    "title": "Денежное обращение в послевоенный период 1945-1947",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-05-14T18:30:00"
+  },
+  {
+    "slug": "o-chem-mechtali-v-sovetskom-kaliningrade-kuda-stremilis-i-kuda-popali",
+    "title": "О чём мечтали в советском Калининграде, куда стремились и куда попали",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-05-15T16:00:00"
+  },
+  {
+    "slug": "zavody-i-parohody-postsovetskoe-industrialnoe-nasledie-kaliningrada",
+    "title": "Заводы и пароходы. Постсоветское индустриальное наследие Калининграда",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-05-16T16:00:00"
+  },
+  {
+    "slug": "istoriya-parusnogo-sporta-v-kaliningradskoy-oblasti",
+    "title": "История парусного спорта в Калининградской области",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-05-19T16:00:00"
+  },
+  {
+    "slug": "kosmicheskaya-orbita-kaliningrada",
+    "title": "Космическая орбита Калининграда",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-05-20T18:30:00"
+  },
+  {
+    "slug": "pervye-na-kose",
+    "title": "Первые на косе",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-05-22T18:30:00"
+  },
+  {
+    "slug": "chelovek-zalozhivshiy-fundament-sovremennogo-kaliningrada-viktor-denisov-i-ego-epoha",
+    "title": "Человек, заложивший фундамент современного Калининграда. Виктор Денисов и его эпоха",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-05-23T14:00:00"
+  },
+  {
+    "slug": "sovetskiy-gusev-vremya-sozidaniy",
+    "title": "Советский Гусев — время созиданий",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-05-28T18:30:00"
+  },
+  {
+    "slug": "privychki-kaliningradtsev-yumor-sueveriya-ne-tolko-podrostkovye-strashilki-legendy-kaliningradskih-dvorov",
+    "title": "Привычки калининградцев, юмор, суеверия не только подростковые, страшилки, легенды калининградских дворов",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекторий ОКЕАНиЯ",
+    "address": "Музей Мирового океана, наб. Петра Великого, 1",
+    "kind": "dated",
+    "isoStart": "2026-05-29T16:00:00"
+  },
+  {
+    "slug": "arhitektura-sovetskogo-kaliningrada-1946-1960-gody",
+    "title": "Архитектура советского Калининграда (1946 - 1960 годы)",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-05-30T15:00:00"
+  },
+  {
+    "slug": "demografiya-pervogo-desyatiletiya-kaliningradskoy-oblasti",
+    "title": "Демография первого десятилетия Калининградской области",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-06-02T18:30:00"
+  },
+  {
+    "slug": "pamyatniki-iskusstva-i-istorii-v-landshafte-kaliningradskogo-zooparka",
+    "title": "Памятники искусства и истории в ландшафте Калининградского зоопарка",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Филиал Государственной Третьяковской галереи в Калининграде",
+    "address": "Парадная набережная, 3",
+    "kind": "dated",
+    "isoStart": "2026-06-04T18:00:00"
+  },
+  {
+    "slug": "zelenaya-pamyat-istoriya-botanicheskogo-sada-kaliningrada",
+    "title": "Зелёная память: история Ботанического сада Калининграда",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-06-05T18:30:00"
+  },
+  {
+    "slug": "mirnaya-zhizn-samoy-zapadnoy-tochki-rossii-baltiyskoy-kosy",
+    "title": "Мирная жизнь самой западной точки России (Балтийской косы)",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-06-11T18:30:00"
+  },
+  {
+    "slug": "istoriya-svetlogorska-v-semeynom-albome",
+    "title": "История Светлогорска в семейном альбоме",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-06-13T15:00:00"
+  },
+  {
+    "slug": "kak-govorit-o-sovetskom-kaliningrade-bez-nostalgicheskogo-tumana-i-bez-styda",
+    "title": "Как говорить о советском Калининграде без ностальгического тумана и без стыда",
+    "durationLabel": "45 минут",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-06-16T18:30:00"
+  },
+  {
+    "slug": "kursanty-s-krylyshkami-kaliningradskoe-vatu-i-vliyanie-na-kaliningrad",
+    "title": "Курсанты с крылышками, Калининградское ВАТУ, и влияние на Калининград",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-06-18T18:30:00"
+  },
+  {
+    "slug": "kaliningradskoe-zdravoohranenie-v-period-stanovleniya-oblasti-osobennosti-vyzovy-pobedy-i-problemy",
+    "title": "Калининградское здравоохранение в период становления области: особенности, вызовы, победы и проблемы",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-06-19T18:30:00"
+  },
+  {
+    "slug": "kirha-sklad-sportzal-muzey-slozhnyy-put-kultovyh-uchrezhdeniy-iz-zabveniya-k-vozrozhdeniyu",
+    "title": "Кирха — склад — спортзал — музей. Сложный путь культовых учреждений из забвения к возрождению",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-06-20T14:00:00"
+  },
+  {
+    "slug": "kaliningrad-gorod-sad-ili-mikrorayon-dlya-prozhivaniya-u-morya",
+    "title": "Калининград город сад или микрорайон для проживания у моря",
+    "durationLabel": "45 минут",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-06-23T18:30:00"
+  },
+  {
+    "slug": "vospriyatie-novoy-rodiny-pereselentsami-kak-vosprinimali-vostochnaya-prussiya",
+    "title": "Восприятие новой родины переселенцами (как воспринимали Восточная Пруссия)",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-06-25T18:30:00"
+  },
+  {
+    "slug": "zooparku-byt-zoopark-trofey-1945-goda-i-odin-iz-pervyh-ochagov-mirnoy-zhizni-v-kaliningrade",
+    "title": "Зоопарку — быть! Зоопарк — трофей 1945 года и один из первых очагов мирной жизни в Калининграде",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-06-26T18:30:00"
+  },
+  {
+    "slug": "primorskiy-zelenogradskiy-rayon-kaliningradskoy-oblasti-v-sovetskoe-vremya-na-etape-stanovleniya",
+    "title": "Приморский (Зеленоградский) район Калининградской области в советское время на этапе становления",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-07-02T18:30:00"
+  },
+  {
+    "slug": "kaliningrad-i-oblast-kak-kinodekoratsiya-istoriya-semok-hudozhestvennyh-filmov-v-regione",
+    "title": "Калининград и область как кинодекорация — история съёмок художественных фильмов в регионе",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-07-03T18:30:00"
+  },
+  {
+    "slug": "velikie-uchitelya-preemstvennost-hudozhestvennyh-pokoleniy",
+    "title": "Великие учителя. Преемственность художественных поколений",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Филиал Государственной Третьяковской галереи в Калининграде",
+    "address": "Парадная набережная, 3",
+    "kind": "dated",
+    "isoStart": "2026-07-04T14:00:00"
+  },
+  {
+    "slug": "kaliningradskiy-morskoy-torgovyy-port-yarkie-stranitsy-sovetskoy-istorii-i-sovremennost",
+    "title": "Калининградский морской торговый порт: яркие страницы советской истории и современность",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "ИЦАЭ",
+    "address": "Советский проспект 1, вход в КГТУ, 2-й этаж",
+    "kind": "dated",
+    "isoStart": "2026-07-07T18:30:00"
+  },
+  {
+    "slug": "vliyanie-planirovochnyh-resheniy-na-kachestvo-zhizni-na-primere-starogo-i-novogo-kaliningrada",
+    "title": "Влияние планировочных решений на качество жизни на примере старого и нового Калининграда",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Калининградский областной историко-художественный музей",
+    "address": "ул. Клиническая, 21",
+    "kind": "dated",
+    "isoStart": "2026-07-09T18:30:00"
+  },
+  {
+    "slug": "kladomaniya-i-gorodskoy-folklor-pochemu-my-verim-v-skrytye-sokrovischa",
+    "title": "“Кладомания” и городской фольклор: почему мы верим в скрытые сокровища",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Корпус Блокгауз",
+    "address": "Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик",
+    "kind": "dated",
+    "isoStart": "2026-07-10T18:30:00"
+  },
+  {
+    "slug": "istoriya-obrazovaniya-i-razvitiya-natsionalnogo-parka-kurshskaya-kosa",
+    "title": "История образования и развития национального парка «Куршская коса»",
+    "durationLabel": "1 час + вопросы из зала",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "dated",
+    "isoStart": "2026-07-19T18:30:00"
+  },
+  {
+    "slug": "vystavka-pervye-na-kose",
+    "title": "Выставка «Первые на косе»",
+    "durationLabel": "",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "range",
+    "isoStart": null
+  },
+  {
+    "slug": "vystavka-istoriy-mirnoy-zhizni-samoy-zapadnoy-tochki-rossii",
+    "title": "Выставка историй мирной жизни самой западной точки России",
+    "durationLabel": "",
+    "venue": "Лекционный зал 4 этаж",
+    "address": "Калининградская областная научная библиотека, проспект Мира, 9/11",
+    "kind": "range",
+    "isoStart": null
+  },
+  {
+    "slug": "premera-novoy-tematicheskoy-ekskursii-po-kaliningradskomu-zooparku",
+    "title": "Премьера новой тематической экскурсии по Калининградскому зоопарку",
+    "durationLabel": "Продолжительность уточняется",
+    "venue": "Калининградский зоопарк",
+    "address": "проспект Мира, 26",
+    "kind": "special",
+    "isoStart": null
+  },
+  {
+    "slug": "etyudy-toy-vesny",
+    "title": "Этюды той весны",
+    "durationLabel": "уточняется",
+    "venue": "Секретная локация",
+    "address": "Секретная локация",
+    "kind": "special",
+    "isoStart": null
+  }
+]
