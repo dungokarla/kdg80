@@ -1,10 +1,14 @@
 import type Database from 'better-sqlite3';
 import type { FastifyInstance } from 'fastify';
-import { Bot, type Context, InlineKeyboard, Keyboard, webhookCallback } from 'grammy';
+import { Bot, type Context, InlineKeyboard, InputFile, Keyboard, webhookCallback } from 'grammy';
 import {
   claimFirstSuperadmin,
+  createOrRefreshOperatorRequest,
+  grantOperatorFromRequest,
   getTelegramAdminByUserId,
   listTelegramAdmins,
+  listTelegramOperatorRequests,
+  revokeOperator,
   type TelegramAdminRole,
 } from './telegram-admins';
 import {
@@ -14,6 +18,7 @@ import {
   type TelegramEventListFilter,
   type TelegramEventView,
 } from './telegram-events';
+import { buildEventXlsxBuffer, formatMaskedEventReport, listRegistrationsForEvent } from './registration-exports';
 import { searchRegistrationsByFullName } from './registration-search';
 
 type TelegramBotDeps = {
@@ -131,6 +136,31 @@ function formatSearchResults(results: ReturnType<typeof searchRegistrationsByFul
   ].join('\n')).join('\n\n');
 }
 
+function formatOperatorsPanel(
+  admins: ReturnType<typeof listTelegramAdmins>,
+  requests: ReturnType<typeof listTelegramOperatorRequests>,
+) {
+  const adminLines = admins.length
+    ? admins.map((item, index) => `${index + 1}. ${item.displayName ?? item.telegramUserId} — ${item.role}`).join('\n')
+    : 'Администраторы пока не назначены.';
+
+  const requestLines = requests.length
+    ? requests.map((item, index) => `${index + 1}. ${item.displayName ?? item.telegramUserId}`).join('\n')
+    : 'Нет ожидающих запросов.';
+
+  return [
+    'Операторы и доступы',
+    '',
+    'Текущие администраторы:',
+    adminLines,
+    '',
+    'Ожидающие запросы:',
+    requestLines,
+    '',
+    'Новые пользователи могут нажать /start, после чего их запрос появится здесь.',
+  ].join('\n');
+}
+
 function listHeading(filter: TelegramEventListFilter) {
   if (filter === 'open') {
     return 'Открытые регистрации';
@@ -176,6 +206,23 @@ function buildEventKeyboard(event: TelegramEventView, role: TelegramAdminRole, f
   keyboard.text('Отчёт', `r:${event.id}:${filter}:${page}`);
   keyboard.text('XLSX', `x:${event.id}:${filter}:${page}`).row();
   keyboard.text('Назад к списку', `l:${filter}:${page}`);
+  return keyboard;
+}
+
+function buildOperatorsKeyboard(
+  admins: ReturnType<typeof listTelegramAdmins>,
+  requests: ReturnType<typeof listTelegramOperatorRequests>,
+) {
+  const keyboard = new InlineKeyboard();
+
+  for (const request of requests.slice(0, 8)) {
+    keyboard.text(`Выдать: ${truncateLabel(request.displayName ?? request.telegramUserId, 24)}`, `oga:${request.id}`).row();
+  }
+
+  for (const admin of admins.filter((item) => item.role === 'operator').slice(0, 8)) {
+    keyboard.text(`Снять: ${truncateLabel(admin.displayName ?? admin.telegramUserId, 24)}`, `ord:${admin.id}`).row();
+  }
+
   return keyboard;
 }
 
@@ -233,6 +280,29 @@ async function sendEventCard(
   });
 }
 
+async function sendOperatorsPanel(
+  ctx: Context,
+  db: Database.Database,
+  editCurrentMessage = false,
+) {
+  const admins = listTelegramAdmins(db);
+  const requests = listTelegramOperatorRequests(db);
+  const text = formatOperatorsPanel(admins, requests);
+  const keyboard = buildOperatorsKeyboard(admins, requests);
+  const replyMarkup = keyboard.inline_keyboard.length ? keyboard : undefined;
+
+  if (editCurrentMessage && ctx.callbackQuery?.message) {
+    await ctx.editMessageText(text, {
+      reply_markup: replyMarkup,
+    });
+    return;
+  }
+
+  await ctx.reply(text, {
+    reply_markup: replyMarkup,
+  });
+}
+
 export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps) {
   const bot = new Bot(deps.token);
   const pendingFindPrompts = new Map<string, number>();
@@ -256,8 +326,13 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
 
     const admin = claimed ?? requireAdminRole(telegramUserId);
     if (!admin) {
+      createOrRefreshOperatorRequest(deps.db, {
+        telegramUserId,
+        displayName: formatDisplayName(ctx.from ?? {}),
+      });
+
       await ctx.reply(
-        'Суперадмин уже назначен. Попросите действующего суперадмина добавить вам операторский доступ.',
+        'Суперадмин уже назначен. Я отправил запрос на операторский доступ. Когда суперадмин подтвердит его, снова нажмите /start.',
       );
       return;
     }
@@ -343,14 +418,7 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       return;
     }
 
-    const admins = listTelegramAdmins(deps.db);
-    const body = admins.length
-      ? admins.map((item, index) => `${index + 1}. ${item.displayName ?? item.telegramUserId} — ${item.role}`).join('\n')
-      : 'Администраторы пока не назначены.';
-
-    await ctx.reply(`Администраторы бота:\n${body}`, {
-      reply_markup: buildMainKeyboard(admin.role),
-    });
+    await sendOperatorsPanel(ctx, deps.db);
   });
 
   bot.hears('События', async (ctx) => {
@@ -430,14 +498,7 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       return;
     }
 
-    const admins = listTelegramAdmins(deps.db);
-    const body = admins.length
-      ? admins.map((item, index) => `${index + 1}. ${item.displayName ?? item.telegramUserId} — ${item.role}`).join('\n')
-      : 'Администраторы пока не назначены.';
-
-    await ctx.reply(`Администраторы бота:\n${body}`, {
-      reply_markup: buildMainKeyboard(admin.role),
-    });
+    await sendOperatorsPanel(ctx, deps.db);
   });
 
   bot.callbackQuery(/^l:(all|open|closed):(\d+)$/u, async (ctx) => {
@@ -527,13 +588,105 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       return;
     }
 
-    const [, action] = ctx.match;
+    if (!deps.privateKeyPemBase64) {
+      await ctx.answerCallbackQuery({
+        text: 'Нужен приватный ключ, чтобы подготовить отчёт.',
+        show_alert: true,
+      });
+      return;
+    }
+
+    const [, action, eventIdRaw] = ctx.match;
+    const event = getTelegramEventById(deps.db, Number(eventIdRaw));
+
+    if (!event) {
+      await ctx.answerCallbackQuery({
+        text: 'Событие не найдено.',
+        show_alert: true,
+      });
+      return;
+    }
+
+    const rows = listRegistrationsForEvent(deps.db, deps.privateKeyPemBase64, event.id);
+
+    if (action === 'r') {
+      await ctx.answerCallbackQuery({
+        text: rows.length ? 'Готовлю masked preview.' : 'Для этого события пока нет регистраций.',
+      });
+
+      await ctx.reply(formatMaskedEventReport(event, rows));
+      return;
+    }
+
     await ctx.answerCallbackQuery({
-      text: action === 'r'
-        ? 'Кнопка отчёта уже зарезервирована. Добавлю event-level отчёт следующим шагом.'
-        : 'Кнопка XLSX уже зарезервирована. Добавлю выгрузку следующим шагом.',
-      show_alert: true,
+      text: rows.length ? 'Готовлю XLSX.' : 'Для этого события пока нет регистраций.',
     });
+
+    if (!rows.length) {
+      return;
+    }
+
+    const buffer = await buildEventXlsxBuffer(rows);
+    await ctx.replyWithDocument(
+      new InputFile(buffer, `registrations-${event.slug}.xlsx`),
+      {
+        caption: `XLSX по событию «${event.title}»`,
+      },
+    );
+  });
+
+  bot.callbackQuery(/^oga:(\d+)$/u, async (ctx) => {
+    const admin = requireAdminRole(String(ctx.from?.id ?? ''));
+    if (!admin || admin.role !== 'superadmin') {
+      await ctx.answerCallbackQuery({
+        text: 'Только суперадмин может назначать операторов.',
+        show_alert: true,
+      });
+      return;
+    }
+
+    const [, requestIdRaw] = ctx.match;
+    const granted = grantOperatorFromRequest(deps.db, Number(requestIdRaw));
+    await ctx.answerCallbackQuery({
+      text: granted ? 'Оператор назначен.' : 'Запрос уже не актуален.',
+    });
+
+    if (granted) {
+      try {
+        await bot.api.sendMessage(granted.telegramUserId, 'Операторский доступ выдан. Нажмите /start, чтобы открыть меню.');
+      } catch (error) {
+        app.log.warn({ err: error }, 'telegram_operator_grant_notify_failed');
+      }
+    }
+
+    await sendOperatorsPanel(ctx, deps.db, true);
+  });
+
+  bot.callbackQuery(/^ord:(\d+)$/u, async (ctx) => {
+    const admin = requireAdminRole(String(ctx.from?.id ?? ''));
+    if (!admin || admin.role !== 'superadmin') {
+      await ctx.answerCallbackQuery({
+        text: 'Только суперадмин может отзывать операторов.',
+        show_alert: true,
+      });
+      return;
+    }
+
+    const [, adminIdRaw] = ctx.match;
+    const revoked = revokeOperator(deps.db, Number(adminIdRaw));
+    await ctx.answerCallbackQuery({
+      text: revoked ? 'Операторский доступ отозван.' : 'Снять можно только роль оператора.',
+    });
+
+    if (revoked) {
+      try {
+        await bot.api.sendMessage(revoked.telegramUserId, 'Операторский доступ отозван. Если это ошибка, попросите суперадмина выдать его снова.');
+      } catch (error) {
+        app.log.warn({ err: error }, 'telegram_operator_revoke_notify_failed');
+      }
+    }
+
+    await sendOperatorsPanel(ctx, deps.db, true);
   });
 
   bot.on('message:text', async (ctx, next) => {

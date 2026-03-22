@@ -77,12 +77,18 @@ function loadRegistrationNotification(
     return null;
   }
 
-  const pii = decryptPii(privateKeyPemBase64, {
-    piiCiphertext: row.pii_ciphertext,
-    piiWrappedKey: row.pii_wrapped_key,
-    piiIv: row.pii_iv,
-    piiAlg: row.pii_alg,
-  });
+  let pii: Record<string, string>;
+
+  try {
+    pii = decryptPii(privateKeyPemBase64, {
+      piiCiphertext: row.pii_ciphertext,
+      piiWrappedKey: row.pii_wrapped_key,
+      piiIv: row.pii_iv,
+      piiAlg: row.pii_alg,
+    });
+  } catch {
+    return null;
+  }
 
   return {
     fullName: pii.fullName,

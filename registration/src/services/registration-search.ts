@@ -64,12 +64,18 @@ export function searchRegistrationsByFullName(
   }> = [];
 
   for (const row of rows) {
-    const pii = decryptPii(privateKeyPemBase64, {
-      piiCiphertext: row.pii_ciphertext,
-      piiWrappedKey: row.pii_wrapped_key,
-      piiIv: row.pii_iv,
-      piiAlg: row.pii_alg,
-    });
+    let pii: Record<string, string>;
+
+    try {
+      pii = decryptPii(privateKeyPemBase64, {
+        piiCiphertext: row.pii_ciphertext,
+        piiWrappedKey: row.pii_wrapped_key,
+        piiIv: row.pii_iv,
+        piiAlg: row.pii_alg,
+      });
+    } catch {
+      continue;
+    }
 
     const fullName = (pii.fullName ?? '').trim().replace(/\s+/gu, ' ');
     if (!fullName.toLowerCase().includes(normalizedQuery)) {
