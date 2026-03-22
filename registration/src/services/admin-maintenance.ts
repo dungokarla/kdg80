@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import type Database from 'better-sqlite3';
+import type { StoragePublisher } from '../lib/storage';
 
 export async function createSqliteBackup(db: Database.Database, prefix = 'registration-backup') {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'registration-backup-'));
@@ -22,8 +23,7 @@ export async function cleanupTestRun(
   db: Database.Database,
   options: {
     testRunId: string;
-    localPublicRoot?: string;
-    ticketsPrefix?: string;
+    storagePublisher?: StoragePublisher;
   },
 ) {
   const rows = db.prepare(`
@@ -71,10 +71,9 @@ export async function cleanupTestRun(
 
   apply();
 
-  if (options.localPublicRoot && options.ticketsPrefix) {
+  if (options.storagePublisher) {
     for (const publicHash of ticketHashes) {
-      const ticketDir = path.join(options.localPublicRoot, options.ticketsPrefix, publicHash);
-      await fs.rm(ticketDir, { recursive: true, force: true });
+      await options.storagePublisher.deleteTicketArtifacts(publicHash);
     }
   }
 

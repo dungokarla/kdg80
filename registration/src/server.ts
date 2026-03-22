@@ -50,8 +50,7 @@ const telegramBot = config.telegramBotToken && config.telegramWebhookSecret
       appBaseUrl: config.appBaseUrl,
       webhookPath: config.telegramWebhookPath,
       privateKeyPemBase64: config.piiPrivateKeyPemBase64,
-      localPublicRoot: config.localPublicRoot,
-      ticketsPrefix: config.ticketsPrefix,
+      storagePublisher,
     })
   : null;
 

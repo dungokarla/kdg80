@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectsCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import type { TicketArtifacts } from '../types';
 
 type StorageConfig = {
@@ -31,6 +31,7 @@ export type TicketArtifactBundle = {
 export type StoragePublisher = {
   driver: 'local' | 's3';
   publishTicketArtifacts(bundle: TicketArtifactBundle): Promise<TicketArtifacts>;
+  deleteTicketArtifacts(publicHash: string): Promise<void>;
 };
 
 function trimSlashes(value: string) {
@@ -45,6 +46,15 @@ function createTicketUrls(baseUrl: string, ticketsPrefix: string, publicHash: st
     pdfUrl: `${ticketUrl}ticket.pdf`,
     icsUrl: `${ticketUrl}event.ics`,
   };
+}
+
+function createTicketArtifactKeys(ticketsPrefix: string, publicHash: string) {
+  const prefix = trimSlashes(ticketsPrefix);
+  return [
+    `${prefix}/${publicHash}/index.html`,
+    `${prefix}/${publicHash}/ticket.pdf`,
+    `${prefix}/${publicHash}/event.ics`,
+  ];
 }
 
 function createS3Publisher(config: StorageConfig): StoragePublisher {
@@ -77,6 +87,16 @@ function createS3Publisher(config: StorageConfig): StoragePublisher {
 
       return createTicketUrls(config.publicTicketBaseUrl, config.ticketsPrefix, bundle.publicHash);
     },
+    async deleteTicketArtifacts(publicHash) {
+      const keys = createTicketArtifactKeys(config.ticketsPrefix, publicHash);
+      await client.send(new DeleteObjectsCommand({
+        Bucket: config.s3Bucket!,
+        Delete: {
+          Objects: keys.map((key) => ({ Key: key })),
+          Quiet: true,
+        },
+      }));
+    },
   };
 }
 
@@ -93,6 +113,10 @@ function createLocalPublisher(config: StorageConfig): StoragePublisher {
       }
 
       return createTicketUrls(config.publicTicketBaseUrl, config.ticketsPrefix, bundle.publicHash);
+    },
+    async deleteTicketArtifacts(publicHash) {
+      const ticketDir = path.join(config.localPublicRoot, trimSlashes(config.ticketsPrefix), publicHash);
+      fs.rmSync(ticketDir, { recursive: true, force: true });
     },
   };
 }

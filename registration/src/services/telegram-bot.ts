@@ -28,6 +28,7 @@ import {
 } from './registration-exports';
 import { cleanupTestRun, createSqliteBackup } from './admin-maintenance';
 import { searchRegistrationsByFullName } from './registration-search';
+import type { StoragePublisher } from '../lib/storage';
 
 type TelegramBotDeps = {
   db: Database.Database;
@@ -36,8 +37,7 @@ type TelegramBotDeps = {
   appBaseUrl: string;
   webhookPath: string;
   privateKeyPemBase64: string | null;
-  localPublicRoot: string;
-  ticketsPrefix: string;
+  storagePublisher: StoragePublisher;
 };
 
 const EVENTS_PER_PAGE = 6;
@@ -546,8 +546,7 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
 
     const result = await cleanupTestRun(deps.db, {
       testRunId: runId,
-      localPublicRoot: deps.localPublicRoot,
-      ticketsPrefix: deps.ticketsPrefix,
+      storagePublisher: deps.storagePublisher,
     });
 
     await ctx.reply(
