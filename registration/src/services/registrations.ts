@@ -1,11 +1,10 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import type Database from 'better-sqlite3';
 import type { RegistrationPayload } from '../types';
 import { normalizeEmail, normalizeFullName, normalizePhone } from '../lib/normalize';
 import { computeFingerprint, encryptPii } from '../lib/crypto';
 import { createPublicHash, createShortTicketId } from '../lib/ticket';
-import { writeTicketArtifacts } from './ticket-artifacts';
+import type { StoragePublisher } from '../lib/storage';
+import { publishTicketArtifacts } from './ticket-artifacts';
 import { derivePublicState } from '../lib/public-state';
 
 type RegistrationDeps = {
@@ -15,7 +14,8 @@ type RegistrationDeps = {
   fingerprintSecret: string;
   publicKeyPemBase64: string;
   publicTicketBaseUrl: string;
-  dataRoot: string;
+  ticketsPrefix: string;
+  storagePublisher: StoragePublisher;
   sourceIp?: string;
   userAgent?: string;
 };
@@ -208,10 +208,11 @@ export async function createRegistration(payload: RegistrationPayload, deps: Reg
     throw error;
   }
 
-  const artifacts = await writeTicketArtifacts(path.join(deps.dataRoot, 'public'), {
+  const artifacts = await publishTicketArtifacts(deps.storagePublisher, {
     publicHash: created.publicHash,
     shortTicketId: created.shortTicketId,
     ticketBaseUrl: deps.publicTicketBaseUrl,
+    ticketsPrefix: deps.ticketsPrefix,
     fullName,
     email,
     phone,

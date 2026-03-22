@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import type { FastifyInstance } from 'fastify';
 import type { RegistrationPayload } from '../types';
+import type { StoragePublisher } from '../lib/storage';
 import { createRegistration, RegistrationError } from '../services/registrations';
 import { listPublicEventStates } from '../services/catalog';
 
@@ -11,7 +12,8 @@ type RegistrationApiDeps = {
   fingerprintSecret: string | null;
   publicKeyPemBase64: string | null;
   publicTicketBaseUrl: string;
-  dataRoot: string;
+  ticketsPrefix: string;
+  storagePublisher: StoragePublisher;
 };
 
 export async function registerRegistrationApi(app: FastifyInstance, deps: RegistrationApiDeps) {
@@ -47,7 +49,8 @@ export async function registerRegistrationApi(app: FastifyInstance, deps: Regist
         fingerprintSecret: deps.fingerprintSecret,
         publicKeyPemBase64: deps.publicKeyPemBase64,
         publicTicketBaseUrl: deps.publicTicketBaseUrl,
-        dataRoot: deps.dataRoot,
+        ticketsPrefix: deps.ticketsPrefix,
+        storagePublisher: deps.storagePublisher,
         sourceIp: request.ip,
         userAgent: request.headers['user-agent'],
       });

@@ -1,12 +1,12 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import PDFDocument from 'pdfkit';
 import type { TicketArtifacts } from '../types';
+import type { StoragePublisher, TicketArtifactBundle } from '../lib/storage';
 
 type TicketArtifactInput = {
   publicHash: string;
   shortTicketId: string;
   ticketBaseUrl: string;
+  ticketsPrefix: string;
   fullName: string;
   emailMasked: string;
   phoneMasked: string;
@@ -34,10 +34,20 @@ function escapeHtml(value: string) {
 }
 
 function buildHtml(input: TicketArtifactInput) {
-  const ticketUrl = `${input.ticketBaseUrl}/tickets/${input.publicHash}/`;
+  const ticketUrl = `${input.ticketBaseUrl}/${input.ticketsPrefix}/${input.publicHash}/`;
   const pdfUrl = `${ticketUrl}ticket.pdf`;
   const icsUrl = `${ticketUrl}event.ics`;
+  const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
   const formattedDate = formatEventDate(input.startsAt);
+  const startsAt = new Date(input.startsAt);
+  const endsAt = new Date(startsAt.getTime() + 90 * 60_000);
+  const googleDates = `${startsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}/${endsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}`;
+
+  googleCalendarUrl.searchParams.set('action', 'TEMPLATE');
+  googleCalendarUrl.searchParams.set('text', input.title);
+  googleCalendarUrl.searchParams.set('dates', googleDates);
+  googleCalendarUrl.searchParams.set('location', `${input.venueName}, ${input.address}`);
+  googleCalendarUrl.searchParams.set('details', `Билет № ${input.shortTicketId}. Печать не требуется. ${ticketUrl}`);
 
   return `<!doctype html>
 <html lang="ru">
@@ -157,6 +167,7 @@ function buildHtml(input: TicketArtifactInput) {
         <div class="actions">
           <a class="button" href="${escapeHtml(pdfUrl)}">Скачать PDF</a>
           <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Скачать ICS</a>
+          <a class="button button--ghost" href="${escapeHtml(googleCalendarUrl.toString())}" target="_blank" rel="noreferrer">Google Calendar</a>
         </div>
         <p class="note">Печать билета не требуется. Рассадка свободная. Добавьте событие в календарь, чтобы не забыть.</p>
         <p class="note">Постоянная ссылка на билет: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
@@ -185,25 +196,31 @@ function buildIcs(input: TicketArtifactInput) {
     `DTEND:${endIcs}`,
     `SUMMARY:${input.title.replace(/,/gu, '\\,')}`,
     `LOCATION:${`${input.venueName}, ${input.address}`.replace(/,/gu, '\\,')}`,
-    `DESCRIPTION:${`Билет № ${input.shortTicketId}. Печать не требуется. ${input.ticketBaseUrl}/tickets/${input.publicHash}/`.replace(/,/gu, '\\,')}`,
+    `DESCRIPTION:${`Билет № ${input.shortTicketId}. Печать не требуется. ${input.ticketBaseUrl}/${input.ticketsPrefix}/${input.publicHash}/`.replace(/,/gu, '\\,')}`,
     'END:VEVENT',
     'END:VCALENDAR',
     '',
   ].join('\r\n');
 }
 
-function createPdf(filePath: string, input: TicketArtifactInput) {
-  return new Promise<void>((resolve, reject) => {
+function createPdfBuffer(input: TicketArtifactInput) {
+  return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
       margin: 48,
     });
 
-    const stream = fs.createWriteStream(filePath);
-    stream.on('finish', () => resolve());
-    stream.on('error', reject);
+    const chunks: Buffer[] = [];
 
-    doc.pipe(stream);
+    doc.on('data', (chunk) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+
+    doc.on('end', () => {
+      resolve(Buffer.concat(chunks));
+    });
+
+    doc.on('error', reject);
 
     doc.fillColor('#b83f2f').fontSize(12).text('80 историй о главном', { characterSpacing: 2 });
     doc.moveDown(0.6);
@@ -223,7 +240,7 @@ function createPdf(filePath: string, input: TicketArtifactInput) {
     doc.text('Рассадка свободная.');
     doc.text('Печать билета не требуется.');
     doc.moveDown(0.8);
-    doc.fillColor('#b83f2f').text(`Ссылка на билет: ${input.ticketBaseUrl}/tickets/${input.publicHash}/`);
+    doc.fillColor('#b83f2f').text(`Ссылка на билет: ${input.ticketBaseUrl}/${input.ticketsPrefix}/${input.publicHash}/`);
     doc.end();
   });
 }
@@ -240,30 +257,61 @@ function maskPhone(phone: string) {
   return phone.replace(/^(\+7)(\d{3})(\d{3})(\d{2})(\d{2})$/u, '$1 $2 ***-**-$5');
 }
 
-export async function writeTicketArtifacts(baseDir: string, input: Omit<TicketArtifactInput, 'emailMasked' | 'phoneMasked'> & {
-  email: string;
-  phone: string;
-}): Promise<TicketArtifacts> {
-  const ticketDir = path.join(baseDir, 'tickets', input.publicHash);
-  fs.mkdirSync(ticketDir, { recursive: true });
-
+export async function publishTicketArtifacts(
+  publisher: StoragePublisher,
+  input: {
+    publicHash: string;
+    shortTicketId: string;
+    ticketBaseUrl: string;
+    ticketsPrefix: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    title: string;
+    startsAt: string;
+    venueName: string;
+    hallName: string;
+    address: string;
+  },
+): Promise<TicketArtifacts> {
   const htmlInput: TicketArtifactInput = {
-    ...input,
+    publicHash: input.publicHash,
+    shortTicketId: input.shortTicketId,
+    ticketBaseUrl: input.ticketBaseUrl,
+    ticketsPrefix: input.ticketsPrefix,
+    fullName: input.fullName,
     emailMasked: maskEmail(input.email),
     phoneMasked: maskPhone(input.phone),
+    title: input.title,
+    startsAt: input.startsAt,
+    venueName: input.venueName,
+    hallName: input.hallName,
+    address: input.address,
   };
 
-  const ticketUrl = `${input.ticketBaseUrl}/tickets/${input.publicHash}/`;
-  const pdfUrl = `${ticketUrl}ticket.pdf`;
-  const icsUrl = `${ticketUrl}event.ics`;
-
-  fs.writeFileSync(path.join(ticketDir, 'index.html'), buildHtml(htmlInput));
-  fs.writeFileSync(path.join(ticketDir, 'event.ics'), buildIcs(htmlInput));
-  await createPdf(path.join(ticketDir, 'ticket.pdf'), htmlInput);
-
-  return {
-    ticketUrl,
-    pdfUrl,
-    icsUrl,
+  const bundle: TicketArtifactBundle = {
+    publicHash: input.publicHash,
+    files: [
+      {
+        key: `${input.ticketsPrefix}/${input.publicHash}/index.html`,
+        body: buildHtml(htmlInput),
+        contentType: 'text/html; charset=utf-8',
+        cacheControl: 'no-store, max-age=0',
+      },
+      {
+        key: `${input.ticketsPrefix}/${input.publicHash}/event.ics`,
+        body: buildIcs(htmlInput),
+        contentType: 'text/calendar; charset=utf-8',
+        cacheControl: 'public, max-age=300',
+      },
+      {
+        key: `${input.ticketsPrefix}/${input.publicHash}/ticket.pdf`,
+        body: await createPdfBuffer(htmlInput),
+        contentType: 'application/pdf',
+        cacheControl: 'public, max-age=300',
+      },
+    ],
   };
+
+  return publisher.publishTicketArtifacts(bundle);
 }

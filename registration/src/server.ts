@@ -3,19 +3,32 @@ import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
 import fs from 'node:fs';
-import path from 'node:path';
 import { loadConfig } from './config';
 import { createDatabase } from './db/client';
 import { runMigrations } from './db/migrate';
 import { registerPublicApi } from './api/public';
 import { registerRegistrationApi } from './api/registration';
+import { createStoragePublisher } from './lib/storage';
 import { syncCatalog } from './services/catalog';
 
 const config = loadConfig();
 const db = createDatabase(config.sqlitePath);
-const publicRoot = path.resolve(process.cwd(), 'data', 'public');
+const storagePublisher = createStoragePublisher({
+  driver: config.storageDriver,
+  publicTicketBaseUrl: config.publicTicketBaseUrl,
+  ticketsPrefix: config.ticketsPrefix,
+  localPublicRoot: config.localPublicRoot,
+  s3Bucket: config.s3Bucket,
+  s3Endpoint: config.s3Endpoint,
+  s3Region: config.s3Region,
+  s3AccessKeyId: config.s3AccessKeyId,
+  s3SecretAccessKey: config.s3SecretAccessKey,
+  s3ForcePathStyle: config.s3ForcePathStyle,
+});
 
-fs.mkdirSync(publicRoot, { recursive: true });
+if (config.storageDriver === 'local') {
+  fs.mkdirSync(config.localPublicRoot, { recursive: true });
+}
 
 runMigrations(db);
 syncCatalog(db);
@@ -44,18 +57,21 @@ await app.register(rateLimit, {
   timeWindow: '1 minute',
 });
 
-await app.register(fastifyStatic, {
-  root: publicRoot,
-  prefix: '/',
-  wildcard: true,
-  decorateReply: false,
-});
+if (config.storageDriver === 'local') {
+  await app.register(fastifyStatic, {
+    root: config.localPublicRoot,
+    prefix: '/',
+    wildcard: true,
+    decorateReply: false,
+  });
+}
 
 app.get('/api/v1/health', async () => {
   return {
     ok: true,
     service: 'registration',
     appBaseUrl: config.appBaseUrl,
+    storageDriver: storagePublisher.driver,
   };
 });
 
@@ -67,7 +83,8 @@ await registerRegistrationApi(app, {
   fingerprintSecret: config.piiFingerprintSecret,
   publicKeyPemBase64: config.piiPublicKeyPemBase64,
   publicTicketBaseUrl: config.publicTicketBaseUrl,
-  dataRoot: path.resolve(process.cwd(), 'data'),
+  ticketsPrefix: config.ticketsPrefix,
+  storagePublisher,
 });
 
 await app.listen({
