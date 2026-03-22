@@ -549,10 +549,28 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       storagePublisher: deps.storagePublisher,
     });
 
+    if (!result.removedRegistrations) {
+      await ctx.reply('Для этого run_id тестовых регистраций не найдено.');
+      return;
+    }
+
+    if (result.artifactDeleteFailures) {
+      app.log.warn({
+        testRunId: runId,
+        failedArtifactHashes: result.failedArtifactHashes,
+      }, 'cleanup_test_run_partial_storage_delete_failure');
+
+      await ctx.reply(
+        `Тестовый прогон очищен в БД. Удалено регистраций: ${result.removedRegistrations}. `
+        + `Затронуто событий: ${result.affectedEvents}. `
+        + `Но не удалось удалить ${result.artifactDeleteFailures} ticket artifacts из storage. `
+        + 'Проверьте права DeleteObject/DeleteObjects на tickets/*.',
+      );
+      return;
+    }
+
     await ctx.reply(
-      result.removedRegistrations
-        ? `Тестовый прогон очищен. Удалено регистраций: ${result.removedRegistrations}. Затронуто событий: ${result.affectedEvents}.`
-        : 'Для этого run_id тестовых регистраций не найдено.',
+      `Тестовый прогон очищен. Удалено регистраций: ${result.removedRegistrations}. Затронуто событий: ${result.affectedEvents}.`,
     );
   });
 
