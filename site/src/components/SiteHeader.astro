@@ -1,0 +1,279 @@
+---
+import type { RouteNavItem } from '../lib/routes';
+
+interface Props {
+  isHome?: boolean;
+  programHref: string;
+  speakersHref?: string;
+  dialoguesHref?: string;
+  pressHref?: string;
+  routeItems: RouteNavItem[];
+  currentRouteSlug?: string;
+}
+
+const {
+  isHome = false,
+  programHref,
+  speakersHref = isHome ? '#speakers' : '/#speakers',
+  dialoguesHref = isHome ? '#dialogues' : '/#dialogues',
+  pressHref = isHome ? '#press' : '/#press',
+  routeItems,
+  currentRouteSlug,
+} = Astro.props;
+
+const logoHref = isHome ? '#top' : '/';
+const headerKind = isHome ? 'home' : (currentRouteSlug ? 'route' : 'default');
+---
+
+<header class="site-header" data-site-header data-header-kind={headerKind} data-scrolled="false" data-logo-ready="false">
+  <div class="container site-header__row">
+    <a class="site-header__logo" href={logoHref} aria-label="Российское общество Знание, фестиваль 80 историй о главном">
+      <span class="site-header__logo-shell" aria-hidden="true">
+        <span class="site-header__logo-state site-header__logo-state--hero">
+          <img src="/shared-assets/logo-znanie-main.svg" alt="" width="541" height="126" decoding="async" fetchpriority="high" />
+        </span>
+        <span class="site-header__logo-state site-header__logo-state--festival">
+          <img src="/shared-assets/logo-znanie-festival.svg" alt="" width="877" height="150" decoding="async" />
+        </span>
+      </span>
+    </a>
+
+    <nav class="site-header__nav" aria-label="Быстрые разделы">
+      <details class="site-header__route-menu" data-route-menu>
+        <summary aria-label="Темы">
+          <span class="site-header__route-summary-icon" aria-hidden="true"></span>
+          <span class="site-header__route-summary-label" data-mobile-label="Темы">По интересам</span>
+        </summary>
+        <div class="site-header__route-panel">
+          {routeItems.map((item) => (
+            <a
+              class={`site-header__route-link ${currentRouteSlug && item.slug === currentRouteSlug ? 'is-current' : ''}`}
+              href={item.href}
+            >
+              <span>{item.title}</span>
+              {item.isShortcut && <small>На главной странице</small>}
+            </a>
+          ))}
+        </div>
+      </details>
+      <a href={speakersHref}>Спикеры</a>
+      <a href={programHref}>Программа</a>
+      <a href={dialoguesHref}>Открытые диалоги</a>
+      <a href={pressHref}>СМИ</a>
+    </nav>
+
+    <a class="button button--primary site-header__cta" href={programHref}>Программа</a>
+  </div>
+</header>
+
+<script is:inline>
+  (() => {
+    const siteHeader = document.querySelector('[data-site-header]');
+    if (!(siteHeader instanceof HTMLElement) || siteHeader.dataset.enhanced === 'true') {
+      return;
+    }
+
+    siteHeader.dataset.enhanced = 'true';
+
+    const routeMenu = siteHeader.querySelector('[data-route-menu]');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let headerStateFrame = 0;
+    let isHeaderScrolled = siteHeader.dataset.scrolled === 'true';
+
+    const syncHeaderHeight = () => {
+      document.documentElement.style.setProperty('--site-header-height', `${siteHeader.offsetHeight}px`);
+    };
+
+    const getHomeThreshold = () => {
+      const heroBrand = document.querySelector('.hero__brand');
+      const isDesktopHeader = window.matchMedia('(min-width: 760px)').matches;
+      if (!isDesktopHeader && heroBrand instanceof HTMLElement) {
+        const heroBrandTop = heroBrand.getBoundingClientRect().top + window.scrollY;
+        return Math.max(heroBrandTop - siteHeader.offsetHeight - 8, 24);
+      }
+
+      return siteHeader.offsetHeight + 24;
+    };
+
+    const getRouteThreshold = () => {
+      const routeHero = document.querySelector('.route-hero');
+      if (routeHero instanceof HTMLElement) {
+        const routeHeroTop = routeHero.getBoundingClientRect().top + window.scrollY;
+        return Math.max(routeHeroTop + 36, 28);
+      }
+
+      return siteHeader.offsetHeight + 24;
+    };
+
+    const syncHeaderLogoState = () => {
+      syncHeaderHeight();
+
+      const headerKind = siteHeader.dataset.headerKind ?? 'default';
+      const threshold = headerKind === 'home'
+        ? getHomeThreshold()
+        : headerKind === 'route'
+          ? getRouteThreshold()
+          : siteHeader.offsetHeight + 24;
+      const hysteresis = 16;
+      const nextScrolled = isHeaderScrolled
+        ? window.scrollY > threshold - hysteresis
+        : window.scrollY > threshold + hysteresis;
+
+      isHeaderScrolled = nextScrolled;
+      siteHeader.dataset.scrolled = nextScrolled ? 'true' : 'false';
+    };
+
+    const requestHeaderLogoStateSync = () => {
+      if (headerStateFrame) {
+        return;
+      }
+
+      headerStateFrame = window.requestAnimationFrame(() => {
+        headerStateFrame = 0;
+        syncHeaderLogoState();
+      });
+    };
+
+    const getHashTarget = (hash) => {
+      if (!hash || hash === '#') {
+        return null;
+      }
+
+      const id = decodeURIComponent(hash.replace(/^#/, ''));
+      const target = document.getElementById(id);
+      return target instanceof HTMLElement ? target : null;
+    };
+
+    const getAnchorOffset = (target) => {
+      const programSection = document.querySelector('#program');
+      const monthNavWrap = document.querySelector('.month-nav-wrap');
+      let offset = siteHeader.offsetHeight + 12;
+
+      if (
+        target.id === 'program'
+        || (programSection instanceof HTMLElement && (programSection === target || programSection.contains(target)))
+      ) {
+        if (monthNavWrap instanceof HTMLElement) {
+          offset += monthNavWrap.offsetHeight + 12;
+        }
+      }
+
+      return offset;
+    };
+
+    const scrollToHashTarget = (hash, smooth = true) => {
+      const target = getHashTarget(hash);
+      if (!(target instanceof HTMLElement)) {
+        return false;
+      }
+
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - getAnchorOffset(target));
+      window.scrollTo({
+        top,
+        behavior: smooth && !prefersReducedMotion.matches ? 'smooth' : 'auto',
+      });
+      return true;
+    };
+
+    const scheduleHashTargetScroll = (hash, smooth = true) => {
+      if (!hash || hash === '#') {
+        return;
+      }
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          scrollToHashTarget(hash, smooth);
+          window.setTimeout(() => {
+            scrollToHashTarget(hash, false);
+          }, 90);
+        });
+      });
+    };
+
+    const handleSamePageAnchorClick = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      const link = target.closest('a[href]');
+      if (!(link instanceof HTMLAnchorElement)) {
+        return;
+      }
+
+      const href = link.getAttribute('href') ?? '';
+      if (!href.includes('#')) {
+        return;
+      }
+
+      const url = new URL(link.href, window.location.href);
+      if (
+        url.origin !== window.location.origin
+        || url.pathname !== window.location.pathname
+        || !url.hash
+        || !getHashTarget(url.hash)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      if (routeMenu instanceof HTMLDetailsElement) {
+        routeMenu.open = false;
+      }
+      history.pushState(null, '', url.hash);
+      scheduleHashTargetScroll(url.hash, true);
+    };
+
+    syncHeaderLogoState();
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        siteHeader.dataset.logoReady = 'true';
+      });
+    });
+
+    if (routeMenu instanceof HTMLDetailsElement) {
+      document.addEventListener('click', (event) => {
+        if (!routeMenu.open) {
+          return;
+        }
+
+        const target = event.target;
+        if (!(target instanceof Node) || routeMenu.contains(target)) {
+          return;
+        }
+
+        routeMenu.open = false;
+      });
+
+      routeMenu.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target instanceof HTMLAnchorElement) {
+          routeMenu.open = false;
+        }
+      });
+    }
+
+    document.addEventListener('click', handleSamePageAnchorClick);
+
+    window.addEventListener('load', () => {
+      requestHeaderLogoStateSync();
+      if (window.location.hash) {
+        scheduleHashTargetScroll(window.location.hash, false);
+      }
+    });
+    window.addEventListener('hashchange', () => {
+      if (routeMenu instanceof HTMLDetailsElement) {
+        routeMenu.open = false;
+      }
+      scheduleHashTargetScroll(window.location.hash, false);
+      requestHeaderLogoStateSync();
+    });
+    window.addEventListener('scroll', requestHeaderLogoStateSync, { passive: true });
+    window.addEventListener('resize', () => {
+      if (routeMenu instanceof HTMLDetailsElement) {
+        routeMenu.open = false;
+      }
+      requestHeaderLogoStateSync();
+    });
+  })();
+</script>

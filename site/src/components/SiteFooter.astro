@@ -1,0 +1,64 @@
+---
+import type { RouteNavItem } from '../lib/routes';
+
+interface Props {
+  routeItems: RouteNavItem[];
+  programHref: string;
+  isHome?: boolean;
+}
+
+const { routeItems, programHref, isHome = false } = Astro.props;
+const FESTIVAL_REGULATION_URL = '/docs/festival-regulation.pdf';
+const PRESS_EMAIL = 'press@kgd80.ru';
+const INVITES_EMAIL = 'bilet@kgd80.ru';
+const TELEGRAM_URL = 'https://t.me/kenigevents';
+---
+
+<footer class="site-footer">
+  <div class="container site-footer__grid">
+    <section class="site-footer__intro">
+      <p class="site-footer__eyebrow">80 историй о главном</p>
+      <h2>Фестиваль о людях, местах и привычках, из которых складывалась новая Калининградская область.</h2>
+      <p>
+        Общая точка входа в программу, маршруты по интересам, материалы для прессы и контакт для вопросов по приглашениям
+        собраны в одном подвале, чтобы навигация не распадалась между страницами.
+      </p>
+    </section>
+
+    <details class="site-footer__group" open>
+      <summary>Фестиваль</summary>
+      <div class="site-footer__group-body">
+        <a href={isHome ? '#top' : '/'}>Главная страница</a>
+        <a href={programHref}>Программа</a>
+        <a href={isHome ? '#dialogues' : '/#dialogues'}>Открытые диалоги</a>
+        <a href={FESTIVAL_REGULATION_URL} target="_blank" rel="noreferrer">Положение фестиваля PDF</a>
+      </div>
+    </details>
+
+    <details class="site-footer__group" open>
+      <summary>По интересам</summary>
+      <div class="site-footer__group-body">
+        {routeItems.map((item) => (
+          <a href={item.href}>{item.title}</a>
+        ))}
+      </div>
+    </details>
+
+    <details class="site-footer__group" open id="press">
+      <summary>Контакты и СМИ</summary>
+      <div class="site-footer__group-body">
+        <a href={`mailto:${PRESS_EMAIL}`}>{PRESS_EMAIL}</a>
+        <a href={`mailto:${INVITES_EMAIL}`}>{INVITES_EMAIL}</a>
+        <a href={TELEGRAM_URL} target="_blank" rel="noreferrer">@kenigevents</a>
+      </div>
+      <p class="site-footer__note">
+        Для пресс-служб и редакций здесь должен быть прямой доступ к положению фестиваля и актуальной программе,
+        а для гостей отдельный понятный контакт по приглашениям.
+      </p>
+    </details>
+  </div>
+  <div class="container site-footer__legal" aria-label="Служебная информация">
+    <p>Официальный сайт фестиваля</p>
+    <p>© Российское общество Знание, 2026</p>
+  </div>
+</footer>

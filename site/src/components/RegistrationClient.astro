@@ -1,0 +1,418 @@
+---
+const registrationApiBaseUrl = (import.meta.env.PUBLIC_REGISTRATION_API_BASE_URL || 'http://localhost:3001').replace(/\/+$/u, '');
+const consentUrl = '/docs/registration-personal-data-consent-draft.pdf';
+const privacyUrl = 'https://znanierussia.ru/privacy_policy';
+const supportEmail = 'bilet@kdg80.ru';
+---
+
+<div class="registration-modal-shell" data-registration-shell hidden>
+  <div class="registration-modal__backdrop" data-registration-close></div>
+  <section class="registration-modal" role="dialog" aria-modal="true" aria-labelledby="registration-modal-title">
+    <button class="registration-modal__close" type="button" data-registration-close aria-label="Закрыть форму регистрации">Закрыть</button>
+    <p class="registration-modal__eyebrow">Регистрация</p>
+    <h2 id="registration-modal-title" data-registration-event-title>Регистрация на событие</h2>
+    <p class="registration-modal__summary" data-registration-event-summary></p>
+
+    <form class="registration-form" data-registration-form novalidate>
+      <label class="registration-form__field">
+        <span>ФИО</span>
+        <input name="fullName" type="text" autocomplete="name" required maxlength="120" placeholder="Имя и фамилия" />
+        <small data-registration-error-for="fullName"></small>
+      </label>
+
+      <label class="registration-form__field">
+        <span>Email</span>
+        <input name="email" type="email" autocomplete="email" required maxlength="254" placeholder="name@example.com" />
+        <small data-registration-error-for="email"></small>
+      </label>
+
+      <label class="registration-form__field">
+        <span>Телефон</span>
+        <input name="phone" type="tel" inputmode="numeric" autocomplete="tel" required placeholder="+7 (___) ___-__-__" />
+        <small data-registration-error-for="phone"></small>
+      </label>
+
+      <label class="registration-form__checkbox">
+        <input name="consentAccepted" type="checkbox" />
+        <span>
+          Я подтверждаю, что ознакомлен(а) с
+          <a href={privacyUrl} target="_blank" rel="noreferrer">политикой конфиденциальности</a>
+          и
+          <a href={consentUrl} target="_blank" rel="noreferrer">согласием на обработку персональных данных</a>.
+        </span>
+      </label>
+      <small data-registration-error-for="consentAccepted"></small>
+
+      <label class="registration-form__honeypot" aria-hidden="true">
+        <span>Ваш сайт</span>
+        <input name="website" type="text" tabindex="-1" autocomplete="off" />
+      </label>
+
+      <p class="registration-form__note">
+        Каждый участник регистрируется сам. По вопросам, связанным с билетами, пишите на
+        <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+      </p>
+      <p class="registration-form__status" data-registration-status hidden></p>
+
+      <button class="button button--primary registration-form__submit" type="submit" data-registration-submit>
+        Зарегистрироваться
+      </button>
+    </form>
+  </section>
+</div>
+
+<script is:inline define:vars={{ registrationApiBaseUrl, supportEmail }}>
+  (() => {
+    const apiBaseUrl = registrationApiBaseUrl;
+    const ctaButtons = Array.from(document.querySelectorAll('[data-registration-cta]'));
+    const shell = document.querySelector('[data-registration-shell]');
+    const form = shell?.querySelector('[data-registration-form]');
+    const titleNode = shell?.querySelector('[data-registration-event-title]');
+    const summaryNode = shell?.querySelector('[data-registration-event-summary]');
+    const statusNode = shell?.querySelector('[data-registration-status]');
+    const submitButton = shell?.querySelector('[data-registration-submit]');
+    const closeTriggers = shell ? Array.from(shell.querySelectorAll('[data-registration-close]')) : [];
+    const errorNodes = shell ? Array.from(shell.querySelectorAll('[data-registration-error-for]')) : [];
+    const stateCache = new Map();
+    let activeEvent = null;
+    let slowRequestTimer = 0;
+
+    if (!(shell instanceof HTMLElement) || !(form instanceof HTMLFormElement) || !ctaButtons.length) {
+      return;
+    }
+
+    const fieldNames = ['fullName', 'email', 'phone', 'consentAccepted'];
+
+    function getDraftKey(slug) {
+      return `registration-draft:${slug}`;
+    }
+
+    function clearErrors() {
+      for (const node of errorNodes) {
+        if (node instanceof HTMLElement) {
+          node.textContent = '';
+        }
+      }
+
+      if (statusNode instanceof HTMLElement) {
+        statusNode.hidden = true;
+        statusNode.textContent = '';
+      }
+    }
+
+    function setFieldError(field, message) {
+      const node = shell.querySelector(`[data-registration-error-for="${field}"]`);
+      if (node instanceof HTMLElement) {
+        node.textContent = message;
+      }
+    }
+
+    function setStatus(message) {
+      if (statusNode instanceof HTMLElement) {
+        statusNode.hidden = false;
+        statusNode.textContent = message;
+      }
+    }
+
+    function normalizePhoneInput(value) {
+      let digits = value.replace(/\D+/g, '');
+      if (digits.startsWith('8')) {
+        digits = `7${digits.slice(1)}`;
+      }
+      if (!digits.startsWith('7')) {
+        digits = `7${digits.replace(/^7*/, '')}`;
+      }
+      digits = digits.slice(0, 11);
+
+      const country = digits.slice(0, 1);
+      const area = digits.slice(1, 4);
+      const prefix = digits.slice(4, 7);
+      const left = digits.slice(7, 9);
+      const right = digits.slice(9, 11);
+
+      let result = `+${country}`;
+      if (area) result += ` (${area}`;
+      if (area.length === 3) result += ')';
+      if (prefix) result += ` ${prefix}`;
+      if (left) result += `-${left}`;
+      if (right) result += `-${right}`;
+      return result;
+    }
+
+    function formatEventSummary(item) {
+      const dateLabel = new Intl.DateTimeFormat('ru-RU', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+        timeZone: 'Europe/Kaliningrad',
+      }).format(new Date(item.startsAt));
+
+      return `${dateLabel} · ${item.venueName}, ${item.hallName} · ${item.address}`;
+    }
+
+    function updateButton(button, item) {
+      const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
+      button.dataset.publicState = item.publicState;
+      button.textContent = item.ctaLabel;
+
+      if (notice instanceof HTMLElement) {
+        notice.hidden = !item.ctaNotice;
+        notice.textContent = item.ctaNotice || '';
+      }
+
+      const isOpen = item.publicState === 'registration_open';
+      button.disabled = !isOpen;
+      button.setAttribute('aria-disabled', isOpen ? 'false' : 'true');
+      button.classList.toggle('button--disabled', !isOpen);
+      button.classList.toggle('button--ghost', !isOpen);
+      button.classList.toggle('button--primary', isOpen);
+    }
+
+    async function fetchStates() {
+      const slugs = Array.from(new Set(
+        ctaButtons
+          .map((button) => button.dataset.eventSlug || '')
+          .filter(Boolean),
+      ));
+
+      const chunkSize = 24;
+      for (let index = 0; index < slugs.length; index += chunkSize) {
+        const chunk = slugs.slice(index, index + chunkSize);
+        const response = await fetch(`${apiBaseUrl}/api/v1/public/events/states?slugs=${encodeURIComponent(chunk.join(','))}`);
+
+        if (!response.ok) {
+          throw new Error('state_fetch_failed');
+        }
+
+        const data = await response.json();
+        for (const item of data.items || []) {
+          stateCache.set(item.slug, item);
+        }
+      }
+
+      for (const button of ctaButtons) {
+        const slug = button.dataset.eventSlug || '';
+        const item = stateCache.get(slug);
+
+        if (item) {
+          updateButton(button, item);
+          continue;
+        }
+
+        button.textContent = 'Регистрация недоступна';
+        button.disabled = true;
+        button.classList.add('button--disabled', 'button--ghost');
+      }
+    }
+
+    function hydrateDraft() {
+      if (!activeEvent) {
+        return;
+      }
+
+      const draft = sessionStorage.getItem(getDraftKey(activeEvent.slug));
+      if (!draft) {
+        form.reset();
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(draft);
+        form.fullName.value = parsed.fullName || '';
+        form.email.value = parsed.email || '';
+        form.phone.value = parsed.phone || '';
+        form.consentAccepted.checked = Boolean(parsed.consentAccepted);
+      } catch {
+        form.reset();
+      }
+    }
+
+    function persistDraft() {
+      if (!activeEvent) {
+        return;
+      }
+
+      sessionStorage.setItem(getDraftKey(activeEvent.slug), JSON.stringify({
+        fullName: form.fullName.value,
+        email: form.email.value,
+        phone: form.phone.value,
+        consentAccepted: form.consentAccepted.checked,
+      }));
+    }
+
+    function clearDraft() {
+      if (activeEvent) {
+        sessionStorage.removeItem(getDraftKey(activeEvent.slug));
+      }
+    }
+
+    function openModal(item) {
+      activeEvent = item;
+      clearErrors();
+      hydrateDraft();
+      document.body.classList.add('registration-modal-open');
+      shell.hidden = false;
+
+      if (titleNode instanceof HTMLElement) {
+        titleNode.textContent = item.title;
+      }
+
+      if (summaryNode instanceof HTMLElement) {
+        summaryNode.textContent = formatEventSummary(item);
+      }
+
+      form.fullName.focus();
+    }
+
+    function closeModal() {
+      clearTimeout(slowRequestTimer);
+      shell.hidden = true;
+      document.body.classList.remove('registration-modal-open');
+      activeEvent = null;
+      clearErrors();
+      form.reset();
+    }
+
+    function validate() {
+      clearErrors();
+
+      const data = {
+        fullName: form.fullName.value.trim().replace(/\s+/g, ' '),
+        email: form.email.value.trim().toLowerCase(),
+        phone: form.phone.value.trim(),
+        consentAccepted: form.consentAccepted.checked,
+      };
+
+      let valid = true;
+      const nameParts = data.fullName.split(' ').filter(Boolean);
+
+      if (!data.fullName) {
+        setFieldError('fullName', 'Укажите имя и фамилию.');
+        valid = false;
+      } else if (nameParts.length < 2 || nameParts.some((item) => item.replace(/[-']/g, '').length < 2)) {
+        setFieldError('fullName', 'Укажите минимум имя и фамилию.');
+        valid = false;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        setFieldError('email', 'Проверьте email.');
+        valid = false;
+      }
+
+      const digits = data.phone.replace(/\D+/g, '');
+      if (!(digits.length === 11 && /^[78]\d{10}$/.test(digits))) {
+        setFieldError('phone', 'Введите российский номер в формате +7.');
+        valid = false;
+      }
+
+      if (!data.consentAccepted) {
+        setFieldError('consentAccepted', 'Подтвердите согласие на обработку персональных данных, чтобы продолжить.');
+        valid = false;
+      }
+
+      return { valid, data };
+    }
+
+    form.phone.addEventListener('input', () => {
+      form.phone.value = normalizePhoneInput(form.phone.value);
+      persistDraft();
+    });
+
+    for (const fieldName of fieldNames) {
+      const field = form[fieldName];
+      if (field instanceof HTMLElement) {
+        field.addEventListener('blur', validate);
+        field.addEventListener('input', persistDraft);
+        field.addEventListener('change', persistDraft);
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      if (!activeEvent) {
+        return;
+      }
+
+      const honeypot = form.website?.value?.trim();
+      if (honeypot) {
+        return;
+      }
+
+      const { valid, data } = validate();
+      if (!valid) {
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.textContent = 'Регистрируем…';
+      clearTimeout(slowRequestTimer);
+      slowRequestTimer = window.setTimeout(() => {
+        setStatus('Проверяем данные и резервируем место. Это может занять несколько секунд.');
+      }, 4000);
+
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/v1/register`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            eventSlug: activeEvent.slug,
+            fullName: data.fullName,
+            email: data.email,
+            phone: data.phone,
+            consentAccepted: data.consentAccepted,
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          setStatus(result.message || 'Не удалось завершить регистрацию. Попробуйте ещё раз.');
+          return;
+        }
+
+        clearDraft();
+        window.location.href = result.ticketUrl;
+      } catch {
+        setStatus(`Связь с регистрацией прервалась. Если проблема повторяется, напишите на ${supportEmail}.`);
+      } finally {
+        clearTimeout(slowRequestTimer);
+        submitButton.disabled = false;
+        submitButton.textContent = 'Зарегистрироваться';
+      }
+    });
+
+    for (const button of ctaButtons) {
+      button.addEventListener('click', () => {
+        const slug = button.dataset.eventSlug || '';
+        const item = stateCache.get(slug);
+        if (item?.publicState === 'registration_open') {
+          openModal(item);
+        }
+      });
+    }
+
+    for (const trigger of closeTriggers) {
+      trigger.addEventListener('click', closeModal);
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !shell.hidden) {
+        closeModal();
+      }
+    });
+
+    fetchStates().catch(() => {
+      for (const button of ctaButtons) {
+        button.textContent = 'Регистрация недоступна';
+        button.disabled = true;
+        button.classList.add('button--disabled', 'button--ghost');
+        const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
+        if (notice instanceof HTMLElement) {
+          notice.hidden = false;
+          notice.textContent = 'Не удалось получить актуальный статус регистрации.';
+        }
+      }
+    });
+  })();
+</script>

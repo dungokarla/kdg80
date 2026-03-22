@@ -11,7 +11,7 @@ type MediaManifest = {
 const media = mediaManifest as MediaManifest;
 const curatedSummaries = summaryOverrides as Record<string, string>;
 
-type FestivalEventKind = 'dated' | 'range' | 'special';
+export type FestivalEventKind = 'dated' | 'range' | 'special';
 
 export type RelatedFestivalEvent = {
   slug: string;
@@ -32,11 +32,27 @@ export type SpeakerLectureLink = {
   dateLabel: string;
 };
 
+export type FestivalDialogueParticipant = {
+  name: string;
+  affiliation: string;
+  images: string[];
+};
+
+export type SpeakerShowcaseEntry = {
+  name: string;
+  affiliation: string;
+  images: string[];
+  anchor: string;
+  appearances: number;
+  weight: number;
+};
+
 export type FestivalEvent = {
   slug: string;
   title: string;
   format: string;
   formatLabel: string;
+  accessLabel?: string;
   dateLabel: string;
   monthLabel: string;
   monthAnchor: string;
@@ -47,9 +63,11 @@ export type FestivalEvent = {
   city: string;
   speakerLabel: string;
   affiliation: string;
+  heroRole: string;
   showingsLabel: string;
   summary: string;
   whyGo: string;
+  questions: string[];
   registrationUrl?: string;
   calendarReady: boolean;
   googleCalendarUrl?: string;
@@ -57,7 +75,7 @@ export type FestivalEvent = {
   calendarNote?: string;
   image?: string;
   speakerImages: string[];
-  dialogueParticipants: Array<{ name: string; images: string[] }>;
+  dialogueParticipants: FestivalDialogueParticipant[];
   kind: FestivalEventKind;
   isoStart?: string;
   relatedEvent?: RelatedFestivalEvent;
@@ -75,24 +93,54 @@ const MONTHS: Record<string, { number: string; label: string; anchor: string }> 
 };
 
 const ROOT_DIR = path.resolve(process.cwd(), '..');
-const MASTER_PATH = path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master_actual_v3.md');
+const MASTER_PATH = path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master.md');
 const DEFAULT_CITY = 'Калининград';
+const SPEAKER_SHOWCASE_KEYWORD_WEIGHTS: Array<{ pattern: RegExp; bonus: number }> = [
+  { pattern: /доктор|д\.\s*н\./i, bonus: 3.2 },
+  { pattern: /к\.\s*[а-я]\.\s*н\.|кандидат/i, bonus: 2.4 },
+  { pattern: /профессор/i, bonus: 3 },
+  { pattern: /президент/i, bonus: 3.1 },
+  { pattern: /директор/i, bonus: 2.4 },
+  { pattern: /основател/i, bonus: 1.8 },
+  { pattern: /третьяковск|музей мирового океана/i, bonus: 2.2 },
+  { pattern: /музей/i, bonus: 1 },
+  { pattern: /архитектор/i, bonus: 1.4 },
+  { pattern: /автор книги|писатель|поэт/i, bonus: 1.6 },
+  { pattern: /краевед/i, bonus: 1.2 },
+  { pattern: /экскурсовод/i, bonus: 0.8 },
+  { pattern: /специалист/i, bonus: 1 },
+  { pattern: /волонт[её]р/i, bonus: 0.5 },
+];
+const SPEAKER_SHOWCASE_NAME_BONUSES: Array<{ match: string; bonus: number }> = [
+  { match: 'Ярцев', bonus: 3.4 },
+  { match: 'Сивкова', bonus: 3.1 },
+  { match: 'Попадин', bonus: 2.8 },
+  { match: 'Мосиенко', bonus: 2.6 },
+  { match: 'Илюшкина', bonus: 2.4 },
+  { match: 'Надымова', bonus: 2.2 },
+  { match: 'Конюхова', bonus: 2.1 },
+  { match: 'Долотова', bonus: 1.9 },
+  { match: 'Криммель', bonus: 1.8 },
+  { match: 'Марковец', bonus: 1.6 },
+];
 
-const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: string[] }> = [
+const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: string[]; alternateTitles?: string[] }> = [
   {
     title: 'Советское монументальное искусство на территории Калининградской области',
     speaker: 'Мосиенко',
     manifestKeys: ['Советское монументальное искусство - Мосиенко'],
   },
   {
-    title: 'Мост, который соединяет времена. Двухъярусный мост - прошлое, настоящее и будущее.',
+    title: 'Мост, который соединяет времена. Двухъярусный мост: прошлое, настоящее и будущее',
     speaker: 'Мосиенко',
     manifestKeys: ['Мосты времени - Мосиенко'],
+    alternateTitles: ['Мост, который соединяет времена. Двухъярусный мост - прошлое, настоящее и будущее.'],
   },
   {
-    title: 'Калининградская область -- место для поэтов',
+    title: 'Калининградская область — вдохновение для писателей',
     speaker: 'Ярцев',
     manifestKeys: ['Калининград - город поэтов - Ярцев'],
+    alternateTitles: ['Калининградская область -- место для поэтов'],
   },
   {
     title: 'Люди, которых унесли птицы (Биостанция Рыбачий в советское время)',
@@ -100,19 +148,22 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Люди как птицы - Марковец'],
   },
   {
-    title: 'История парусного спорта в Калинингадской области',
+    title: 'История парусного спорта в Калининградской области',
     speaker: 'Жадобко',
     manifestKeys: ['Яхты2 - Жадобко', 'Яхты1 - Жадобко'],
+    alternateTitles: ['История парусного спорта в Калинингадской области'],
   },
   {
-    title: 'Калининградский морской торговый порт: яркие страницы советской истории и современность.',
+    title: 'Калининградский морской торговый порт: яркие страницы советской истории и современность',
     speaker: 'Нижегородцева',
     manifestKeys: ['Торговый порт - Нижегородцева'],
+    alternateTitles: ['Калининградский морской торговый порт: яркие страницы советской истории и современность.'],
   },
   {
-    title: 'Кирха - склад - спортзал - музей. Сложный путь культовых учреждений из забвения к возрождению',
+    title: 'Кирха — склад — спортзал — музей. Сложный путь культовых учреждений из забвения к возрождению',
     speaker: 'Долотова',
     manifestKeys: ['Кирхи, форты - Долотова'],
+    alternateTitles: ['Кирха - склад - спортзал - музей. Сложный путь культовых учреждений из забвения к возрождению'],
   },
   {
     title: 'Архитектура советского Калининграда (1946 - 1960 годы)',
@@ -120,9 +171,10 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Советская архитектура - Попадин'],
   },
   {
-    title: 'Великие учителя. Преемственность художественных поколений.',
+    title: 'Великие учителя. Преемственность художественных поколений',
     speaker: 'Илюшкина',
     manifestKeys: ['Великие учителя - Илюшкина'],
+    alternateTitles: ['Великие учителя. Преемственность художественных поколений.'],
   },
   {
     title: 'Виштынецкая возвышенность: как осваивали с 1945 года, современность и перспективы',
@@ -140,6 +192,11 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Железнодорожный развитие малых городоа - Казакова'],
   },
   {
+    title: 'Космическая орбита Калининграда',
+    speaker: 'Селин',
+    manifestKeys: ['Космическая орбита Калининграда - Селин'],
+  },
+  {
     title: 'Калининград и область как кинодекорация — история съёмок художественных фильмов в регионе',
     speaker: 'Бойко',
     manifestKeys: ['Калининград в кино - Бойко'],
@@ -150,9 +207,21 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['О чём мечтали в советском Калининграде - Литвинович'],
   },
   {
-    title: 'Советский Гусев-время созиданий',
+    title: 'Первые на косе',
+    speaker: 'Цедрик',
+    manifestKeys: ['Первые на косе - Цедрик'],
+  },
+  {
+    title: 'Выставка «Первые на косе»',
+    speaker: '',
+    manifestKeys: ['Первые на косе - Выставка'],
+    alternateTitles: ['Выставка Первые на косе'],
+  },
+  {
+    title: 'Советский Гусев — время созиданий',
     speaker: 'Ситникова',
     manifestKeys: ['Советский Гусев - Ситникова'],
+    alternateTitles: ['Советский Гусев-время созиданий'],
   },
   {
     title: 'Привычки калининградцев, юмор, суеверия не только подростковые, страшилки, легенды калининградских дворов',
@@ -205,19 +274,27 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Клады - Долотова'],
   },
   {
-    title: 'История образования и развития национального парка«Куршская коса',
+    title: 'История образования и развития национального парка «Куршская коса»',
     speaker: 'Скребцова',
     manifestKeys: ['Образование куршской косы - Скребкова'],
+    alternateTitles: ['История образования и развития национального парка«Куршская коса'],
   },
   {
-    title: 'Рыба на каждом столе: в ресторане и дома. Праздничный стол по- калининградски',
+    title: 'Рыба на каждом столе: в ресторане и дома. Праздничный стол по-калининградски',
     speaker: 'Конюхова',
     manifestKeys: ['Праздничный стол по-калининградски рыба в каждый дом - Конюхова'],
+    alternateTitles: ['Рыба на каждом столе: в ресторане и дома. Праздничный стол по- калининградски'],
   },
   {
     title: 'Мирная жизнь самой западной точки России (Балтийской косы)',
     speaker: 'Надымова',
     manifestKeys: ['Самая западная точка России Балтийская коса - Надымова'],
+  },
+  {
+    title: 'Выставка историй мирной жизни самой западной точки России',
+    speaker: '',
+    manifestKeys: ['Мирная жизнь на Балтийской косе - Выставка'],
+    alternateTitles: ['Выставка историй мирной жизни самой западной точки России (Балтийской косы)'],
   },
   {
     title: 'История Светлогорска в семейном альбоме',
@@ -230,9 +307,10 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Этюды той весны - 1', 'Этюды той весны - 2', 'Этюды той весны - 3'],
   },
   {
-    title: 'Восстановление янтарного карьера и Янтарный комбинат в послевоенные годы.',
+    title: 'Восстановление янтарного карьера и Янтарный комбинат в послевоенные годы',
     speaker: 'Криммель',
     manifestKeys: ['Янтарный комбинат - Криммель'],
+    alternateTitles: ['Восстановление янтарного карьера и Янтарный комбинат в послевоенные годы.'],
   },
   {
     title: 'Природа чемодана',
@@ -240,19 +318,22 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Природа чемодана - Никитин'],
   },
   {
-    title: 'Заводы и пароходы. Постсоветское индустриальное наследие Калининграда.',
+    title: 'Заводы и пароходы. Постсоветское индустриальное наследие Калининграда',
     speaker: 'Мосиенко',
     manifestKeys: ['Индустриальное наследие - Мосиенко'],
+    alternateTitles: ['Заводы и пароходы. Постсоветское индустриальное наследие Калининграда.'],
   },
   {
-    title: 'Зоопарку – быть! Зоопарк – трофей 1945 года и один из первых очагов мирной жизни в Калининграде',
+    title: 'Зоопарку — быть! Зоопарк — трофей 1945 года и один из первых очагов мирной жизни в Калининграде',
     speaker: 'Левкова',
     manifestKeys: ['Зоопарку быть - Левкова'],
+    alternateTitles: ['Зоопарку – быть! Зоопарк – трофей 1945 года и один из первых очагов мирной жизни в Калининграде'],
   },
   {
-    title: 'Человек, заложивший фундамент современного Калининграда. Виктор Денисов и его эпоха.',
+    title: 'Человек, заложивший фундамент современного Калининграда. Виктор Денисов и его эпоха',
     speaker: 'Машинская',
     manifestKeys: ['Денисов - Машинская'],
+    alternateTitles: ['Человек, заложивший фундамент современного Калининграда. Виктор Денисов и его эпоха.'],
   },
   {
     title: 'Демография первого десятилетия Калининградской области',
@@ -275,14 +356,16 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['КВАТУ Курсанты с крылышками - Перкусов'],
   },
   {
-    title: 'Калининградское здравоохранение в период становления области: особенности, вызовы, победы и проблемы.',
+    title: 'Калининградское здравоохранение в период становления области: особенности, вызовы, победы и проблемы',
     speaker: 'Манкевич',
     manifestKeys: ['Здравоохранение - Манкевич'],
+    alternateTitles: ['Калининградское здравоохранение в период становления области: особенности, вызовы, победы и проблемы.'],
   },
   {
-    title: 'Влияение планировочных решений на качество жизни на примере старого и нового Калининград',
+    title: 'Влияние планировочных решений на качество жизни на примере старого и нового Калининграда',
     speaker: 'Анисимов',
     manifestKeys: ['Планировочные решения - Анисимов'],
+    alternateTitles: ['Влияение планировочных решений на качество жизни на примере старого и нового Калининград'],
   },
 ];
 
@@ -356,11 +439,19 @@ function normalizeText(value: string) {
     .trim();
 }
 
+function sanitizeTimeLabel(value: string) {
+  return normalizeText(
+    value
+      .replace(/\s*\((?:по\s+)?утвержд[её]нной?\s+фестивальной\s+сетке\)\s*/giu, '')
+  );
+}
+
 function sanitizeListEntry(value: string) {
   return normalizeText(
     value
       .replace(/^[—–•-]+\s*/, '')
-      .replace(/^\d+\s+/, '')
+      .replace(/^\d+\s*[-.)]\s*/u, '')
+      .replace(/^\d+\s+/u, '')
       .replace(/^Миф\s*№?\d+:\s*/i, '')
       .replace(/^[«"]+|[»"]+$/g, ''),
   );
@@ -463,7 +554,18 @@ function normalizeMythFragment(value: string) {
     .trim();
 }
 
-function composeAngleSummary(questionItems: string[], misconceptionItems: string[]) {
+function getFormatNarrativeSubject(formatRaw: string) {
+  const lookup = normalizeLookup(formatRaw);
+  if (lookup.includes(normalizeLookup('Выставка'))) {
+    return 'Выставка';
+  }
+  if (lookup.includes(normalizeLookup('Иммерсивный спектакль'))) {
+    return 'Спектакль';
+  }
+  return 'Лекция';
+}
+
+function composeAngleSummary(questionItems: string[], misconceptionItems: string[], formatRaw: string) {
   const questionText = isGenericQuestionSet(questionItems)
     ? 'почему этот сюжет важен для региона, кто и что его сформировало и как он продолжает влиять на Калининградскую область сегодня'
     : joinNatural(
@@ -475,10 +577,11 @@ function composeAngleSummary(questionItems: string[], misconceptionItems: string
 
   const hasMyths = misconceptionItems.some((item) => normalizeMythFragment(item));
   const questionSentence = questionText ? `${capitalizeFirst(questionText)}?` : '';
+  const subject = getFormatNarrativeSubject(formatRaw);
   const mythSentence = hasMyths
     ? isGenericMythSet(misconceptionItems)
-      ? 'Лекция возвращает этот сюжет из области штампов к живой истории региона и показывает, почему он касается не только специалистов.'
-      : 'Лекция разбирает самые живучие мифы вокруг этой темы и переводит разговор из области штампов к фактам, людям и месту.'
+      ? `${subject} возвращает этот сюжет из области штампов к живой истории региона и показывает, почему он касается не только специалистов.`
+      : `${subject} разбирает самые живучие мифы вокруг этой темы и переводит разговор из области штампов к фактам, людям и месту.`
     : '';
 
   if (questionSentence && mythSentence) {
@@ -508,24 +611,50 @@ function trimLead(value: string) {
 }
 
 function composeEventSummary(title: string, body: string, formatRaw: string) {
+  const publishDescription = normalizeText(extractField(body, 'Чистовое описание для публикации'));
+  if (publishDescription) {
+    return toSentence(publishDescription);
+  }
+
   const summaryOverride = Object.entries(curatedSummaries)
     .find(([key]) => normalizeLookup(key) === normalizeLookup(title))?.[1];
   if (summaryOverride) {
     return normalizeText(summaryOverride);
   }
 
+  const siteDescription = normalizeText(extractField(body, 'Описание для сайта'));
   const shortDescription = normalizeText(
     extractField(body, 'Короткое описание для афиши — версия 1') ||
     extractField(body, 'Короткое описание для афиши — версия 2'),
   );
-  const baseDescription = normalizeText(extractField(body, 'Основа для описания'));
-  const questionItems = extractListItems(body, '3 вопроса, на которые отвечает лекция');
-  const misconceptionItems = extractListItems(body, '3 заблуждения, с которыми работает лекция');
+  const baseDescription = normalizeText(
+    extractField(body, 'Основа для описания / полезная фактура из таблицы')
+    || extractField(body, 'Основа для описания'),
+  );
+  const questionItems = [
+    '3 вопроса, на которые отвечает событие',
+    '3 вопроса, на которые отвечает лекция',
+    '3 вопроса, на которые отвечает выставка',
+    '3 вопроса, на которые отвечает спектакль',
+  ]
+    .map((label) => extractListItems(body, label))
+    .find((items) => items.length) ?? [];
+  const misconceptionItems = [
+    '3 мифа и заблуждения, с которыми работает событие',
+    '3 мифа и заблуждения, с которыми работает лекция',
+    '3 заблуждения, с которыми работает лекция',
+    '3 заблуждения, с которыми работает выставка',
+    '3 заблуждения, с которыми работает спектакль',
+  ]
+    .map((label) => extractListItems(body, label))
+    .find((items) => items.length) ?? [];
   const pieces: string[] = [];
-  const angleSummary = composeAngleSummary(questionItems, misconceptionItems);
+  const angleSummary = composeAngleSummary(questionItems, misconceptionItems, formatRaw);
   const prefersShortDescription = normalizeLookup(formatRaw).includes(normalizeLookup('Иммерсивный спектакль'));
 
-  if (prefersShortDescription && shortDescription && !startsWithTemplateLead(shortDescription)) {
+  if (siteDescription && !startsWithTemplateLead(siteDescription)) {
+    return toSentence(siteDescription);
+  } else if (prefersShortDescription && shortDescription && !startsWithTemplateLead(shortDescription)) {
     pieces.push(toSentence(trimLead(shortDescription)));
   } else if (baseDescription && !startsWithTemplateLead(baseDescription)) {
     pieces.push(toSentence(trimLead(baseDescription)));
@@ -543,6 +672,7 @@ function composeEventSummary(title: string, body: string, formatRaw: string) {
   }
 
   return normalizeText(
+    siteDescription ||
     extractField(body, 'Короткое описание для афиши — версия 1') ||
     extractField(body, 'Короткое описание для афиши — версия 2') ||
     baseDescription ||
@@ -572,6 +702,10 @@ function normalizeLookup(value: string) {
   return transliterate(value).toLowerCase();
 }
 
+export function normalizeFestivalLookup(value: string) {
+  return normalizeLookup(value);
+}
+
 function tokenizeLookup(value: string) {
   return normalizeLookup(value)
     .split('-')
@@ -591,6 +725,22 @@ function parseDurationMinutes(value: string) {
   const hours = normalized.match(/(\d+)\s*час/);
   const minutes = normalized.match(/(\d+)\s*мин/);
   return (hours ? Number(hours[1]) * 60 : 0) + (minutes ? Number(minutes[1]) : 0) || null;
+}
+
+function parseRangeEnd(dateLabel: string) {
+  const match = dateLabel.match(/(?:с\s*)?(\d{1,2})\s+([а-я]+)(?:\s+\d{4})?\s*(?:-|—|–|по)\s*(\d{1,2})\s+([а-я]+)\s+(\d{4})/i);
+  if (!match) {
+    return null;
+  }
+
+  const year = match[5];
+  const monthInfo = MONTHS[match[4].toLowerCase()];
+  if (!monthInfo) {
+    return null;
+  }
+
+  const day = match[3].padStart(2, '0');
+  return `${year}-${monthInfo.number}-${day}T23:59:59`;
 }
 
 function parseExactDate(dateLabel: string, timeLabel: string) {
@@ -647,11 +797,25 @@ function parseHeaderTitle(heading: string) {
     return value;
   };
 
-  if (heading.includes(' — ')) {
-    const rawTitle = heading.split(' — ').slice(1).join(' — ').trim().replace(/\s*:\s*$/, '');
-    return stripWrappedQuotes(rawTitle);
+  let normalized = heading.trim().replace(/\s*:\s*$/, '');
+
+  normalized = normalized.replace(/^Спецсобытие\s+—\s+/i, '');
+  normalized = normalized.replace(/^(?:с\s+)?\d{1,2}\s+[а-я]+(?:\s*(?:-|—|–|по)\s*\d{1,2}\s+[а-я]+)?\s+2026\s+—\s+/i, '');
+  normalized = normalized.replace(/^Иммерсивный спектакль\s+/i, '').trim();
+
+  return stripWrappedQuotes(normalized);
+}
+
+function isProgramHeading(heading: string, body: string) {
+  if (heading.startsWith('Спецсобытие')) {
+    return true;
   }
-  return stripWrappedQuotes(heading.trim().replace(/\s*:\s*$/, ''));
+
+  if (/^(?:с\s+)?\d{1,2}\s+[а-я]+(?:\s*(?:-|—|–|по)\s*\d{1,2}\s+[а-я]+)?\s+2026\s+—\s+/i.test(heading)) {
+    return true;
+  }
+
+  return /(?:\*\*Формат:\*\*\s*Иммерсивный спектакль)/i.test(body);
 }
 
 function normalizeFormatName(raw: string) {
@@ -659,6 +823,26 @@ function normalizeFormatName(raw: string) {
     .replace('Паблик-ток', 'Открытый диалог')
     .replace('паблик-ток', 'Открытый диалог')
     .replace('Открытие фестиваля + паблик-ток', 'Открытие фестиваля');
+}
+
+function isOpeningFestivalFormat(raw: string) {
+  return normalizeLookup(raw).includes(normalizeLookup('Открытие фестиваля'));
+}
+
+function isPublicTalkFormat(raw: string) {
+  return normalizeLookup(raw).includes(normalizeLookup('паблик-ток'));
+}
+
+function resolveDurationLabel(kind: FestivalEvent['kind'], body: string, formatRaw: string) {
+  if (kind === 'range') {
+    return '';
+  }
+
+  if (isPublicTalkFormat(formatRaw) && !isOpeningFestivalFormat(formatRaw)) {
+    return '45 минут';
+  }
+
+  return extractField(body, 'Длительность') || extractField(body, 'Ориентировочная длительность') || '1 час';
 }
 
 function pickBestManifestKey(value: string, keys: string[], minimumScore: number) {
@@ -686,7 +870,10 @@ function assignImage(title: string, speakerValue: string) {
   const titleLookup = normalizeLookup(title);
   const speakerLookup = normalizeLookup(speakerValue);
   const match = EVENT_IMAGE_MAP.find((entry) => (
-    titleLookup === normalizeLookup(entry.title)
+    (
+      titleLookup === normalizeLookup(entry.title)
+      || entry.alternateTitles?.some((alternateTitle) => titleLookup === normalizeLookup(alternateTitle))
+    )
     && speakerLookup.includes(normalizeLookup(entry.speaker))
   ));
 
@@ -779,14 +966,15 @@ function extractDialogueParticipants(raw: string) {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const seededNames = sourceLines.some((line) => /^[—–•-]/.test(line))
-    ? sourceLines.map((line) => normalizeSpeakerLabel(line.replace(/^[—–•-]+\s*/, '').split(/\s+[—-]\s+/)[0] ?? line))
-    : splitSpeakerSegments(raw).map((segment) => normalizeSpeakerLabel(segment));
+  const seededParticipants = sourceLines.some((line) => /^[—–•-]/.test(line))
+    ? sourceLines.map((line) => splitSpeakerData(line.replace(/^[—–•-]+\s*/, '')))
+    : splitSpeakerSegments(raw).map((segment) => splitSpeakerData(segment));
 
   const seen = new Set<string>();
-  const participants: Array<{ name: string; images: string[] }> = [];
+  const participants: FestivalDialogueParticipant[] = [];
 
-  for (const seededName of seededNames) {
+  for (const seededParticipant of seededParticipants) {
+    const seededName = seededParticipant.speakerLabel;
     if (!seededName) {
       continue;
     }
@@ -809,11 +997,27 @@ function extractDialogueParticipants(raw: string) {
     seen.add(signature);
     participants.push({
       name: seededName,
+      affiliation: seededParticipant.affiliation,
       images,
     });
   }
 
   return participants;
+}
+
+function getSpeakerShowcaseWeight(speaker: Pick<SpeakerShowcaseEntry, 'name' | 'affiliation' | 'appearances'>) {
+  const affiliation = speaker.affiliation.toLowerCase();
+  const appearanceBonus = Math.max(0, speaker.appearances - 1) * 1.35;
+  const affiliationBonus = SPEAKER_SHOWCASE_KEYWORD_WEIGHTS.reduce(
+    (total, entry) => total + (entry.pattern.test(affiliation) ? entry.bonus : 0),
+    0,
+  );
+  const nameBonus = SPEAKER_SHOWCASE_NAME_BONUSES.reduce(
+    (total, entry) => total + (speaker.name.includes(entry.match) ? entry.bonus : 0),
+    0,
+  );
+
+  return Number((1 + appearanceBonus + affiliationBonus + nameBonus).toFixed(3));
 }
 
 function toUtcDate(isoStart: string, durationMinutes: number) {
@@ -931,6 +1135,103 @@ function applyExhibitionLocationOverride(title: string, kind: FestivalEventKind,
   return override?.venue ?? venue;
 }
 
+function normalizeEventLocation(venue: string, address: string) {
+  const locationLookup = normalizeLookup(`${venue} ${address}`);
+
+  if (locationLookup.includes(normalizeLookup('ИЦАЭ'))) {
+    return {
+      venue: 'ИЦАЭ',
+      address: 'Советский проспект 1, вход в КГТУ, 2-й этаж',
+    };
+  }
+
+  if (locationLookup.includes(normalizeLookup('Музей Мирового океана'))) {
+    return {
+      venue: 'Лекторий ОКЕАНиЯ',
+      address: 'Музей Мирового океана, наб. Петра Великого, 1',
+    };
+  }
+
+  if (
+    locationLookup.includes(normalizeLookup('Калининградская областная научная библиотека'))
+    || locationLookup.includes(normalizeLookup('Лекционный зал'))
+  ) {
+    return {
+      venue: 'Лекционный зал 4 этаж',
+      address: 'Калининградская областная научная библиотека, проспект Мира, 9/11',
+    };
+  }
+
+  if (
+    locationLookup.includes(normalizeLookup('Фридландские ворота'))
+    || locationLookup.includes(normalizeLookup('Блокгауз'))
+  ) {
+    return {
+      venue: 'Корпус Блокгауз',
+      address: 'Музей «Фридландские ворота», ул. Дзержинского 30, вход через музейный дворик',
+    };
+  }
+
+  return { venue, address };
+}
+
+function applyEventLocationOverride(title: string, location: { venue: string; address: string }) {
+  if (includesAnyNormalized(title, ['Этюды той весны'])) {
+    return {
+      venue: 'Секретная локация',
+      address: 'Секретная локация',
+    };
+  }
+
+  return location;
+}
+
+function createProvisionalZooExcursion(events: FestivalEvent[]) {
+  const zooLecture = events.find((event) =>
+    includesAnyNormalized(
+      event.title,
+      ['Право на существование: зоопарки в современном мире. Перспективы развития Калининградского зоопарка'],
+    ),
+  );
+
+  if (!zooLecture) {
+    return null;
+  }
+
+  return {
+    ...zooLecture,
+    slug: 'premera-novoy-tematicheskoy-ekskursii-po-kaliningradskomu-zooparku',
+    title: 'Премьера новой тематической экскурсии по Калининградскому зоопарку',
+    format: 'Экскурсия',
+    formatLabel: 'Экскурсия',
+    accessLabel: '',
+    dateLabel: 'Июнь 2026',
+    monthLabel: 'Скоро',
+    monthAnchor: 'soon',
+    timeLabel: 'Точное время будет объявлено',
+    durationLabel: 'Продолжительность уточняется',
+    venue: 'Калининградский зоопарк',
+    address: 'проспект Мира, 26',
+    speakerLabel: '',
+    affiliation: '',
+    heroRole: '',
+    summary: 'Премьера новой тематической экскурсии по зоопарку, которая лучше раскроет, что появилось в зоопарке в советское время, познакомит с историей зоопарка того периода и покажет вживую, как менялся зоопарк после немецкой эпохи.',
+    whyGo: 'Экскурсия задумывается как весёлая и полная необычных зоопарковых историй прогулка по советскому слою Калининградского зоопарка.',
+    questions: [],
+    registrationUrl: undefined,
+    calendarReady: false,
+    googleCalendarUrl: undefined,
+    icsUrl: undefined,
+    calendarNote: 'Точная дата и время экскурсии будут объявлены позже.',
+    kind: 'special' as const,
+    isoStart: undefined,
+    showingsLabel: 'Премьера экскурсии в июне',
+    speakerImages: [],
+    dialogueParticipants: [],
+    speakerLectureLinks: [],
+  } satisfies FestivalEvent;
+}
+
 function attachRelatedEvents(events: FestivalEvent[]) {
   for (const binding of RELATED_EVENT_BINDINGS) {
     const lecture = events.find((event) =>
@@ -991,7 +1292,7 @@ function parseSections() {
     const heading = lines[0]?.trim();
     const body = lines.slice(1).join('\n').trim();
 
-    if (!heading || !body) {
+    if (!heading || !body || !isProgramHeading(heading, body)) {
       continue;
     }
 
@@ -999,7 +1300,12 @@ function parseSections() {
     const slug = toSlug(title);
     const formatRaw = extractField(body, 'Формат') || 'Событие';
     const formatLabel = normalizeFormatName(formatRaw);
-    const durationLabel = extractField(body, 'Длительность') || '1 час';
+    const kind: FestivalEvent['kind'] = heading.startsWith('Спецсобытие')
+      ? 'special'
+      : formatRaw.includes('Выставка') || body.includes('**Период проведения:**') || body.includes('**Период работы:**')
+        ? 'range'
+        : 'dated';
+    const durationLabel = resolveDurationLabel(kind, body, formatRaw);
     const summary = composeEventSummary(title, body, formatRaw);
     const whyGo = normalizeText(
       extractFirst(body, [
@@ -1010,6 +1316,14 @@ function parseSections() {
         'Зачем идти на спектакль',
       ]),
     );
+    const questions = [
+      '3 вопроса, на которые отвечает событие',
+      '3 вопроса, на которые отвечает лекция',
+      '3 вопроса, на которые отвечает выставка',
+      '3 вопроса, на которые отвечает спектакль',
+    ]
+      .map((label) => extractListItems(body, label))
+      .find((items) => items.length) ?? [];
     const rawVenue = extractField(body, 'Площадка') || 'Площадка уточняется';
     const address = extractField(body, 'Короткий адрес') || 'Адрес уточняется';
     const showingsLabel = extractField(body, 'Количество показов');
@@ -1017,20 +1331,25 @@ function parseSections() {
       extractField(body, 'Спикер') ||
       extractField(body, 'Участники') ||
       extractField(body, 'Партнёр / источник материалов') ||
-      extractField(body, 'Рабочая привязка в таблице')
+      extractField(body, 'Рабочая привязка в таблице') ||
+      extractField(body, 'Связка в рабочем файле')
     ).trim();
     const speakerData = splitSpeakerData(speakerRaw);
+    const heroRole = normalizeText(extractField(body, 'Регалия для hero'));
     const dialogueParticipants = formatLabel.includes('Открытый диалог')
       ? extractDialogueParticipants(speakerRaw)
       : [];
-    const dateLabel = extractField(body, 'Дата') || extractField(body, 'Период проведения') || 'Дата будет объявлена';
-    const timeLabel = extractField(body, 'Время') || extractField(body, 'Время посещения') || 'Время будет объявлено';
-    const kind: FestivalEvent['kind'] = heading.startsWith('Спецсобытие')
-      ? 'special'
-      : formatRaw.includes('Выставка') || body.includes('**Период проведения:**')
-        ? 'range'
-        : 'dated';
-    const venue = applyExhibitionLocationOverride(title, kind, rawVenue);
+    const dateLabel = extractField(body, 'Дата') || extractField(body, 'Период работы') || extractField(body, 'Период проведения') || 'Дата будет объявлена';
+    const timeLabel = sanitizeTimeLabel(
+      extractField(body, 'Время') || extractField(body, 'Режим посещения') || extractField(body, 'Время посещения') || 'Время будет объявлено',
+    );
+    const normalizedLocation = applyEventLocationOverride(
+      title,
+      normalizeEventLocation(
+        applyExhibitionLocationOverride(title, kind, rawVenue),
+        address,
+      ),
+    );
 
     const exactDate = parseExactDate(dateLabel, timeLabel);
     const rangeDate = kind === 'range' ? parseRangeStart(heading) : null;
@@ -1040,8 +1359,8 @@ function parseSections() {
       title,
       slug,
       summary: summary || whyGo,
-      venue,
-      address,
+      venue: normalizedLocation.venue,
+      address: normalizedLocation.address,
       isoStart: exactDate?.isoStart,
       durationMinutes,
     });
@@ -1056,19 +1375,21 @@ function parseSections() {
       monthAnchor: monthInfo.monthAnchor,
       timeLabel,
       durationLabel,
-      venue,
-      address,
+      venue: normalizedLocation.venue,
+      address: normalizedLocation.address,
       city: DEFAULT_CITY,
       speakerLabel: kind === 'special' ? '' : speakerData.speakerLabel,
       affiliation: kind === 'special' ? '' : speakerData.affiliation,
+      heroRole: kind === 'special' ? '' : heroRole,
       showingsLabel,
       summary,
       whyGo,
-      registrationUrl: kind === 'special' ? undefined : `https://example.com/register?event=${slug}`,
-      calendarReady: kind === 'special' ? false : calendar.ready,
-      googleCalendarUrl: kind === 'special' ? undefined : calendar.googleUrl,
-      icsUrl: kind === 'special' ? undefined : calendar.icsUrl,
-      calendarNote: kind === 'special' ? 'Дата спектакля будет объявлена позже.' : calendar.note,
+      questions,
+      registrationUrl: kind === 'dated' ? `https://example.com/register?event=${slug}` : undefined,
+      calendarReady: kind === 'dated' ? calendar.ready : false,
+      googleCalendarUrl: kind === 'dated' ? calendar.googleUrl : undefined,
+      icsUrl: kind === 'dated' ? calendar.icsUrl : undefined,
+      calendarNote: kind === 'special' ? 'Дата спектакля будет объявлена позже.' : undefined,
       image: assignImage(title, speakerData.speakerLabel),
       speakerImages: kind === 'special' ? [] : assignSpeakerImages(speakerData.speakerLabel),
       dialogueParticipants,
@@ -1076,6 +1397,11 @@ function parseSections() {
       isoStart: exactDate?.isoStart ?? rangeDate?.isoStart,
       speakerLectureLinks: [],
     });
+  }
+
+  const provisionalZooExcursion = createProvisionalZooExcursion(events);
+  if (provisionalZooExcursion) {
+    events.push(provisionalZooExcursion);
   }
 
   return sortEvents(attachRelatedEvents(events));
@@ -1108,23 +1434,71 @@ export function getMonthGroups(events: FestivalEvent[]) {
   return Array.from(groups.values());
 }
 
-export function getSpeakerShowcase(events: FestivalEvent[]) {
-  const bySpeaker = new Map<string, { name: string; affiliation: string; images: string[]; anchor: string }>();
+export function getSpeakerShowcase(events: FestivalEvent[], limit = 8) {
+  const bySpeaker = new Map<string, Omit<SpeakerShowcaseEntry, 'weight'>>();
 
-  for (const event of events) {
-    if (!event.speakerLabel || !event.speakerImages.length || bySpeaker.has(event.speakerLabel)) {
-      continue;
+  function upsertSpeaker(speaker: {
+    name: string;
+    affiliation: string;
+    images: string[];
+    anchor: string;
+  }) {
+    if (!speaker.name || !speaker.images.length) {
+      return;
     }
 
-    bySpeaker.set(event.speakerLabel, {
-      name: event.speakerLabel,
-      affiliation: event.affiliation,
-      images: event.speakerImages,
-      anchor: `event-${event.slug}`,
+    const existing = bySpeaker.get(speaker.name);
+
+    if (existing) {
+      existing.appearances += 1;
+      if (!existing.affiliation || speaker.affiliation.length > existing.affiliation.length) {
+        existing.affiliation = speaker.affiliation;
+      }
+      if (!existing.images.length && speaker.images.length) {
+        existing.images = speaker.images;
+      }
+      return;
+    }
+
+    bySpeaker.set(speaker.name, {
+      name: speaker.name,
+      affiliation: speaker.affiliation,
+      images: speaker.images,
+      anchor: speaker.anchor,
+      appearances: 1,
     });
   }
 
-  return Array.from(bySpeaker.values()).slice(0, 8);
+  for (const event of events) {
+    if (event.speakerLabel && event.speakerImages.length) {
+      upsertSpeaker({
+        name: event.speakerLabel,
+        affiliation: event.affiliation,
+        images: event.speakerImages,
+        anchor: `event-${event.slug}`,
+      });
+    }
+
+    for (const participant of event.dialogueParticipants) {
+      upsertSpeaker({
+        name: participant.name,
+        affiliation: participant.affiliation,
+        images: participant.images,
+        anchor: `event-${event.slug}`,
+      });
+    }
+  }
+
+  return Array.from(bySpeaker.values())
+    .map((speaker) => ({
+      ...speaker,
+      weight: getSpeakerShowcaseWeight(speaker),
+    }))
+    .sort((left, right) =>
+      right.weight - left.weight
+      || right.appearances - left.appearances
+      || left.name.localeCompare(right.name, 'ru'))
+    .slice(0, limit);
 }
 
 export function getHookQuotes(events: FestivalEvent[]) {
@@ -1140,6 +1514,55 @@ export function getHookQuotes(events: FestivalEvent[]) {
 
 export function getOpenDialogues(events: FestivalEvent[]) {
   return events.filter((event) => event.formatLabel.includes('Открытый диалог'));
+}
+
+export function getEventStartIso(event: FestivalEvent) {
+  if (event.kind === 'special') {
+    return undefined;
+  }
+
+  return event.isoStart;
+}
+
+export function getEventEndIso(event: FestivalEvent) {
+  if (event.kind === 'special') {
+    return undefined;
+  }
+
+  if (event.kind === 'range') {
+    return parseRangeEnd(event.dateLabel) ?? event.isoStart;
+  }
+
+  if (!event.isoStart) {
+    return undefined;
+  }
+
+  const durationMinutes = parseDurationMinutes(event.durationLabel) ?? 60;
+  const end = new Date(new Date(event.isoStart).getTime() + durationMinutes * 60_000);
+  return end.toISOString().slice(0, 19);
+}
+
+export function getEventTemporalState(event: FestivalEvent, now = new Date()) {
+  const startIso = getEventStartIso(event);
+  const endIso = getEventEndIso(event);
+
+  if (!startIso && !endIso) {
+    return 'timeless' as const;
+  }
+
+  const nowMs = now.getTime();
+  const startMs = startIso ? new Date(startIso).getTime() : Number.NaN;
+  const endMs = endIso ? new Date(endIso).getTime() : Number.NaN;
+
+  if (!Number.isNaN(startMs) && nowMs < startMs) {
+    return 'upcoming' as const;
+  }
+
+  if (!Number.isNaN(endMs) && nowMs > endMs) {
+    return 'past' as const;
+  }
+
+  return 'ongoing' as const;
 }
 
 export function buildIcs(event: FestivalEvent) {

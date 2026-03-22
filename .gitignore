@@ -11,4 +11,8 @@ CLAUDE_PROMPT.md
 .playwright-cli/
 .tmp-*.png
 site/.vscode/
+site/.tmp-playwright*/
 site/scripts/__pycache__/
+.codex-artifacts/
+test-results/
+tmp/

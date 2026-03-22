@@ -1,0 +1,29 @@
+---
+import type { RouteNavItem } from '../lib/routes';
+
+interface Props {
+  items: RouteNavItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<section class="interest-chooser-zone" id="interest-chooser" data-interest-zone aria-labelledby="interest-chooser-title">
+  <div class="container">
+    <div class="interest-chooser" data-interest-chooser data-stuck="false" data-hidden="false">
+      <div class="interest-chooser__copy">
+        <p class="interest-chooser__eyebrow">По интересам</p>
+        <h2 id="interest-chooser-title">Выберите свой маршрут по фестивалю</h2>
+        <p>Короткий вход в тематические подборки, который до программы становится временным вторым уровнем навигации.</p>
+      </div>
+
+      <nav class="interest-chooser__nav" aria-label="Маршруты по интересам">
+        {items.map((item) => (
+          <a class={`interest-chooser__link ${item.isShortcut ? 'interest-chooser__link--shortcut' : ''}`} href={item.href}>
+            <span>{item.navLabel}</span>
+          </a>
+        ))}
+      </nav>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,46 @@
+---
+import type { RouteNavItem } from '../lib/routes';
+
+interface Props {
+  items: RouteNavItem[];
+  currentRouteSlug: string;
+}
+
+const { items, currentRouteSlug } = Astro.props;
+---
+
+<section class="route-subnav" data-route-subnav aria-label="Переключение маршрутов">
+  <div class="container">
+    <div class="route-subnav__desktop">
+      {items.map((item) => (
+        <a
+          class={`route-subnav__link ${item.slug === currentRouteSlug ? 'is-current' : ''} ${item.isShortcut ? 'route-subnav__link--shortcut' : ''}`}
+          href={item.href}
+          aria-current={item.slug === currentRouteSlug ? 'page' : undefined}
+        >
+          {item.navLabel}
+        </a>
+      ))}
+    </div>
+
+    <details class="route-subnav__mobile">
+      <summary>
+        <span class="route-subnav__mobile-summary-copy">
+          <strong>Другие темы</strong>
+          <small>Сменить маршрут</small>
+        </span>
+      </summary>
+      <div class="route-subnav__mobile-panel">
+        {items.map((item) => (
+          <a
+            class={`route-subnav__mobile-link ${item.slug === currentRouteSlug ? 'is-current' : ''}`}
+            href={item.href}
+            aria-current={item.slug === currentRouteSlug ? 'page' : undefined}
+          >
+            {item.navLabel}
+          </a>
+        ))}
+      </div>
+    </details>
+  </div>
+</section>

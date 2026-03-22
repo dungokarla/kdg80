@@ -1,0 +1,249 @@
+---
+import type { SpeakerShowcaseEntry } from '../lib/festival';
+import { toSpeakerStripCard } from '../lib/media';
+
+interface Props {
+  entries: SpeakerShowcaseEntry[];
+  totalCount: number;
+  loadHref: string;
+}
+
+const { entries, totalCount, loadHref } = Astro.props;
+const cards = entries.map((entry) => toSpeakerStripCard(entry));
+const remainingCount = Math.max(totalCount - cards.length, 0);
+---
+
+<section class="section speaker-section" id="speakers">
+  <div class="container">
+    <div
+      class="speaker-poster"
+      data-speaker-poster
+      data-speaker-load-url={loadHref}
+      data-speaker-initial-cards={JSON.stringify(cards)}
+    >
+      <div class="speaker-poster__masthead">
+        <div class="speaker-poster__topline">
+          <div class="speaker-poster__topcopy">
+            <p class="speaker-poster__eyebrow">Люди фестиваля</p>
+            <p class="speaker-poster__stamp">Калининград / 2026 / 80 историй о главном</p>
+          </div>
+        </div>
+
+        <h2>
+          <span>ГОЛОСА</span>
+          <span>ФЕСТИВАЛЯ</span>
+        </h2>
+
+        <p class="speaker-poster__note">
+          Эксперты, руководители организаций, авторы книг, учёные, краеведы и гиды.
+        </p>
+
+        {remainingCount > 0 && (
+          <div class="speaker-poster__actions">
+            <button class="speaker-poster__refresh" type="button" data-speaker-load>
+              Показать ещё
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div class="speaker-strip" data-speaker-strip>
+        {cards.map((card) => (
+          <a class="speaker-entry" href={`#${card.anchor}`}>
+            <div class="speaker-entry__meta">
+              <strong>{card.name}</strong>
+              {card.affiliation && <span>{card.affiliation}</span>}
+            </div>
+
+            <div class="speaker-entry__media">
+              <img
+                class="speaker-entry__portrait"
+                src={card.image}
+                alt={card.name}
+                loading="lazy"
+                fetchpriority="low"
+                decoding="async"
+                style={card.style}
+              />
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  const speakerPoster = document.querySelector('[data-speaker-poster]');
+
+  const createSpeakerEntry = (card) => {
+    const link = document.createElement('a');
+    link.className = 'speaker-entry';
+    link.href = `#${card.anchor}`;
+
+    const meta = document.createElement('div');
+    meta.className = 'speaker-entry__meta';
+
+    const name = document.createElement('strong');
+    name.textContent = card.name;
+    meta.append(name);
+
+    if (card.affiliation) {
+      const affiliation = document.createElement('span');
+      affiliation.textContent = card.affiliation;
+      meta.append(affiliation);
+    }
+
+    const media = document.createElement('div');
+    media.className = 'speaker-entry__media';
+
+    const image = document.createElement('img');
+    image.className = 'speaker-entry__portrait';
+    image.src = card.image;
+    image.alt = card.name;
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.fetchPriority = 'low';
+
+    if (card.style) {
+      image.style.cssText = card.style;
+    }
+
+    media.append(image);
+    link.append(meta, media);
+    return link;
+  };
+
+  if (speakerPoster instanceof HTMLElement) {
+    const strip = speakerPoster.querySelector('[data-speaker-strip]');
+    const button = speakerPoster.querySelector('[data-speaker-load]');
+    const loadUrl = speakerPoster.dataset.speakerLoadUrl;
+    const initialCards = (() => {
+      try {
+        const payload = JSON.parse(speakerPoster.dataset.speakerInitialCards || '[]');
+        return Array.isArray(payload) ? payload.filter((card) => card?.name && card?.image && card?.anchor) : [];
+      } catch {
+        return [];
+      }
+    })();
+
+    if (strip instanceof HTMLElement && button instanceof HTMLButtonElement && loadUrl) {
+      let loadedCards = null;
+      let currentCards = initialCards.slice();
+      let deck = [];
+
+      const shuffle = (items) => {
+        const values = items.slice();
+
+        for (let index = values.length - 1; index > 0; index -= 1) {
+          const randomIndex = Math.floor(Math.random() * (index + 1));
+          [values[index], values[randomIndex]] = [values[randomIndex], values[index]];
+        }
+
+        return values;
+      };
+
+      const dedupeCards = (items) => {
+        const seen = new Set();
+        return items.filter((card) => {
+          if (!card?.anchor || seen.has(card.anchor)) {
+            return false;
+          }
+
+          seen.add(card.anchor);
+          return true;
+        });
+      };
+
+      const preloadCards = async (cards) => {
+        await Promise.all(cards.map((card) => new Promise((resolve) => {
+          const image = new Image();
+          image.src = card.image;
+
+          const finish = () => resolve();
+
+          image.onload = finish;
+          image.onerror = finish;
+
+          if (typeof image.decode === 'function') {
+            image.decode().then(finish).catch(finish);
+          }
+        })));
+      };
+
+      const setButtonLabel = (value) => {
+        button.textContent = value;
+      };
+
+      const allCards = () => dedupeCards([...(loadedCards ?? []), ...initialCards]);
+
+      const refillDeck = (excludeCards) => {
+        const excludedAnchors = new Set(excludeCards.map((card) => card.anchor));
+        return shuffle(allCards().filter((card) => !excludedAnchors.has(card.anchor)));
+      };
+
+      const getNextCards = () => {
+        const slotCount = currentCards.length || initialCards.length || 8;
+
+        if (deck.length < slotCount) {
+          deck = refillDeck(currentCards);
+        }
+
+        let nextCards = deck.splice(0, slotCount);
+
+        if (nextCards.length < slotCount) {
+          const takenAnchors = new Set([...currentCards, ...nextCards].map((card) => card.anchor));
+          const refill = shuffle(allCards().filter((card) => !takenAnchors.has(card.anchor)));
+          const needed = slotCount - nextCards.length;
+          nextCards = nextCards.concat(refill.slice(0, needed));
+          deck = refill.slice(needed);
+        }
+
+        return nextCards.length ? nextCards : currentCards;
+      };
+
+      button.addEventListener('click', async () => {
+        if (button.disabled) {
+          return;
+        }
+
+        button.disabled = true;
+        setButtonLabel('Обновляем...');
+
+        try {
+          if (!loadedCards) {
+            const response = await fetch(loadUrl, { credentials: 'same-origin' });
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+
+            const payload = await response.json();
+            loadedCards = Array.isArray(payload?.cards)
+              ? payload.cards.filter((card) => card?.name && card?.image && card?.anchor)
+              : [];
+          }
+
+          const nextCards = getNextCards();
+          await preloadCards(nextCards);
+
+          strip.dataset.state = 'swapping';
+          window.setTimeout(() => {
+            strip.replaceChildren(...nextCards.map((card) => createSpeakerEntry(card)));
+            currentCards = nextCards;
+            window.requestAnimationFrame(() => {
+              delete strip.dataset.state;
+            });
+          }, 150);
+        } catch (_error) {
+          setButtonLabel('Показать ещё');
+          button.disabled = false;
+          return;
+        }
+
+        button.disabled = false;
+        setButtonLabel('Показать ещё');
+      });
+    }
+  }
+</script>

@@ -1,0 +1,116 @@
+---
+import EventCard from '../components/EventCard.astro';
+import RegistrationClient from '../components/RegistrationClient.astro';
+import RouteHero from '../components/RouteHero.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import Layout from '../layouts/Layout.astro';
+import { getFestivalEvents } from '../lib/festival';
+import {
+  getFestivalRouteBySlug,
+  getFestivalRoutes,
+  getRouteEventSections,
+  getRouteNavItems,
+  getRouteTemporalGroups,
+  getSmartProgramHref,
+} from '../lib/routes';
+
+export function getStaticPaths() {
+  return getFestivalRoutes().map((route) => ({
+    params: { slug: route.slug },
+  }));
+}
+
+const route = getFestivalRouteBySlug(Astro.params.slug ?? '');
+
+if (!route) {
+  return Astro.redirect('/');
+}
+
+const allEvents = getFestivalEvents();
+const routeItems = getRouteNavItems();
+const now = new Date();
+const programHref = getSmartProgramHref(allEvents, false, now);
+const routeProgramHref = '#route-program';
+const temporalGroups = getRouteTemporalGroups(route, now);
+const upcomingSections = getRouteEventSections(temporalGroups.upcoming);
+const pastSections = getRouteEventSections(temporalGroups.past);
+const title = `${route.title} | 80 историй о главном`;
+const description = route.description || `Маршрут по интересам «${route.title}»: подборка событий фестиваля и сильные мифы, связанные с темой.`;
+---
+
+<Layout title={title} description={description}>
+  <div class="page page--route">
+    <div id="top" aria-hidden="true"></div>
+    <SiteHeader routeItems={routeItems} currentRouteSlug={route.slug} programHref={programHref} />
+
+    <main>
+      <RouteHero route={route} routeProgramHref={routeProgramHref} />
+
+      <section class="section section--route-program" id="route-program">
+        <div class="container">
+          <div class="section__header section__header--split">
+            <div>
+              <p class="section__eyebrow">События маршрута</p>
+              <h2>Сначала редкие сценические форматы, затем лекции по хронологии, а выставки вынесены ниже.</h2>
+            </div>
+            <p class="section__text">
+              Карточки здесь те же, что и в общей программе, поэтому правки по событию должны совпадать везде без отдельной route-версии.
+            </p>
+          </div>
+
+          <div class="route-program">
+            {upcomingSections.map((section) => (
+              <section class="route-program__section" id={`${route.slug}-${section.id}`}>
+                <header class="route-program__section-head">
+                  <h3>{section.title}</h3>
+                  <span>{section.events.length}</span>
+                </header>
+                <div class="event-list">
+                  {section.events.map((event) => (
+                    <EventCard event={event} now={now} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {pastSections.length > 0 && (
+        <section class="section section--route-past">
+          <div class="container">
+            <div class="section__header section__header--split">
+              <div>
+                <p class="section__eyebrow">Архив маршрута</p>
+                <h2>События прошли</h2>
+              </div>
+              <p class="section__text">
+                Прошедшие встречи вынесены ниже, чтобы основной поток не шумел и фокус оставался на ближайшей программе.
+              </p>
+            </div>
+
+            <div class="route-program route-program--past">
+              {pastSections.map((section) => (
+                <section class="route-program__section route-program__section--past">
+                  <header class="route-program__section-head">
+                    <h3>{section.title}</h3>
+                    <span>{section.events.length}</span>
+                  </header>
+                  <div class="event-list">
+                    {section.events.map((event) => (
+                      <EventCard event={event} now={now} />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </main>
+
+    <SiteFooter routeItems={routeItems} programHref={programHref} />
+    <RegistrationClient />
+  </div>
+</Layout>

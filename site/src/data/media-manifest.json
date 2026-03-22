@@ -23,14 +23,16 @@
     "Калининрадские суеверия и привычки - Никитин": "/generated/events/kalininradskie-sueveriya-i-privychki-nikitin.webp",
     "Кирхи, форты - Долотова": "/generated/events/kirhi-forty-dolotova.webp",
     "Клады - Долотова": "/generated/events/klady-dolotova.webp",
+    "Космическая орбита Калининграда - Селин": "/generated/events/kosmicheskaya-orbita-kaliningrada-selin.webp",
     "Люди как птицы - Марковец": "/generated/events/lyudi-kak-ptitsy-markovets.webp",
     "Мосты времени - Мосиенко": "/generated/events/mosty-vremeni-mosienko.webp",
     "Ностальгический  разговор - Попадин": "/generated/events/nostalgicheskiy-razgovor-popadin.webp",
     "О чём мечтали в советском Калининграде - Литвинович": "/generated/events/o-chem-mechtali-v-sovetskom-kaliningrade-litvinovich.webp",
     "Образование куршской косы - Скребкова": "/generated/events/obrazovanie-kurshskoy-kosy-skrebkova.webp",
+    "Первые на косе - Цедрик": "/generated/events/pervye-na-kose-tsedrik.webp",
     "Планировочные решения - Анисимов": "/generated/events/planirovochnye-resheniya-anisimov.webp",
     "Праздничный стол по-калининградски рыба в каждый дом - Конюхова": "/generated/events/prazdnichnyy-stol-po-kaliningradski-ryba-v-kazhdyy-dom-konyuhova.webp",
-    "Природа чемодана - Никитин": "/generated/events/priroda-chemodana-nikitin.webp",
+    "Природа чемодана - Никитин": "/generated/events/priroda-chemodana-nikitin-20260319.webp",
     "Самая западная точка России Балтийская коса - Надымова": "/generated/events/samaya-zapadnaya-tochka-rossii-baltiyskaya-kosa-nadymova.webp",
     "Светлогорск - Быстрова": "/generated/events/svetlogorsk-bystrova.webp",
     "Скульптуры зоопарка - Колбанёва": "/generated/events/skulptury-zooparka-kolbaneva.webp",
@@ -43,7 +45,9 @@
     "Яхты2 - Жадобко": "/generated/events/yahty2-zhadobko.webp",
     "Этюды той весны - 1": "/generated/events/etyudy-toy-vesny-1.webp",
     "Этюды той весны - 2": "/generated/events/etyudy-toy-vesny-2.webp",
-    "Этюды той весны - 3": "/generated/events/etyudy-toy-vesny-3.webp"
+    "Этюды той весны - 3": "/generated/events/etyudy-toy-vesny-3.webp",
+    "Первые на косе - Выставка": "/generated/events/pervye-na-kose-vystavka.webp",
+    "Мирная жизнь на Балтийской косе - Выставка": "/generated/events/mirnaya-zhizn-na-baltiyskoy-kose-vystavka.webp"
   },
   "speakers": {
     "Алексей Соколов": [
@@ -74,8 +78,7 @@
       "/generated/speakers/kazakova-natalya.webp"
     ],
     "Колбанёва Светлана": [
-      "/generated/speakers/kolbaneva-svetlana-ispravleno.webp",
-      "/generated/speakers/kolbaneva-svetlana.webp"
+      "/generated/speakers/kolbaneva-svetlana-ispravleno.webp"
     ],
     "Кретинин Геннадий": [
       "/generated/speakers/kretinin-gennadiy.webp"
@@ -118,6 +121,9 @@
     ],
     "Попадин Александр": [
       "/generated/speakers/popadin-aleksandr.webp"
+    ],
+    "Соколова Светлана": [
+      "/generated/speakers/sokolova-svetlana.webp"
     ],
     "Сарниц Артур": [
       "/generated/speakers/sarnits-artur.webp"

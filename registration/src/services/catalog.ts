@@ -1,0 +1,281 @@
+import type Database from 'better-sqlite3';
+import { getFestivalEvents, type FestivalEvent } from '../../../site/src/lib/festival.ts';
+import { derivePublicState, getCtaCopy } from '../lib/public-state';
+import type {
+  CatalogEventSeed,
+  HallSeed,
+  PublicEventStateView,
+  RegistrationPublicState,
+} from '../types';
+
+type EventRow = {
+  slug: string;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  venue_name: string;
+  hall_name: string;
+  address: string;
+  capacity: number;
+  seats_taken: number;
+  registration_public_state: RegistrationPublicState;
+  registration_opens_at: string | null;
+};
+
+const HALLS: HallSeed[] = [
+  {
+    code: 'scientific-library-lecture-hall',
+    venueName: 'Калининградская областная научная библиотека',
+    hallName: 'Лекционный зал, 4 этаж',
+    address: 'проспект Мира, 9/11',
+    capacity: 80,
+  },
+  {
+    code: 'icae-hall',
+    venueName: 'ИЦАЭ, КГТУ',
+    hallName: 'Зал, 2 этаж',
+    address: 'Советский проспект, 1',
+    capacity: 200,
+  },
+  {
+    code: 'tretyakov-cinema',
+    venueName: 'Филиал Государственной Третьяковской галереи в Калининграде',
+    hallName: 'Кинозал',
+    address: 'Парадная набережная, 3',
+    capacity: 241,
+  },
+  {
+    code: 'friedland-gate-hall',
+    venueName: 'Музей «Фридландские ворота»',
+    hallName: 'Зал',
+    address: 'улица Дзержинского, 30',
+    capacity: 50,
+  },
+  {
+    code: 'world-ocean-okeaniya',
+    venueName: 'Музей Мирового океана',
+    hallName: 'ОКЕАНиЯ',
+    address: 'Набережная Петра Великого, 1',
+    capacity: 140,
+  },
+];
+
+function addMinutes(isoStart: string, minutes: number) {
+  const start = new Date(isoStart);
+  return new Date(start.getTime() + minutes * 60_000).toISOString();
+}
+
+function getDefaultDurationMinutes(event: FestivalEvent) {
+  const match = event.durationLabel.match(/(\d+)\s*мин/u);
+  if (match) {
+    return Number(match[1]);
+  }
+
+  const hoursMatch = event.durationLabel.match(/(\d+)\s*ч/u);
+  if (hoursMatch) {
+    return Number(hoursMatch[1]) * 60;
+  }
+
+  return 90;
+}
+
+function matchHall(event: FestivalEvent) {
+  const venue = `${event.venue} ${event.address}`.toLowerCase();
+
+  if (venue.includes('научн') && venue.includes('библиот')) {
+    return HALLS[0];
+  }
+
+  if (venue.includes('ицаэ') || venue.includes('кгту')) {
+    return HALLS[1];
+  }
+
+  if (venue.includes('третьяков')) {
+    return HALLS[2];
+  }
+
+  if (venue.includes('фридланд')) {
+    return HALLS[3];
+  }
+
+  if (venue.includes('мирового океана')) {
+    return HALLS[4];
+  }
+
+  return null;
+}
+
+function toCatalogSeed(event: FestivalEvent): CatalogEventSeed | null {
+  if (event.kind !== 'dated' || !event.isoStart) {
+    return null;
+  }
+
+  const hall = matchHall(event);
+  const durationMinutes = getDefaultDurationMinutes(event);
+  const startsAt = new Date(event.isoStart).toISOString();
+  const endsAt = addMinutes(startsAt, durationMinutes);
+
+  if (!hall) {
+    return {
+      slug: event.slug,
+      title: event.title,
+      startsAt,
+      endsAt,
+      venueName: event.venue,
+      hallName: event.venue,
+      address: event.address,
+      capacity: 0,
+      sourceStatus: 'needs_mapping',
+      defaultPublicState: 'closed',
+    };
+  }
+
+  return {
+    slug: event.slug,
+    title: event.title,
+    startsAt,
+    endsAt,
+    venueName: hall.venueName,
+    hallName: hall.hallName,
+    address: hall.address,
+    capacity: hall.capacity,
+    sourceStatus: 'ready',
+    defaultPublicState: 'soon',
+  };
+}
+
+function getCatalogSeeds() {
+  return getFestivalEvents()
+    .map(toCatalogSeed)
+    .filter((item): item is CatalogEventSeed => Boolean(item));
+}
+
+export function syncCatalog(db: Database.Database) {
+  const insertHall = db.prepare(`
+    INSERT INTO halls(code, venue_name, hall_name, address, capacity)
+    VALUES (@code, @venueName, @hallName, @address, @capacity)
+    ON CONFLICT(code) DO UPDATE SET
+      venue_name = excluded.venue_name,
+      hall_name = excluded.hall_name,
+      address = excluded.address,
+      capacity = excluded.capacity,
+      updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  `);
+
+  for (const hall of HALLS) {
+    insertHall.run(hall);
+  }
+
+  const hallRows = db.prepare('SELECT code, id FROM halls').all() as Array<{ code: string; id: number }>;
+  const hallIdByCode = new Map<string, number>(hallRows.map((row) => [row.code, row.id]));
+
+  const findHallId = (seed: CatalogEventSeed) => {
+    const hall = HALLS.find((item) =>
+      item.venueName === seed.venueName
+      && item.hallName === seed.hallName
+      && item.address === seed.address,
+    );
+
+    return hall ? hallIdByCode.get(hall.code) ?? null : null;
+  };
+
+  const upsertEvent = db.prepare(`
+    INSERT INTO events(
+      slug,
+      title,
+      starts_at,
+      ends_at,
+      venue_name,
+      hall_name,
+      address,
+      hall_id,
+      capacity,
+      registration_public_state,
+      source_status,
+      source_updated_at
+    ) VALUES (
+      @slug,
+      @title,
+      @startsAt,
+      @endsAt,
+      @venueName,
+      @hallName,
+      @address,
+      @hallId,
+      @capacity,
+      @defaultPublicState,
+      @sourceStatus,
+      (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    )
+    ON CONFLICT(slug) DO UPDATE SET
+      title = excluded.title,
+      starts_at = excluded.starts_at,
+      ends_at = excluded.ends_at,
+      venue_name = excluded.venue_name,
+      hall_name = excluded.hall_name,
+      address = excluded.address,
+      hall_id = excluded.hall_id,
+      capacity = excluded.capacity,
+      source_status = excluded.source_status,
+      source_updated_at = excluded.source_updated_at,
+      updated_at = (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  `);
+
+  const sync = db.transaction(() => {
+    for (const seed of getCatalogSeeds()) {
+      upsertEvent.run({
+        ...seed,
+        hallId: findHallId(seed),
+      });
+    }
+  });
+
+  sync();
+}
+
+export function listPublicEventStates(db: Database.Database, slugs: string[] = []): PublicEventStateView[] {
+  const where = slugs.length
+    ? `WHERE slug IN (${slugs.map(() => '?').join(', ')})`
+    : '';
+
+  const rows = db.prepare(`
+    SELECT
+      slug,
+      title,
+      starts_at,
+      ends_at,
+      venue_name,
+      hall_name,
+      address,
+      capacity,
+      seats_taken,
+      registration_public_state,
+      registration_opens_at
+    FROM events
+    ${where}
+    ORDER BY starts_at ASC, title ASC
+  `).all(...slugs) as EventRow[];
+
+  return rows.map((row) => {
+    const publicState = derivePublicState(row);
+    const copy = getCtaCopy(publicState);
+
+    return {
+      slug: row.slug,
+      title: row.title,
+      startsAt: row.starts_at,
+      endsAt: row.ends_at,
+      venueName: row.venue_name,
+      hallName: row.hall_name,
+      address: row.address,
+      capacity: row.capacity,
+      seatsTaken: row.seats_taken,
+      seatsLeft: Math.max(row.capacity - row.seats_taken, 0),
+      publicState,
+      registrationPublicState: row.registration_public_state,
+      ctaLabel: copy.ctaLabel,
+      ctaNotice: copy.ctaNotice,
+      opensAt: row.registration_opens_at,
+    };
+  });
+}

@@ -1,0 +1,489 @@
+---
+import { getEventTemporalState, type FestivalEvent } from '../lib/festival';
+import {
+  getDialoguePortraitImage,
+  getDialoguePortraitStyle,
+  getEventPortraitImage,
+  getEventPortraitImages,
+  getEventPortraitStyle,
+  getPortraitFrames,
+} from '../lib/media';
+
+interface Props {
+  event: FestivalEvent;
+  now?: Date;
+}
+
+const { event, now = new Date() } = Astro.props;
+
+const WEEKDAY_SHORT: Record<string, string> = {
+  понедельник: 'пн',
+  вторник: 'вт',
+  среда: 'ср',
+  четверг: 'чт',
+  пятница: 'пт',
+  суббота: 'сб',
+  воскресенье: 'вс',
+};
+
+const SCIENTIFIC_LIBRARY_VISIT_SCHEDULE = {
+  hoursLabel: 'Пн-чт 10:00-20:00, сб-вс 10:00-18:00, пт выходной',
+  sanitaryLabel: 'Последний вторник месяца — санитарный день',
+  sourceUrl: 'https://lib39.ru/aboutlibrary/grafic.php',
+  sourceLabel: 'Официальный график библиотеки',
+};
+
+type RelatedEventCard = NonNullable<FestivalEvent['relatedEvent']>;
+
+function getDateParts(dateLabel: string) {
+  const match = dateLabel.match(/(\d{1,2})\s+([а-я]+)\s+2026(?:\s+\(([^)]+)\))?/i);
+  if (!match) {
+    return {
+      day: '??',
+      month: 'скоро',
+      weekday: '',
+    };
+  }
+
+  return {
+    day: match[1],
+    month: match[2].toLowerCase(),
+    weekday: WEEKDAY_SHORT[(match[3] ?? '').toLowerCase()] ?? '',
+  };
+}
+
+function getRangeDateParts(dateLabel: string) {
+  const match = dateLabel.match(/(?:с\s*)?(\d{1,2})\s+([а-я]+)(?:\s+\d{4})?\s*(?:-|—|–|по)\s*(\d{1,2})\s+([а-я]+)\s+(\d{4})/i);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    startDay: match[1],
+    startMonth: match[2].toLowerCase(),
+    endDay: match[3],
+    endMonth: match[4].toLowerCase(),
+  };
+}
+
+function getCardText(value: Pick<FestivalEvent, 'whyGo' | 'summary'>) {
+  return value.summary || value.whyGo;
+}
+
+function getCardExtraText(value: Pick<FestivalEvent, 'whyGo' | 'summary'>) {
+  if (!value.whyGo) {
+    return '';
+  }
+
+  return value.whyGo !== value.summary ? value.whyGo : '';
+}
+
+function shouldShowQuestionBlock(value: Pick<FestivalEvent, 'questions' | 'kind'>) {
+  return value.kind !== 'special' && value.questions.length >= 3;
+}
+
+function hasExpandableSummary(value: Pick<FestivalEvent, 'whyGo' | 'summary' | 'questions' | 'kind'>) {
+  return Boolean(getCardExtraText(value) || shouldShowQuestionBlock(value));
+}
+
+function getRelatedMetaLine(relatedEvent: RelatedEventCard) {
+  const parts = [relatedEvent.formatLabel, relatedEvent.dateLabel];
+
+  if (relatedEvent.kind !== 'range' && !relatedEvent.timeLabel.includes('будет объявлено')) {
+    parts.push(relatedEvent.timeLabel);
+  }
+
+  return parts.filter(Boolean).join(' · ');
+}
+
+function getRelatedSecondaryLine(relatedEvent: RelatedEventCard) {
+  const parts = relatedEvent.kind === 'range'
+    ? [relatedEvent.venue, relatedEvent.address]
+    : [relatedEvent.speakerLabel, relatedEvent.venue];
+
+  return parts.filter(Boolean).join(' · ');
+}
+
+function getLectureTitleClass(title: string) {
+  const length = title.trim().length;
+
+  if (length >= 88) {
+    return 'event-card__visual-title event-card__visual-title--xxlong';
+  }
+
+  if (length >= 64) {
+    return 'event-card__visual-title event-card__visual-title--xlong';
+  }
+
+  if (length >= 46) {
+    return 'event-card__visual-title event-card__visual-title--long';
+  }
+
+  return 'event-card__visual-title';
+}
+
+function isLectureEvent(formatLabel: string) {
+  return formatLabel.toLowerCase().includes('лекц');
+}
+
+function isOpeningEvent(value: Pick<FestivalEvent, 'title' | 'format'>) {
+  return value.title === 'Открытие фестиваля' || value.format.includes('Открытие фестиваля');
+}
+
+function usesScientificLibraryVisitSchedule(value: Pick<FestivalEvent, 'kind' | 'venue' | 'timeLabel'>) {
+  if (value.kind !== 'range') {
+    return false;
+  }
+
+  const venueLookup = value.venue.toLowerCase();
+  const timeLookup = value.timeLabel.toLowerCase();
+
+  return (
+    (venueLookup.includes('науч') && venueLookup.includes('библиот')) ||
+    (timeLookup.includes('часы работы') && timeLookup.includes('библиот'))
+  );
+}
+
+function getRangeVisitLabel(value: Pick<FestivalEvent, 'timeLabel'>, useScientificLibraryVisitSchedule: boolean) {
+  if (useScientificLibraryVisitSchedule) {
+    return SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.hoursLabel;
+  }
+
+  return value.timeLabel;
+}
+
+function getDialogueMonogram(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+const dateParts = getDateParts(event.dateLabel);
+const rangeDateParts = event.kind === 'range' ? getRangeDateParts(event.dateLabel) : null;
+const isDialogueEvent = event.formatLabel.includes('Открытый диалог') && event.dialogueParticipants.length > 0;
+const isSpecialEvent = event.kind === 'special';
+const isRangeEvent = event.kind === 'range';
+const isLecture = isLectureEvent(event.formatLabel);
+const openingEvent = isOpeningEvent(event);
+const stageImage = event.image || (openingEvent ? '/shared-assets/hero-added-09.webp' : '');
+const useDialogueVisual = isDialogueEvent && !openingEvent;
+const portraitImages = getEventPortraitImages(event.speakerLabel, event.speakerImages, isLecture);
+const portraitFrames = getPortraitFrames(event.speakerLabel, event.speakerImages, isLecture);
+const portraitStyle = getEventPortraitStyle(event.speakerLabel, isLecture);
+const visualDialogueParticipants = useDialogueVisual
+  ? event.dialogueParticipants.filter((participant) => participant.images[0]).slice(0, 4)
+  : [];
+const dialogueStageParticipants = visualDialogueParticipants.length
+  ? visualDialogueParticipants
+  : event.dialogueParticipants.slice(0, 4);
+const cardText = getCardText(event);
+const cardExtraText = getCardExtraText(event);
+const hasExpandableCardSummary = hasExpandableSummary(event);
+const useScientificLibraryVisitSchedule = usesScientificLibraryVisitSchedule(event);
+const accessLabel = event.accessLabel ?? 'Бесплатно';
+const specialServiceLabels = isSpecialEvent
+  ? [
+      event.dateLabel === 'Дата будет объявлена' ? 'Дата будет объявлена дополнительно' : event.dateLabel,
+      event.timeLabel === 'Время будет объявлено' ? 'Время будет объявлено дополнительно' : event.timeLabel,
+      event.showingsLabel,
+    ].filter(Boolean)
+  : [];
+const temporalState = getEventTemporalState(event, now);
+const hasActionRow = !isRangeEvent && !isSpecialEvent;
+---
+
+<article
+  class={`event-card ${event.speakerImages.length ? 'event-card--with-speaker' : ''} ${isLecture ? 'event-card--lecture' : ''} ${isDialogueEvent ? 'event-card--dialogue' : ''} ${isSpecialEvent ? 'event-card--special' : ''} ${!hasActionRow ? 'event-card--no-actions' : ''}`}
+  id={`event-${event.slug}`}
+  data-temporal-state={temporalState}
+>
+  <div class="event-card__main">
+    <div class={`event-card__stage ${!useDialogueVisual && event.speakerImages.length > 0 ? 'event-card__stage--portrait' : ''}`}>
+      {isSpecialEvent ? (
+        <div class={`event-card__visual ${stageImage ? 'event-card__visual--special' : 'event-card__visual--plain event-card__visual--special'}`}>
+          {stageImage && (
+            <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" fetchpriority="low" />
+          )}
+          <div class="event-card__overlay"></div>
+        </div>
+      ) : (
+        <>
+          <div class="event-card__date">
+            {rangeDateParts ? (
+              <>
+                <span class="event-card__range-row">
+                  <span class="event-card__range-prefix">с</span>
+                  <span class="event-card__range-day">{rangeDateParts.startDay}</span>
+                  <span class="event-card__range-month">{rangeDateParts.startMonth}</span>
+                </span>
+                <span class="event-card__range-row">
+                  <span class="event-card__range-prefix">по</span>
+                  <span class="event-card__range-day">{rangeDateParts.endDay}</span>
+                  <span class="event-card__range-month">{rangeDateParts.endMonth}</span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span class="event-card__day">{dateParts.day}</span>
+                <span class="event-card__month">{dateParts.month}</span>
+                {dateParts.weekday && <span class="event-card__weekday">{dateParts.weekday}</span>}
+                <span class="event-card__time">{event.timeLabel}</span>
+              </>
+            )}
+          </div>
+
+          {useDialogueVisual ? (
+            <div
+              class="event-card__dialogue-visual"
+              aria-label={`Участники события ${event.title}`}
+              style={`--dialogue-columns: ${Math.max(dialogueStageParticipants.length, 1)}`}
+            >
+              {dialogueStageParticipants.map((participant) => (
+                <div class={`event-card__dialogue-person ${participant.images[0] ? '' : 'event-card__dialogue-person--placeholder'}`}>
+                  <div class="event-card__dialogue-meta">
+                    <strong>{participant.name}</strong>
+                  </div>
+                  <div class={`event-card__dialogue-media ${participant.images[0] ? '' : 'event-card__dialogue-media--placeholder'}`}>
+                    {participant.images[0] ? (
+                      <img
+                        class="event-card__dialogue-portrait"
+                        src={getDialoguePortraitImage(participant.name, participant.images[0])}
+                        alt={participant.name}
+                        loading="lazy"
+                        decoding="async"
+                        fetchpriority="low"
+                        style={getDialoguePortraitStyle(participant.name)}
+                      />
+                    ) : (
+                      <span class="event-card__dialogue-placeholder" aria-hidden="true">
+                        {getDialogueMonogram(participant.name)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div class={`event-card__visual ${stageImage ? '' : 'event-card__visual--plain'}`}>
+                {stageImage && (
+                  <img class="event-card__poster" src={stageImage} alt={`Афиша: ${event.title}`} loading="lazy" decoding="async" fetchpriority="low" />
+                )}
+                <div class="event-card__overlay"></div>
+
+                {isLecture && (
+                  <div class="event-card__visual-copy">
+                    <p class={getLectureTitleClass(event.title)}>{event.title}</p>
+                  </div>
+                )}
+              </div>
+
+              {event.speakerImages.length > 0 && (
+                <div
+                  class="event-card__portrait portrait-cycle"
+                  data-portrait-frames={portraitFrames}
+                  style={portraitStyle}
+                >
+                  <img
+                    class="portrait-cycle__image is-active"
+                    src={portraitImages[0]}
+                    alt={event.speakerLabel}
+                    loading="lazy"
+                    decoding="async"
+                    fetchpriority="low"
+                  />
+                  {portraitImages.length > 1 && (
+                    <img
+                      class="portrait-cycle__image"
+                      src={portraitImages[1]}
+                      alt={event.speakerLabel}
+                      loading="lazy"
+                      decoding="async"
+                      fetchpriority="low"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+
+    <div class="event-card__body">
+      <div class="event-card__body-head">
+        <div class="event-card__labels">
+          <span class="event-card__format event-card__format--body">{event.formatLabel}</span>
+          {accessLabel && <span class="event-card__access event-card__access--free">{accessLabel}</span>}
+        </div>
+        {!isLecture && <h4 class="event-card__title">{event.title}</h4>}
+      </div>
+
+      {isDialogueEvent && (
+        <div class="event-card__cast">
+          {event.dialogueParticipants.map((participant) => (
+            <span>{participant.name}</span>
+          ))}
+        </div>
+      )}
+
+      {!isDialogueEvent && !isSpecialEvent && event.speakerLabel && <p class="event-card__speaker">{event.speakerLabel}</p>}
+      {!isDialogueEvent && !isSpecialEvent && event.affiliation && <p class="event-card__affiliation">{event.affiliation}</p>}
+
+      {isRangeEvent ? (
+        hasExpandableCardSummary ? (
+          <details class="event-card__summary-details">
+            <summary class="event-card__summary-toggle">
+              <span class="event-card__summary-text">{cardText}</span>
+              <span class="event-card__summary-hint" aria-hidden="true"></span>
+            </summary>
+            {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+            {shouldShowQuestionBlock(event) && (
+              <div class="event-card__question-block">
+                <p class="event-card__question-label">О чём поговорим</p>
+                <ul class="event-card__question-list">
+                  {event.questions.map((question) => (
+                    <li>{question}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </details>
+        ) : (
+          <p class="event-card__summary-plain">{cardText}</p>
+        )
+      ) : (
+        hasExpandableCardSummary ? (
+          <details class="event-card__summary-details">
+            <summary class="event-card__summary-toggle">
+              <span class="event-card__summary-text">{cardText}</span>
+              <span class="event-card__summary-hint" aria-hidden="true"></span>
+            </summary>
+            {cardExtraText && <p class="event-card__summary-extra">{cardExtraText}</p>}
+            {shouldShowQuestionBlock(event) && (
+              <div class="event-card__question-block">
+                <p class="event-card__question-label">О чём поговорим</p>
+                <ul class="event-card__question-list">
+                  {event.questions.map((question) => (
+                    <li>{question}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </details>
+        ) : (
+          <p class="event-card__summary-plain">{cardText}</p>
+        )
+      )}
+
+      {event.relatedEvent && (
+        <div class="event-card__related">
+          <p class="event-card__related-label">{event.relatedEvent.relationLabel}</p>
+          <a class="event-card__related-link" href={`#event-${event.relatedEvent.slug}`}>
+            <strong>{event.relatedEvent.title}</strong>
+            <span>{getRelatedMetaLine(event.relatedEvent)}</span>
+            <span>{getRelatedSecondaryLine(event.relatedEvent)}</span>
+          </a>
+        </div>
+      )}
+
+      {isRangeEvent && (
+        <div class="event-card__range-info">
+          <span class="event-card__range-label">Период экспонирования</span>
+          <strong>{event.dateLabel}</strong>
+          <span class="event-card__range-detail">{getRangeVisitLabel(event, useScientificLibraryVisitSchedule)}</span>
+          {useScientificLibraryVisitSchedule && (
+            <span class="event-card__range-detail">{SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.sanitaryLabel}</span>
+          )}
+          <span class="event-card__range-detail">{event.venue} · {event.address}</span>
+          {useScientificLibraryVisitSchedule && (
+            <a
+              class="event-card__range-link"
+              href={SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {SCIENTIFIC_LIBRARY_VISIT_SCHEDULE.sourceLabel}
+            </a>
+          )}
+        </div>
+      )}
+
+      {isSpecialEvent && specialServiceLabels.length > 0 && (
+        <div class="event-card__service-meta" aria-label="Информация о событии">
+          {specialServiceLabels.map((label) => (
+            <span class={label.length <= 22
+              ? 'event-card__meta-pill event-card__meta-pill--compact'
+              : 'event-card__meta-pill event-card__meta-pill--wide'}>
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {!isRangeEvent && (
+        <div class="event-card__meta">
+          <span class="event-card__meta-pill event-card__meta-pill--compact">{event.venue}</span>
+          {event.durationLabel && <span class="event-card__meta-pill event-card__meta-pill--compact">{event.durationLabel}</span>}
+          <span class="event-card__meta-break" aria-hidden="true"></span>
+          <span class="event-card__meta-pill event-card__meta-pill--wide event-card__meta-pill--address">{event.address}</span>
+        </div>
+      )}
+
+      {isLecture && event.speakerLectureLinks.length > 0 && (
+        <div class="event-card__speaker-links" aria-label={`Другие лекции спикера ${event.speakerLabel}`}>
+          <span>Ещё у лектора:</span>
+          {event.speakerLectureLinks.map((lecture) => (
+            <a href={`#event-${lecture.slug}`} title={lecture.dateLabel}>{lecture.title}</a>
+          ))}
+        </div>
+      )}
+    </div>
+
+    {hasActionRow && (
+      <aside class="event-card__actions">
+        {temporalState === 'past' ? (
+          <div class="button button--ghost button--disabled event-card__past-state" aria-disabled="true">Событие прошло</div>
+        ) : (
+          <div class="event-card__registration-control" data-registration-card data-event-slug={event.slug}>
+            <button
+              class="button button--primary button--disabled event-card__registration-button"
+              type="button"
+              data-registration-cta
+              data-event-slug={event.slug}
+              data-event-title={event.title}
+              disabled
+              aria-disabled="true"
+            >
+              Проверяем регистрацию…
+            </button>
+            <div class="notice event-card__registration-notice" data-registration-notice hidden></div>
+          </div>
+        )}
+
+        {temporalState !== 'past' && event.calendarReady ? (
+          <details class="calendar-menu">
+            <summary class="button button--ghost">В календарь</summary>
+            <div class="calendar-panel">
+              <a class="calendar-link" href={event.icsUrl}>ICS</a>
+              <a
+                class="calendar-link"
+                href={event.googleCalendarUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Google
+              </a>
+            </div>
+          </details>
+        ) : temporalState !== 'past' && event.calendarNote ? (
+          <div class="notice">{event.calendarNote}</div>
+        ) : null}
+      </aside>
+    )}
+  </div>
+</article>

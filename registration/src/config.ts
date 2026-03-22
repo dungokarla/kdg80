@@ -1,0 +1,121 @@
+import path from 'node:path';
+
+type AppConfig = {
+  host: string;
+  port: number;
+  appBaseUrl: string;
+  publicSiteBaseUrl: string;
+  publicTicketBaseUrl: string;
+  sqlitePath: string;
+  localPublicRoot: string;
+  timeZone: string;
+  allowedOrigins: string[];
+  consentVersion: string;
+  consentTextHash: string;
+  piiPublicKeyPemBase64: string | null;
+  piiPrivateKeyPemBase64: string | null;
+  piiFingerprintSecret: string | null;
+  telegramBotToken: string | null;
+  telegramWebhookSecret: string | null;
+  telegramWebhookPath: string;
+  emergencyExportToken: string | null;
+  ticketsPrefix: string;
+  exportsPrefix: string;
+  storageDriver: 'local' | 's3';
+  s3Bucket: string | null;
+  s3Endpoint: string | null;
+  s3Region: string | null;
+  s3AccessKeyId: string | null;
+  s3SecretAccessKey: string | null;
+  s3ForcePathStyle: boolean;
+};
+
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/u, '');
+}
+
+function parsePort(value: string | undefined, fallback: number) {
+  const numeric = Number(value ?? fallback);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback;
+}
+
+function parseOrigins(value: string | undefined, fallback: string) {
+  return (value ?? fallback)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map(trimTrailingSlash);
+}
+
+function parseBoolean(value: string | undefined, fallback: boolean) {
+  if (value == null || value.trim() === '') {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes';
+}
+
+export function loadConfig(): AppConfig {
+  const host = process.env.HOST?.trim() || '0.0.0.0';
+  const port = parsePort(process.env.PORT, 3001);
+  const flyAppName = process.env.FLY_APP_NAME?.trim();
+  const appBaseUrl = trimTrailingSlash(
+    process.env.APP_BASE_URL?.trim()
+      || (flyAppName ? `https://${flyAppName}.fly.dev` : `http://localhost:${port}`),
+  );
+  const publicSiteBaseUrl = trimTrailingSlash(process.env.PUBLIC_SITE_BASE_URL?.trim() || 'http://localhost:4321');
+  const publicTicketBaseUrl = trimTrailingSlash(process.env.PUBLIC_TICKET_BASE_URL?.trim() || appBaseUrl);
+  const sqlitePath = path.resolve(process.cwd(), process.env.SQLITE_PATH?.trim() || './data/registration.sqlite');
+  const localPublicRoot = path.resolve(process.cwd(), process.env.LOCAL_PUBLIC_ROOT?.trim() || './data/public');
+  const timeZone = process.env.TZ?.trim() || 'Europe/Kaliningrad';
+  const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS, publicSiteBaseUrl);
+  const consentVersion = process.env.CONSENT_VERSION?.trim() || 'draft-1';
+  const consentTextHash = process.env.CONSENT_TEXT_HASH?.trim() || 'dev-draft';
+  const piiPublicKeyPemBase64 = process.env.PII_PUBLIC_KEY_PEM_B64?.trim() || null;
+  const piiPrivateKeyPemBase64 = process.env.PII_PRIVATE_KEY_PEM_B64?.trim() || null;
+  const piiFingerprintSecret = process.env.PII_FINGERPRINT_SECRET?.trim() || null;
+  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || null;
+  const telegramWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null;
+  const telegramWebhookPath = process.env.TELEGRAM_WEBHOOK_PATH?.trim() || '/api/v1/telegram/webhook';
+  const emergencyExportToken = process.env.EMERGENCY_EXPORT_TOKEN?.trim() || null;
+  const ticketsPrefix = (process.env.TICKETS_PREFIX?.trim() || 'tickets').replace(/^\/+|\/+$/gu, '');
+  const exportsPrefix = (process.env.EXPORTS_PREFIX?.trim() || 'exports').replace(/^\/+|\/+$/gu, '');
+  const s3Bucket = process.env.S3_BUCKET?.trim() || null;
+  const s3Endpoint = trimTrailingSlash(process.env.S3_ENDPOINT?.trim() || '');
+  const s3Region = process.env.S3_REGION?.trim() || null;
+  const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID?.trim() || null;
+  const s3SecretAccessKey = process.env.S3_SECRET_ACCESS_KEY?.trim() || null;
+  const s3ForcePathStyle = parseBoolean(process.env.S3_FORCE_PATH_STYLE, true);
+  const storageDriver = s3Bucket && s3Endpoint && s3Region && s3AccessKeyId && s3SecretAccessKey ? 's3' : 'local';
+
+  return {
+    host,
+    port,
+    appBaseUrl,
+    publicSiteBaseUrl,
+    publicTicketBaseUrl,
+    sqlitePath,
+    localPublicRoot,
+    timeZone,
+    allowedOrigins,
+    consentVersion,
+    consentTextHash,
+    piiPublicKeyPemBase64,
+    piiPrivateKeyPemBase64,
+    piiFingerprintSecret,
+    telegramBotToken,
+    telegramWebhookSecret,
+    telegramWebhookPath,
+    emergencyExportToken,
+    ticketsPrefix,
+    exportsPrefix,
+    storageDriver,
+    s3Bucket,
+    s3Endpoint: s3Endpoint || null,
+    s3Region,
+    s3AccessKeyId,
+    s3SecretAccessKey,
+    s3ForcePathStyle,
+  };
+}

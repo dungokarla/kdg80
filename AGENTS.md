@@ -2,13 +2,44 @@
 
 - `Opus` always means `Claude Opus`, never a generic quality level, mode name, or informal nickname.
 - The aliases `Opus`, `Опус`, `Claude Opus`, and `Claude Opus latest` all mean: run Claude with the `opus` model alias.
+- Gemini CLI may be used in this workspace as a consultation model for implementation planning, code review, debugging, second opinions, and strategy checks.
+- Prefer Gemini for routine consultations and quick external validation more often than Opus. Use it proactively for ordinary consulting passes unless the user explicitly asks for Opus or there is a clear reason to escalate beyond Gemini.
 - If the user asks to "use Opus", "launch Opus", "run Opus", "call Opus", or uses the Russian equivalents, interpret that as a concrete instruction to use the Claude model alias `opus`.
 - In this workspace, when the user references `Opus`, prefer `claude --model opus --effort high` or an equivalent default configuration that resolves to the latest available Claude Opus model.
+- When a command, script, or workflow needs an explicit Gemini consultation invocation, prefer headless Gemini CLI via `gemini -m gemini-3-pro-preview -p "<prompt>" --output-format text` for routine Gemini consultations in this workspace.
+- Do not rely on the Gemini CLI default model here for headless consultations unless you have just verified it is healthy in the current session.
+- Do not downgrade to Gemini 2.5 or switch to a Flash model unless the user explicitly approves that downgrade.
+- Use another Gemini 3 Pro model alias only when the user explicitly asks for it or when you have just validated that the alias is available and behaving correctly in this installed CLI.
+- Do not guess Gemini model ids from UI copy alone; use the exact alias names supported by the installed Gemini CLI build.
+- Keep Gemini prompts compact. Summarize repository context instead of pasting large raw documents by default.
+- For large context, prefer piping via stdin or using a temporary file/heredoc over building very large inline shell strings.
 - For website work, use Claude Opus with high effort as a consulting and support model for interface design, UX decisions, frontend implementation, and code-level problem solving.
-- Treat Opus as the default assistant for reviewing site UI, suggesting interface improvements, validating implementation approaches, and helping with code changes when the user asks for a consultant, helper, or second opinion.
+- Treat Opus as the specialist assistant for site UI review, interface improvement work, deeper UX validation, and website-specific implementation consultation when the user asks for Opus or when a Gemini pass is not enough.
+- For general-purpose consultation, second opinions, implementation validation, and non-visual code strategy, prefer Gemini first and use Opus as a follow-up when the user requests it or Gemini's answer is insufficient.
 - When a command, script, or workflow needs an explicit Claude invocation for site-related UI or code tasks, prefer `claude --model opus --effort high`.
 - Do not ask the user to clarify what `Opus` means unless they explicitly contrast it with another model.
 - If a tool, script, or agent needs a model name, map `Opus` directly to `opus`.
+
+## Opus Consultation Wait Policy
+
+- When the user explicitly asks to use `Opus` for consultation, do not use short exploratory timeouts that are likely to cut off a valid response.
+- Default to a generous wait budget for `Claude Opus` consultations. Prefer a single well-scoped request with a timeout in the several-minutes range rather than repeated short retries.
+- For substantial site, UX, frontend, or strategy consultations, prefer waiting up to `10 minutes` before treating the run as stalled, unless the user asked for a faster cut-off.
+- Do not retry `Opus` with a shorter timeout after an earlier timeout. If a rerun is needed, keep or increase the wait budget and improve the prompt instead of shrinking the limit.
+- Avoid repeated paid consultation attempts that are unlikely to finish. Make one deliberate request, wait properly, and only launch another run if the previous result is clearly unusable or the user asks for another angle.
+- If `Opus` appears blocked or unhealthy, report that transparently to the user, including the actual timeout used, instead of silently replacing the consultation with the agent's own opinion.
+
+## Gemini Consultation Wait Policy
+
+- When the user asks to use `Gemini` for consultation, do not use short exploratory timeouts that are likely to cut off a valid answer.
+- Prefer a single deliberate headless request over multiple quick retries. Improve the prompt before rerunning; do not spam Gemini with repeated partial attempts.
+- For lightweight validation or second-opinion checks, allow enough time for Gemini CLI initialization and response generation instead of treating the first silent seconds as failure.
+- For substantial implementation, debugging, code review, or strategy consultations, prefer a wait budget in the several-minutes range before treating the run as stalled.
+- Treat `MODEL_CAPACITY_EXHAUSTED` or `No capacity available for model ...` as a model-availability problem first, not as evidence that the prompt was too large.
+- If a Gemini 3 Pro request fails on the default or preview route, retry only with another validated Gemini 3 Pro alias for this installed CLI, not with Flash or 2.5 unless the user explicitly approves.
+- If prompt size might still matter, test that hypothesis separately with the same task on a working Gemini 3 Pro route instead of inferring it from a preview-model 429.
+- When the prompt is large, pass it through stdin or a temp file and trim it to the minimum context needed before retrying.
+- If Gemini fails because of auth, model selection, CLI initialization, or environment issues, report the actual command pattern and the concrete error instead of silently replacing the consultation with the agent's own opinion.
 
 ## Skill Usage Policy
 
@@ -24,6 +55,37 @@
 - Always verify both desktop and mobile views for visual tasks before saying the issue is fixed.
 - The verification pass must check the actual rendered result, not only the code or static CSS diff.
 - When the user reports a visual defect, re-open the affected screens in Playwright, capture fresh screenshots, and compare the result against the reported problem before closing the task.
+
+## Hero Reference Pack
+
+- For any hero-related work on this festival site, treat these files as the primary visual references and re-check them before closing the task:
+- `/workspaces/kdg80/Исходные данные/Идеи/Desctop.png`
+- `/workspaces/kdg80/Исходные данные/Идеи/Mobile 1.png`
+- `/workspaces/kdg80/Исходные данные/Идеи/Mobile 2.png`
+- Desktop and mobile hero placement must be treated as two different composition systems. Do not assume one placement formula can be scaled down to the other.
+- For desktop, the speaker should visually live on the split seam between the white and red panels.
+- For mobile, the speaker should be bottom-anchored, editorially oversized, and may partially exit the right edge when that improves the composition.
+
+## Requirements Governance Policy
+
+- Before implementing a task, first check the relevant requirements documents and verify that the requested work does not contradict the currently fixed requirements.
+- Before proposing any requirement change, re-read the current canonical requirement document itself, not only the latest user message or bug report.
+- A requirement-change proposal must be based on an explicit document diff against the current canonical text.
+- When the user asks to update, clarify, or confirm requirements, first analyze the existing requirement document and separate the findings into three buckets:
+- `Already present` — the requirement already exists in the document and should not be proposed as a new addition.
+- `Needs clarification` — the requirement exists but is too vague, incomplete, or missing an important constraint.
+- `Missing` — the requirement is genuinely absent from the document and should be proposed as a new addition.
+- When proposing requirement edits, cite the relevant existing clauses or sections from the current document before suggesting the change.
+- Do not restate the user's latest wording as if it were a newly discovered missing requirement without first proving that it is absent or insufficient in the canonical document.
+- The confirmation stage must present a real delta against the current requirement document so the user can approve only the actual changes, not re-read their own previous wording.
+- If the task appears to conflict with the current requirements, stop before implementation and do not proceed directly to code changes.
+- In that case, present the conflict explicitly to the user and propose the exact requirement changes needed first.
+- The proposal must name the requirement document(s) to be changed and list the concrete edits the agent wants to make to those requirements.
+- Only after the user confirms the requirement changes may the implementation work begin.
+- The goal is to keep the requirements documentation current and prevent important approved behavior from being accidentally lost during later iterations.
+- Maintain explicit status markers in the canonical requirements documents for requirement readiness and confirmation state.
+- After the user reports a defect or asks for a correction, update the affected requirement items to `Not done` or `Not confirmed by user` in the requirement document instead of leaving them implicitly green.
+- Do not mark a requirement item as fully done based only on internal checks. Internal validation may justify `Not confirmed by user`, but explicit user confirmation after manual testing is required before the requirement is marked done.
 
 ## Git / Push Policy
 

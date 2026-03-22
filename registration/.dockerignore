@@ -1,0 +1,28 @@
+**
+!registration/
+!registration/package.json
+!registration/package-lock.json
+!registration/tsconfig.json
+!registration/.env.example
+!registration/Dockerfile
+!registration/src/
+!registration/src/**
+!site/
+!site/src/
+!site/src/lib/
+!site/src/lib/festival.ts
+!site/src/data/
+!site/src/data/media-manifest.json
+!site/src/data/summary-overrides.json
+!Исходные данные/
+!Исходные данные/festival_site_master.md
+
+registration/node_modules/
+registration/data/
+site/node_modules/
+site/dist/
+site/.astro/
+site/.tmp-playwright*/
+tmp/
+test-results/
+.git/
