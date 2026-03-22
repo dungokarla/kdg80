@@ -212,6 +212,12 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     manifestKeys: ['Первые на косе - Цедрик'],
   },
   {
+    title: 'Выставка «Первые на косе»',
+    speaker: '',
+    manifestKeys: ['Первые на косе - Выставка'],
+    alternateTitles: ['Выставка Первые на косе'],
+  },
+  {
     title: 'Советский Гусев — время созиданий',
     speaker: 'Ситникова',
     manifestKeys: ['Советский Гусев - Ситникова'],
@@ -283,6 +289,12 @@ const EVENT_IMAGE_MAP: Array<{ title: string; speaker: string; manifestKeys: str
     title: 'Мирная жизнь самой западной точки России (Балтийской косы)',
     speaker: 'Надымова',
     manifestKeys: ['Самая западная точка России Балтийская коса - Надымова'],
+  },
+  {
+    title: 'Выставка историй мирной жизни самой западной точки России',
+    speaker: '',
+    manifestKeys: ['Мирная жизнь на Балтийской косе - Выставка'],
+    alternateTitles: ['Выставка историй мирной жизни самой западной точки России (Балтийской косы)'],
   },
   {
     title: 'История Светлогорска в семейном альбоме',
@@ -1205,6 +1217,7 @@ function createProvisionalZooExcursion(events: FestivalEvent[]) {
     heroRole: '',
     summary: 'Премьера новой тематической экскурсии по зоопарку, которая лучше раскроет, что появилось в зоопарке в советское время, познакомит с историей зоопарка того периода и покажет вживую, как менялся зоопарк после немецкой эпохи.',
     whyGo: 'Экскурсия задумывается как весёлая и полная необычных зоопарковых историй прогулка по советскому слою Калининградского зоопарка.',
+    questions: [],
     registrationUrl: undefined,
     calendarReady: false,
     googleCalendarUrl: undefined,
@@ -1214,6 +1227,7 @@ function createProvisionalZooExcursion(events: FestivalEvent[]) {
     isoStart: undefined,
     showingsLabel: 'Премьера экскурсии в июне',
     speakerImages: [],
+    dialogueParticipants: [],
     speakerLectureLinks: [],
   } satisfies FestivalEvent;
 }

@@ -76,6 +76,7 @@ const headerKind = isHome ? 'home' : (currentRouteSlug ? 'route' : 'default');
     siteHeader.dataset.enhanced = 'true';
 
     const routeMenu = siteHeader.querySelector('[data-route-menu]');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let headerStateFrame = 0;
     let isHeaderScrolled = siteHeader.dataset.scrolled === 'true';
 
@@ -133,6 +134,96 @@ const headerKind = isHome ? 'home' : (currentRouteSlug ? 'route' : 'default');
       });
     };
 
+    const getHashTarget = (hash) => {
+      if (!hash || hash === '#') {
+        return null;
+      }
+
+      const id = decodeURIComponent(hash.replace(/^#/, ''));
+      const target = document.getElementById(id);
+      return target instanceof HTMLElement ? target : null;
+    };
+
+    const getAnchorOffset = (target) => {
+      const programSection = document.querySelector('#program');
+      const monthNavWrap = document.querySelector('.month-nav-wrap');
+      let offset = siteHeader.offsetHeight + 12;
+
+      if (
+        target.id === 'program'
+        || (programSection instanceof HTMLElement && (programSection === target || programSection.contains(target)))
+      ) {
+        if (monthNavWrap instanceof HTMLElement) {
+          offset += monthNavWrap.offsetHeight + 12;
+        }
+      }
+
+      return offset;
+    };
+
+    const scrollToHashTarget = (hash, smooth = true) => {
+      const target = getHashTarget(hash);
+      if (!(target instanceof HTMLElement)) {
+        return false;
+      }
+
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - getAnchorOffset(target));
+      window.scrollTo({
+        top,
+        behavior: smooth && !prefersReducedMotion.matches ? 'smooth' : 'auto',
+      });
+      return true;
+    };
+
+    const scheduleHashTargetScroll = (hash, smooth = true) => {
+      if (!hash || hash === '#') {
+        return;
+      }
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          scrollToHashTarget(hash, smooth);
+          window.setTimeout(() => {
+            scrollToHashTarget(hash, false);
+          }, 90);
+        });
+      });
+    };
+
+    const handleSamePageAnchorClick = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      const link = target.closest('a[href]');
+      if (!(link instanceof HTMLAnchorElement)) {
+        return;
+      }
+
+      const href = link.getAttribute('href') ?? '';
+      if (!href.includes('#')) {
+        return;
+      }
+
+      const url = new URL(link.href, window.location.href);
+      if (
+        url.origin !== window.location.origin
+        || url.pathname !== window.location.pathname
+        || !url.hash
+        || !getHashTarget(url.hash)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      if (routeMenu instanceof HTMLDetailsElement) {
+        routeMenu.open = false;
+      }
+      history.pushState(null, '', url.hash);
+      scheduleHashTargetScroll(url.hash, true);
+    };
+
     syncHeaderLogoState();
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -162,11 +253,19 @@ const headerKind = isHome ? 'home' : (currentRouteSlug ? 'route' : 'default');
       });
     }
 
-    window.addEventListener('load', requestHeaderLogoStateSync);
+    document.addEventListener('click', handleSamePageAnchorClick);
+
+    window.addEventListener('load', () => {
+      requestHeaderLogoStateSync();
+      if (window.location.hash) {
+        scheduleHashTargetScroll(window.location.hash, false);
+      }
+    });
     window.addEventListener('hashchange', () => {
       if (routeMenu instanceof HTMLDetailsElement) {
         routeMenu.open = false;
       }
+      scheduleHashTargetScroll(window.location.hash, false);
       requestHeaderLogoStateSync();
     });
     window.addEventListener('scroll', requestHeaderLogoStateSync, { passive: true });

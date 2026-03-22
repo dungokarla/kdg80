@@ -374,14 +374,6 @@ summary {
     linear-gradient(180deg, rgba(216, 75, 49, 0.04), transparent 45%);
 }
 
-.hero__site-label {
-  margin: 0 0 -0.1rem;
-  color: rgba(18, 17, 14, 0.46);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 .eyebrow,
 .section__eyebrow,
 .month-block__eyebrow,
@@ -1453,6 +1445,7 @@ summary {
   top: calc(var(--site-header-height, 4.25rem) + 0.15rem);
   z-index: 20;
   padding: 0.8rem 0 0;
+  margin-bottom: 0.85rem;
   background: linear-gradient(180deg, rgba(241, 234, 223, 0.98) 0%, rgba(241, 234, 223, 0.88) 80%, rgba(241, 234, 223, 0) 100%);
 }
 
@@ -1487,14 +1480,14 @@ summary {
 .month-block {
   display: grid;
   gap: 1.15rem;
-  padding-top: 0.45rem;
+  padding-top: 0.75rem;
   scroll-margin-top: 8.2rem;
   content-visibility: auto;
   contain-intrinsic-size: 1px 2400px;
 }
 
 .month-block + .month-block {
-  padding-top: 1rem;
+  padding-top: 1.45rem;
 }
 
 .month-block__header {
@@ -1507,7 +1500,7 @@ summary {
 .month-block__header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(2.15rem, 5.6vw, 3.45rem);
+  font-size: clamp(2.3rem, 5.8vw, 3.7rem);
   line-height: 0.95;
   letter-spacing: -0.05em;
 }
@@ -2186,8 +2179,8 @@ summary {
 
 .event-card__meta,
 .event-card__service-meta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, max-content));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.34rem 0.42rem;
   margin-top: 0.15rem;
   align-items: start;
@@ -2206,6 +2199,8 @@ summary {
 }
 
 .event-card__meta-pill {
+  flex: 0 0 auto;
+  width: fit-content;
   max-width: 100%;
   min-height: 1.8rem;
   padding: 0.22rem 0.58rem;
@@ -2217,11 +2212,12 @@ summary {
 }
 
 .event-card__meta-pill--compact {
-  grid-column: span 1;
+  flex: 0 0 auto;
 }
 
 .event-card__meta-pill--wide {
-  grid-column: 1 / -1;
+  flex: 1 1 100%;
+  width: 100%;
 }
 
 .notice,
@@ -3151,9 +3147,12 @@ summary {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  padding: 0.2rem 0;
   cursor: pointer;
   list-style: none;
   color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
@@ -3800,6 +3799,21 @@ summary {
   font-size: 0.9rem;
 }
 
+.site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.45rem 1rem;
+  padding-top: 0.9rem;
+  color: rgba(18, 17, 14, 0.62);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.site-footer__legal p {
+  margin: 0;
+}
+
 @media (min-width: 760px) {
   .site-header__route-panel {
     position: absolute;
@@ -4017,6 +4031,11 @@ summary {
     width: 100%;
   }
 
+  .site-footer__legal {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .interest-chooser {
     top: calc(var(--site-header-height, 4.25rem) + 0.15rem);
   }
@@ -4048,7 +4067,11 @@ summary {
   }
 
   .month-block__header h3 {
-    font-size: clamp(2.2rem, 8vw, 2.9rem);
+    font-size: clamp(2.25rem, 8.4vw, 3.05rem);
+  }
+
+  .site-header__route-menu summary::after {
+    content: none;
   }
 
   .route-hero__myth-card {

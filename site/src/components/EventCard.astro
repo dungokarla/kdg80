@@ -78,11 +78,11 @@ function getCardExtraText(value: Pick<FestivalEvent, 'whyGo' | 'summary'>) {
   return value.whyGo !== value.summary ? value.whyGo : '';
 }
 
-function shouldShowQuestionBlock(value: Pick<FestivalEvent, 'questions'>) {
-  return value.questions.length >= 3;
+function shouldShowQuestionBlock(value: Pick<FestivalEvent, 'questions' | 'kind'>) {
+  return value.kind !== 'special' && value.questions.length >= 3;
 }
 
-function hasExpandableSummary(value: Pick<FestivalEvent, 'whyGo' | 'summary' | 'questions'>) {
+function hasExpandableSummary(value: Pick<FestivalEvent, 'whyGo' | 'summary' | 'questions' | 'kind'>) {
   return Boolean(getCardExtraText(value) || shouldShowQuestionBlock(value));
 }
 

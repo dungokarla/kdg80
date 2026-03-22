@@ -41,7 +41,7 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
         {remainingCount > 0 && (
           <div class="speaker-poster__actions">
             <button class="speaker-poster__refresh" type="button" data-speaker-load>
-              Другие спикеры
+              Показать ещё
             </button>
           </div>
         )}
@@ -236,13 +236,13 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
             });
           }, 150);
         } catch (_error) {
-          setButtonLabel('Другие спикеры');
+          setButtonLabel('Показать ещё');
           button.disabled = false;
           return;
         }
 
         button.disabled = false;
-        setButtonLabel('Другие спикеры');
+        setButtonLabel('Показать ещё');
       });
     }
   }
