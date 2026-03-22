@@ -444,11 +444,6 @@ const ROUTE_SECTION_RULES: Array<{ id: string; title: string; match: (event: Fes
     match: (event) => normalizeFestivalLookup(event.formatLabel).includes(normalizeFestivalLookup('Иммерсивный спектакль')),
   },
   {
-    id: 'exhibitions',
-    title: 'Выставки',
-    match: (event) => normalizeFestivalLookup(event.formatLabel).includes(normalizeFestivalLookup('Выставка')),
-  },
-  {
     id: 'excursions',
     title: 'Экскурсия',
     match: (event) => normalizeFestivalLookup(event.formatLabel).includes(normalizeFestivalLookup('Экскурсия')),
@@ -462,6 +457,11 @@ const ROUTE_SECTION_RULES: Array<{ id: string; title: string; match: (event: Fes
     id: 'lectures',
     title: 'Лекции',
     match: (event) => normalizeFestivalLookup(event.formatLabel).includes(normalizeFestivalLookup('Лекция')),
+  },
+  {
+    id: 'exhibitions',
+    title: 'Выставки',
+    match: (event) => normalizeFestivalLookup(event.formatLabel).includes(normalizeFestivalLookup('Выставка')),
   },
 ];
 
