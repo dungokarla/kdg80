@@ -429,7 +429,8 @@ const hasActionRow = !isRangeEvent && !isSpecialEvent;
         <div class="event-card__meta">
           <span class="event-card__meta-pill event-card__meta-pill--compact">{event.venue}</span>
           {event.durationLabel && <span class="event-card__meta-pill event-card__meta-pill--compact">{event.durationLabel}</span>}
-          <span class="event-card__meta-pill event-card__meta-pill--wide">{event.address}</span>
+          <span class="event-card__meta-break" aria-hidden="true"></span>
+          <span class="event-card__meta-pill event-card__meta-pill--wide event-card__meta-pill--address">{event.address}</span>
         </div>
       )}
 
