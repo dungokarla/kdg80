@@ -31,6 +31,36 @@ export type EventRegistrationExportRow = {
   ticketUrl: string | null;
 };
 
+function mapRows(rows: ExportRow[], privateKeyPemBase64: string) {
+  return rows.flatMap((row) => {
+    try {
+      const pii = decryptPii(privateKeyPemBase64, {
+        piiCiphertext: row.pii_ciphertext,
+        piiWrappedKey: row.pii_wrapped_key,
+        piiIv: row.pii_iv,
+        piiAlg: row.pii_alg,
+      });
+
+      return [{
+        registrationId: row.registration_id,
+        fullName: pii.fullName ?? '',
+        email: pii.email ?? '',
+        phone: pii.phone ?? '',
+        emailMasked: maskEmail(pii.email ?? ''),
+        phoneMasked: maskPhone(pii.phone ?? ''),
+        eventTitle: row.title,
+        startsAt: row.starts_at,
+        venueName: row.venue_name,
+        hallName: row.hall_name,
+        address: row.address,
+        ticketUrl: row.public_url,
+      } satisfies EventRegistrationExportRow];
+    } catch {
+      return [];
+    }
+  });
+}
+
 function maskEmail(email: string) {
   const [local, domain = ''] = email.split('@');
   const safeLocal = local.length <= 2 ? `${local[0] ?? '*'}*` : `${local.slice(0, 2)}***`;
@@ -68,33 +98,33 @@ export function listRegistrationsForEvent(
     ORDER BY r.created_at ASC, r.id ASC
   `).all(eventId) as ExportRow[];
 
-  return rows.flatMap((row) => {
-    try {
-      const pii = decryptPii(privateKeyPemBase64, {
-        piiCiphertext: row.pii_ciphertext,
-        piiWrappedKey: row.pii_wrapped_key,
-        piiIv: row.pii_iv,
-        piiAlg: row.pii_alg,
-      });
+  return mapRows(rows, privateKeyPemBase64);
+}
 
-      return [{
-        registrationId: row.registration_id,
-        fullName: pii.fullName ?? '',
-        email: pii.email ?? '',
-        phone: pii.phone ?? '',
-        emailMasked: maskEmail(pii.email ?? ''),
-        phoneMasked: maskPhone(pii.phone ?? ''),
-        eventTitle: row.title,
-        startsAt: row.starts_at,
-        venueName: row.venue_name,
-        hallName: row.hall_name,
-        address: row.address,
-        ticketUrl: row.public_url,
-      } satisfies EventRegistrationExportRow];
-    } catch {
-      return [];
-    }
-  });
+export function listAllRegistrationsForExport(
+  db: Database.Database,
+  privateKeyPemBase64: string,
+) {
+  const rows = db.prepare(`
+    SELECT
+      r.id AS registration_id,
+      r.pii_ciphertext,
+      r.pii_wrapped_key,
+      r.pii_iv,
+      r.pii_alg,
+      e.title,
+      e.starts_at,
+      e.venue_name,
+      e.hall_name,
+      e.address,
+      t.public_url
+    FROM registrations r
+    INNER JOIN events e ON e.id = r.event_id
+    LEFT JOIN tickets t ON t.registration_id = r.id
+    ORDER BY e.starts_at ASC, e.title ASC, r.created_at ASC, r.id ASC
+  `).all() as ExportRow[];
+
+  return mapRows(rows, privateKeyPemBase64);
 }
 
 export function formatMaskedEventReport(
@@ -132,7 +162,7 @@ export function formatMaskedEventReport(
   return [...header, ...items].join('\n');
 }
 
-export async function buildEventXlsxBuffer(rows: EventRegistrationExportRow[]) {
+export async function buildRegistrationsXlsxBuffer(rows: EventRegistrationExportRow[]) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'registration-service';
   workbook.created = new Date();
@@ -162,3 +192,5 @@ export async function buildEventXlsxBuffer(rows: EventRegistrationExportRow[]) {
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
 }
+
+export const buildEventXlsxBuffer = buildRegistrationsXlsxBuffer;

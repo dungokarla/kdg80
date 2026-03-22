@@ -18,7 +18,14 @@ import {
   type TelegramEventListFilter,
   type TelegramEventView,
 } from './telegram-events';
-import { buildEventXlsxBuffer, formatMaskedEventReport, listRegistrationsForEvent } from './registration-exports';
+import {
+  buildRegistrationsXlsxBuffer,
+  buildEventXlsxBuffer,
+  formatMaskedEventReport,
+  listAllRegistrationsForExport,
+  listRegistrationsForEvent,
+} from './registration-exports';
+import { cleanupTestRun, createSqliteBackup } from './admin-maintenance';
 import { searchRegistrationsByFullName } from './registration-search';
 
 type TelegramBotDeps = {
@@ -28,6 +35,8 @@ type TelegramBotDeps = {
   appBaseUrl: string;
   webhookPath: string;
   privateKeyPemBase64: string | null;
+  localPublicRoot: string;
+  ticketsPrefix: string;
 };
 
 const EVENTS_PER_PAGE = 6;
@@ -65,18 +74,22 @@ function formatHelp(role: TelegramAdminRole) {
     'Доступные команды:',
     '/start — открыть главное меню.',
     '/help — показать список команд.',
-    '/operators — список администраторов.',
     '',
     'Кнопки:',
     'События — список событий и карточки событий.',
-    'Поиск — следующий шаг реализации.',
-    'Экспорт — следующий шаг реализации.',
+    'Поиск — поиск регистрации по ФИО.',
   ];
 
   if (role === 'superadmin') {
+    lines.push('/operators — список администраторов.');
+    lines.push('/export_all — общий XLSX по всем событиям.');
+    lines.push('/backup_sqlite — резервная копия SQLite.');
+    lines.push('/cleanup_test_run <run_id> — удалить тестовые регистрации конкретного прогона.');
+    lines.push('');
     lines.push('Открыть регистрацию — список будущих событий, доступных для открытия.');
     lines.push('Закрыть регистрацию — список открытых событий.');
     lines.push('Операторы — текущие роли и состав администраторов.');
+    lines.push('Экспорт — сводный XLSX и резервная копия.');
   }
 
   return lines.join('\n');
@@ -224,6 +237,12 @@ function buildOperatorsKeyboard(
   }
 
   return keyboard;
+}
+
+function buildExportKeyboard() {
+  return new InlineKeyboard()
+    .text('Сводный XLSX', 'exp:all').row()
+    .text('SQLite backup', 'exp:backup');
 }
 
 function paginate<T>(items: T[], page: number, perPage: number) {
@@ -404,6 +423,71 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
     });
   });
 
+  bot.command('export_all', async (ctx) => {
+    const admin = requireAdminRole(String(ctx.from?.id ?? ''));
+    if (!admin || admin.role !== 'superadmin') {
+      await ctx.reply('Общий экспорт доступен только суперадмину.');
+      return;
+    }
+
+    if (!deps.privateKeyPemBase64) {
+      await ctx.reply('Нужен приватный ключ, чтобы подготовить общий экспорт.');
+      return;
+    }
+
+    const rows = listAllRegistrationsForExport(deps.db, deps.privateKeyPemBase64);
+    const buffer = await buildRegistrationsXlsxBuffer(rows);
+    await ctx.replyWithDocument(
+      new InputFile(buffer, 'registrations-all.xlsx'),
+      {
+        caption: 'Сводный XLSX по всем событиям.',
+      },
+    );
+  });
+
+  bot.command('backup_sqlite', async (ctx) => {
+    const admin = requireAdminRole(String(ctx.from?.id ?? ''));
+    if (!admin || admin.role !== 'superadmin') {
+      await ctx.reply('Резервная копия базы доступна только суперадмину.');
+      return;
+    }
+
+    const buffer = await createSqliteBackup(deps.db, 'registration-backup');
+    await ctx.replyWithDocument(
+      new InputFile(buffer, 'registration-backup.sqlite'),
+      {
+        caption: 'Резервная копия SQLite.',
+      },
+    );
+  });
+
+  bot.command('cleanup_test_run', async (ctx) => {
+    const admin = requireAdminRole(String(ctx.from?.id ?? ''));
+    if (!admin || admin.role !== 'superadmin') {
+      await ctx.reply('Очистка тестовых прогонов доступна только суперадмину.');
+      return;
+    }
+
+    const commandText = ctx.message?.text ?? '';
+    const runId = commandText.replace(/^\/cleanup_test_run(@\w+)?/u, '').trim();
+    if (!runId) {
+      await ctx.reply('Укажите run_id: /cleanup_test_run <run_id>');
+      return;
+    }
+
+    const result = await cleanupTestRun(deps.db, {
+      testRunId: runId,
+      localPublicRoot: deps.localPublicRoot,
+      ticketsPrefix: deps.ticketsPrefix,
+    });
+
+    await ctx.reply(
+      result.removedRegistrations
+        ? `Тестовый прогон очищен. Удалено регистраций: ${result.removedRegistrations}. Затронуто событий: ${result.affectedEvents}.`
+        : 'Для этого run_id тестовых регистраций не найдено.',
+    );
+  });
+
   bot.command('operators', async (ctx) => {
     const admin = requireAdminRole(String(ctx.from?.id ?? ''));
     if (!admin) {
@@ -480,9 +564,67 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       return;
     }
 
-    await ctx.reply('Раздел экспорта будет добавлен следующим шагом. Уже доступен список событий и управление открытием/закрытием регистрации.', {
-      reply_markup: buildMainKeyboard(admin.role),
+    if (admin.role !== 'superadmin') {
+      await ctx.reply('Раздел экспорта доступен только суперадмину.', {
+        reply_markup: buildMainKeyboard(admin.role),
+      });
+      return;
+    }
+
+    await ctx.reply('Экспорт и резервное копирование:', {
+      reply_markup: buildExportKeyboard(),
     });
+  });
+
+  bot.callbackQuery(/^exp:(all|backup)$/u, async (ctx) => {
+    const admin = requireAdminRole(String(ctx.from?.id ?? ''));
+    if (!admin || admin.role !== 'superadmin') {
+      await ctx.answerCallbackQuery({
+        text: 'Раздел экспорта доступен только суперадмину.',
+        show_alert: true,
+      });
+      return;
+    }
+
+    const [, action] = ctx.match;
+
+    if (action === 'all') {
+      if (!deps.privateKeyPemBase64) {
+        await ctx.answerCallbackQuery({
+          text: 'Нужен приватный ключ, чтобы подготовить общий экспорт.',
+          show_alert: true,
+        });
+        return;
+      }
+
+      const rows = listAllRegistrationsForExport(deps.db, deps.privateKeyPemBase64);
+      await ctx.answerCallbackQuery({
+        text: rows.length ? 'Готовлю сводный XLSX.' : 'Регистраций пока нет.',
+      });
+
+      const buffer = await buildRegistrationsXlsxBuffer(rows);
+      await ctx.replyWithDocument(
+        new InputFile(buffer, 'registrations-all.xlsx'),
+        {
+          caption: 'Сводный XLSX по всем событиям.',
+          reply_markup: buildMainKeyboard(admin.role),
+        },
+      );
+      return;
+    }
+
+    await ctx.answerCallbackQuery({
+      text: 'Готовлю резервную копию SQLite.',
+    });
+
+    const buffer = await createSqliteBackup(deps.db, 'registration-backup');
+    await ctx.replyWithDocument(
+      new InputFile(buffer, 'registration-backup.sqlite'),
+      {
+        caption: 'Резервная копия SQLite.',
+        reply_markup: buildMainKeyboard(admin.role),
+      },
+    );
   });
 
   bot.hears('Операторы', async (ctx) => {

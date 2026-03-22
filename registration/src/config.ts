@@ -17,6 +17,7 @@ type AppConfig = {
   telegramBotToken: string | null;
   telegramWebhookSecret: string | null;
   telegramWebhookPath: string;
+  emergencyExportToken: string | null;
   ticketsPrefix: string;
   exportsPrefix: string;
   storageDriver: 'local' | 's3';
@@ -71,6 +72,7 @@ export function loadConfig(): AppConfig {
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || null;
   const telegramWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null;
   const telegramWebhookPath = process.env.TELEGRAM_WEBHOOK_PATH?.trim() || '/api/v1/telegram/webhook';
+  const emergencyExportToken = process.env.EMERGENCY_EXPORT_TOKEN?.trim() || null;
   const ticketsPrefix = (process.env.TICKETS_PREFIX?.trim() || 'tickets').replace(/^\/+|\/+$/gu, '');
   const exportsPrefix = (process.env.EXPORTS_PREFIX?.trim() || 'exports').replace(/^\/+|\/+$/gu, '');
   const s3Bucket = process.env.S3_BUCKET?.trim() || null;
@@ -98,6 +100,7 @@ export function loadConfig(): AppConfig {
     telegramBotToken,
     telegramWebhookSecret,
     telegramWebhookPath,
+    emergencyExportToken,
     ticketsPrefix,
     exportsPrefix,
     storageDriver,

@@ -8,6 +8,7 @@ import { createDatabase } from './db/client';
 import { runMigrations } from './db/migrate';
 import { registerPublicApi } from './api/public';
 import { registerRegistrationApi } from './api/registration';
+import { registerAdminApi } from './api/admin';
 import { createStoragePublisher } from './lib/storage';
 import { syncCatalog } from './services/catalog';
 import { registerTelegramBot } from './services/telegram-bot';
@@ -48,6 +49,8 @@ const telegramBot = config.telegramBotToken && config.telegramWebhookSecret
       appBaseUrl: config.appBaseUrl,
       webhookPath: config.telegramWebhookPath,
       privateKeyPemBase64: config.piiPrivateKeyPemBase64,
+      localPublicRoot: config.localPublicRoot,
+      ticketsPrefix: config.ticketsPrefix,
     })
   : null;
 
@@ -88,6 +91,11 @@ app.get('/api/v1/health', async () => {
 });
 
 await registerPublicApi(app, db);
+await registerAdminApi(app, {
+  db,
+  emergencyExportToken: config.emergencyExportToken,
+  privateKeyPemBase64: config.piiPrivateKeyPemBase64,
+});
 await registerRegistrationApi(app, {
   db,
   consentVersion: config.consentVersion,
