@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { S3Client, DeleteObjectsCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import type { TicketArtifacts } from '../types';
 
 type StorageConfig = {
@@ -89,13 +89,12 @@ function createS3Publisher(config: StorageConfig): StoragePublisher {
     },
     async deleteTicketArtifacts(publicHash) {
       const keys = createTicketArtifactKeys(config.ticketsPrefix, publicHash);
-      await client.send(new DeleteObjectsCommand({
-        Bucket: config.s3Bucket!,
-        Delete: {
-          Objects: keys.map((key) => ({ Key: key })),
-          Quiet: true,
-        },
-      }));
+      for (const key of keys) {
+        await client.send(new DeleteObjectCommand({
+          Bucket: config.s3Bucket!,
+          Key: key,
+        }));
+      }
     },
   };
 }
