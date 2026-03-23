@@ -158,8 +158,15 @@ const supportEmail = 'bilet@kdg80.ru';
       button.textContent = item.ctaLabel;
 
       if (notice instanceof HTMLElement) {
-        notice.hidden = !item.ctaNotice;
-        notice.textContent = item.ctaNotice || '';
+        const stackedNoticeAllowed = ![
+          'registration_soon',
+          'registration_closed',
+          'sold_out',
+          'past',
+        ].includes(item.publicState);
+        const noticeText = stackedNoticeAllowed ? (item.ctaNotice || '') : '';
+        notice.hidden = !noticeText;
+        notice.textContent = noticeText;
       }
 
       const isOpen = item.publicState === 'registration_open';
