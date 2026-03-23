@@ -16,6 +16,7 @@ const supportEmail = 'bilet@kdg80.ru';
     <p class="registration-modal__eyebrow">Регистрация</p>
     <h2 id="registration-modal-title" data-registration-event-title>Регистрация на событие</h2>
     <p class="registration-modal__summary" data-registration-event-summary></p>
+    <p class="registration-modal__speaker" data-registration-event-speaker hidden></p>
 
     <form class="registration-form" data-registration-form novalidate>
       <label class="registration-form__field">
@@ -74,6 +75,7 @@ const supportEmail = 'bilet@kdg80.ru';
     const form = shell?.querySelector('[data-registration-form]');
     const titleNode = shell?.querySelector('[data-registration-event-title]');
     const summaryNode = shell?.querySelector('[data-registration-event-summary]');
+    const speakerNode = shell?.querySelector('[data-registration-event-speaker]');
     const statusNode = shell?.querySelector('[data-registration-status]');
     const submitButton = shell?.querySelector('[data-registration-submit]');
     const closeTriggers = shell ? Array.from(shell.querySelectorAll('[data-registration-close]')) : [];
@@ -151,7 +153,16 @@ const supportEmail = 'bilet@kdg80.ru';
         timeZone: 'Europe/Kaliningrad',
       }).format(new Date(item.startsAt));
 
-      return `${dateLabel} · ${item.venueName}, ${item.hallName} · ${item.address}`;
+      const locationParts = [item.venueName, item.hallName].filter(Boolean);
+      return [dateLabel, locationParts.join(', '), item.address].filter(Boolean).join(' · ');
+    }
+
+    function formatSpeakerLabel(item) {
+      if (typeof item.speakerLabel !== 'string' || !item.speakerLabel.trim()) {
+        return '';
+      }
+
+      return `Спикер: ${item.speakerLabel.trim()}`;
     }
 
     function updateButton(button, item) {
@@ -355,6 +366,12 @@ const supportEmail = 'bilet@kdg80.ru';
         summaryNode.textContent = formatEventSummary(item);
       }
 
+      if (speakerNode instanceof HTMLElement) {
+        const speakerLabel = formatSpeakerLabel(item);
+        speakerNode.hidden = !speakerLabel;
+        speakerNode.textContent = speakerLabel;
+      }
+
       form.fullName.focus();
     }
 
@@ -364,6 +381,10 @@ const supportEmail = 'bilet@kdg80.ru';
       document.body.classList.remove('registration-modal-open');
       activeEvent = null;
       clearErrors();
+      if (speakerNode instanceof HTMLElement) {
+        speakerNode.hidden = true;
+        speakerNode.textContent = '';
+      }
       form.reset();
     }
 
@@ -381,21 +402,24 @@ const supportEmail = 'bilet@kdg80.ru';
       const nameParts = data.fullName.split(' ').filter(Boolean);
 
       if (!data.fullName) {
-        setFieldError('fullName', 'Укажите имя и фамилию.');
+        setFieldError('fullName', 'Укажите имя и фамилию полностью.');
+        valid = false;
+      } else if (!/^[A-Za-zА-Яа-яЁё' -]+$/u.test(data.fullName)) {
+        setFieldError('fullName', 'Укажите имя и фамилию полностью.');
         valid = false;
       } else if (nameParts.length < 2 || nameParts.some((item) => item.replace(/[-']/g, '').length < 2)) {
-        setFieldError('fullName', 'Укажите минимум имя и фамилию.');
+        setFieldError('fullName', 'Укажите имя и фамилию полностью.');
         valid = false;
       }
 
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-        setFieldError('email', 'Проверьте email.');
+        setFieldError('email', 'Проверьте email: адрес выглядит некорректно.');
         valid = false;
       }
 
       const digits = data.phone.replace(/\D+/g, '');
       if (!(digits.length === 11 && /^[78]\d{10}$/.test(digits))) {
-        setFieldError('phone', 'Введите российский номер в формате +7.');
+        setFieldError('phone', 'Введите российский номер в формате +7XXXXXXXXXX.');
         valid = false;
       }
 
@@ -482,7 +506,10 @@ const supportEmail = 'bilet@kdg80.ru';
         const slug = button.dataset.eventSlug || '';
         const item = stateCache.get(slug);
         if (item?.publicState === 'registration_open') {
-          openModal(item);
+          openModal({
+            ...item,
+            speakerLabel: button.dataset.eventSpeaker || '',
+          });
         }
       });
     }

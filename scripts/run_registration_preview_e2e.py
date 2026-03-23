@@ -10,9 +10,10 @@ import textwrap
 import time
 import urllib.request
 from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 from dotenv import dotenv_values
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
@@ -168,6 +169,7 @@ def create_context(
   browser: Browser,
   mode: str,
   test_run_id: str | None = None,
+  mock_now_iso: str | None = None,
 ) -> tuple[BrowserContext, ScenarioTrace]:
   trace = ScenarioTrace(name=mode)
   context = browser.new_context(
@@ -194,6 +196,17 @@ def create_context(
             }}
             return originalFetch(input, init);
           }};
+        }})();
+        """
+      )
+    )
+  if mock_now_iso:
+    context.add_init_script(
+      script=textwrap.dedent(
+        f"""
+        (() => {{
+          const mockNow = Date.parse({json.dumps(mock_now_iso)});
+          Date.now = () => mockNow;
         }})();
         """
       )
@@ -258,6 +271,62 @@ def screenshot_card(page: Page, slug: str, target_path: Path) -> None:
   locator.scroll_into_view_if_needed()
   page.wait_for_timeout(500)
   locator.screenshot(path=str(target_path))
+
+
+def screenshot_page_state(page: Page, slug: str, target_path: Path) -> None:
+  locator = event_card(page, slug)
+  locator.scroll_into_view_if_needed()
+  page.wait_for_timeout(700)
+  page.screenshot(path=str(target_path))
+
+
+def open_registration_modal(page: Page, slug: str) -> None:
+  wait_for_label(page, slug, 'Регистрация')
+  event_card(page, slug).scroll_into_view_if_needed()
+  page.wait_for_timeout(400)
+  event_button(page, slug).click()
+  page.locator('.registration-modal').wait_for(state='visible')
+  page.wait_for_timeout(400)
+
+
+def close_registration_modal(page: Page) -> None:
+  page.locator('.registration-modal__close').click()
+  page.wait_for_timeout(300)
+
+
+def set_form_values(
+  page: Page,
+  *,
+  full_name: str,
+  email: str,
+  phone: str,
+  consent: bool,
+) -> None:
+  page.locator('[name="fullName"]').fill(full_name)
+  page.locator('[name="email"]').fill(email)
+  page.locator('[name="phone"]').fill(phone)
+  page.locator('[name="consentAccepted"]').set_checked(consent)
+
+
+def expect_inline_error(page: Page, expected_message: str) -> None:
+  locator = page.locator('small, [data-registration-status]')
+  locator.filter(has_text=expected_message).first.wait_for(state='visible', timeout=5000)
+
+
+def iso_plus_minutes(iso_value: str, minutes: int) -> str:
+  value = datetime.fromisoformat(iso_value.replace('Z', '+00:00'))
+  return (value + timedelta(minutes=minutes)).isoformat().replace('+00:00', 'Z')
+
+
+def resolve_status(url: str) -> int:
+  request = urllib.request.Request(url, method='HEAD')
+  try:
+    with urllib.request.urlopen(request, timeout=30) as response:
+      return response.status
+  except Exception:
+    request = urllib.request.Request(url, headers={'accept': '*/*'})
+    with urllib.request.urlopen(request, timeout=30) as response:
+      return response.status
 
 
 def render_report(browser: Browser, target_path: Path, title: str, lines: list[str]) -> None:
@@ -366,6 +435,59 @@ async def inspect_telegram(env: dict[str, str], bot_username: str, full_name: st
   }
 
 
+async def cleanup_test_run(
+  env: dict[str, str],
+  bot_username: str,
+  run_id: str,
+  event_slug: str,
+  seats_taken_before_cleanup: int | None,
+) -> dict[str, Any]:
+  bundle = read_auth_bundle(env)
+  api_id = int(env['TELEGRAM_API_ID'])
+  api_hash = env['TELEGRAM_API_HASH']
+  client = TelegramClient(
+    StringSession(bundle['session']),
+    api_id,
+    api_hash,
+    device_model=bundle.get('device_model'),
+    system_version=bundle.get('system_version'),
+    app_version=bundle.get('app_version'),
+    lang_code=bundle.get('lang_code'),
+    system_lang_code=bundle.get('system_lang_code'),
+  )
+  await client.connect()
+  await client.send_message(bot_username, f'/cleanup_test_run {run_id}')
+  await asyncio.sleep(3)
+  recent = await client.get_messages(bot_username, limit=4)
+  recent_text = [msg.raw_text or '' for msg in recent]
+  await client.disconnect()
+
+  before = seats_taken_before_cleanup
+  after = None
+  deadline = time.time() + 90
+  while time.time() < deadline:
+    manifest = fetch_json(STATE_MANIFEST_URL)
+    item = next((entry for entry in manifest.get('items', []) if entry.get('slug') == event_slug), None)
+    if item is None:
+      break
+    after = item.get('seatsTaken')
+    if before is None or (isinstance(after, int) and isinstance(before, int) and after < before):
+      return {
+        'recent_messages': recent_text,
+        'after': item,
+        'generated_at': manifest.get('generatedAt'),
+      }
+    await asyncio.sleep(2)
+
+  manifest = fetch_json(STATE_MANIFEST_URL)
+  item = next((entry for entry in manifest.get('items', []) if entry.get('slug') == event_slug), None)
+  return {
+    'recent_messages': recent_text,
+    'after': item,
+    'generated_at': manifest.get('generatedAt'),
+  }
+
+
 def parse_args() -> argparse.Namespace:
   parser = argparse.ArgumentParser(
     description='Run production-like registration E2E against a secret preview on kgd80.ru',
@@ -387,6 +509,7 @@ def main() -> None:
   manifest = fetch_json(STATE_MANIFEST_URL)
   api = fetch_json(STATE_API_URL)
   examples = pick_examples(manifest['items'])
+  manifest_items_before = {item['slug']: item for item in manifest['items']}
 
   run_id = f'registration-preview-e2e-{int(time.time())}'
   full_name = args.full_name
@@ -416,6 +539,7 @@ def main() -> None:
     for state, example in examples.items():
       wait_for_label(page, example.slug, example.cta_label)
       screenshot_card(page, example.slug, output_dir / f'{state}-desktop.png')
+      screenshot_page_state(page, example.slug, output_dir / f'{state}-list-desktop.png')
     summary['desktop_trace'] = asdict(normal_trace)
     context.close()
 
@@ -424,10 +548,22 @@ def main() -> None:
     open_homepage(mobile_page, base_url)
     wait_for_label(mobile_page, examples['registration_open'].slug, examples['registration_open'].cta_label)
     wait_for_label(mobile_page, examples['registration_closed'].slug, examples['registration_closed'].cta_label)
-    screenshot_card(mobile_page, examples['registration_open'].slug, output_dir / 'registration-open-mobile.png')
-    screenshot_card(mobile_page, examples['registration_closed'].slug, output_dir / 'registration-closed-mobile.png')
+    screenshot_page_state(mobile_page, examples['registration_open'].slug, output_dir / 'registration-open-mobile.png')
+    screenshot_page_state(mobile_page, examples['registration_closed'].slug, output_dir / 'registration-closed-mobile.png')
     summary['mobile_trace'] = asdict(mobile_trace)
     mobile_context.close()
+
+    past_context, past_trace = create_context(
+      browser,
+      'normal',
+      mock_now_iso=iso_plus_minutes(manifest_items_before[examples['registration_open'].slug]['endsAt'], 10),
+    )
+    past_page = past_context.new_page()
+    open_homepage(past_page, base_url)
+    wait_for_label(past_page, examples['registration_open'].slug, 'Событие прошло')
+    screenshot_page_state(past_page, examples['registration_open'].slug, output_dir / 'past-list-desktop.png')
+    summary['past_trace'] = asdict(past_trace)
+    past_context.close()
 
     fallback_context, fallback_trace = create_context(browser, 'manifest_missing')
     fallback_page = fallback_context.new_page()
@@ -444,6 +580,37 @@ def main() -> None:
     screenshot_card(outage_page, examples['registration_open'].slug, output_dir / 'dual-outage-desktop.png')
     summary['dual_outage_trace'] = asdict(outage_trace)
     outage_context.close()
+
+    validation_context, validation_trace = create_context(browser, 'normal')
+    validation_page = validation_context.new_page()
+    open_homepage(validation_page, base_url)
+    open_registration_modal(validation_page, examples['registration_open'].slug)
+    validation_page.locator('.registration-form__checkbox').screenshot(path=str(output_dir / 'consent-block-desktop.png'))
+    validation_page.screenshot(path=str(output_dir / 'registration-form-empty-desktop.png'))
+
+    validation_cases = [
+      ('validation-name-desktop.png', '<script>alert(1)</script>', 'ivan@example.com', '+79991234567', True, 'Укажите имя и фамилию полностью.'),
+      ('validation-email-desktop.png', 'Иван Иванов', 'invalid-email', '+79991234567', True, 'Проверьте email: адрес выглядит некорректно.'),
+      ('validation-phone-desktop.png', 'Иван Иванов', 'ivan@example.com', '+7123', True, 'Введите российский номер в формате +7XXXXXXXXXX.'),
+      ('validation-consent-desktop.png', 'Иван Иванов', 'ivan@example.com', '+79991234567', False, 'Подтвердите согласие на обработку персональных данных, чтобы продолжить.'),
+    ]
+
+    for filename, full_name_case, email_case, phone_case, consent_case, message in validation_cases:
+      set_form_values(
+        validation_page,
+        full_name=full_name_case,
+        email=email_case,
+        phone=phone_case,
+        consent=consent_case,
+      )
+      validation_page.locator('[data-registration-submit]').click()
+      expect_inline_error(validation_page, message)
+      validation_page.screenshot(path=str(output_dir / filename))
+      close_registration_modal(validation_page)
+      open_registration_modal(validation_page, examples['registration_open'].slug)
+
+    summary['validation_trace'] = asdict(validation_trace)
+    validation_context.close()
 
     registration_context, registration_trace = create_context(browser, 'normal', test_run_id=run_id)
     registration_page = registration_context.new_page()
@@ -479,6 +646,23 @@ def main() -> None:
     summary['registration_trace'] = asdict(registration_trace)
     registration_context.close()
 
+    consent_links = []
+    consent_page_context, consent_page_trace = create_context(browser, 'normal')
+    consent_page = consent_page_context.new_page()
+    open_homepage(consent_page, base_url)
+    open_registration_modal(consent_page, examples['registration_open'].slug)
+    for locator in consent_page.locator('.registration-form__checkbox a').all():
+      href = locator.get_attribute('href') or ''
+      absolute_url = urljoin(base_url, href)
+      consent_links.append({
+        'href': absolute_url,
+        'status': resolve_status(absolute_url),
+      })
+    consent_page.screenshot(path=str(output_dir / 'registration-form-consent-desktop.png'))
+    summary['consent_links'] = consent_links
+    summary['consent_trace'] = asdict(consent_page_trace)
+    consent_page_context.close()
+
     render_report(
       browser,
       output_dir / 'summary.png',
@@ -492,6 +676,7 @@ def main() -> None:
         f'Sold out: {examples["sold_out"].title} -> {examples["sold_out"].cta_label}',
         f'Manifest fallback hit API: {summary["manifest_fallback_trace"]["api_requested"]}',
         'Dual outage kept loading CTA: verified',
+        f'Consent link statuses: {[item["status"] for item in summary["consent_links"]]}',
         f'Registration submit status: {summary["register_status"]}',
         f'Ticket URL: {summary["ticket_url"]}',
       ],
@@ -501,6 +686,23 @@ def main() -> None:
 
   telegram_info = asyncio.run(inspect_telegram(env, args.bot_username, full_name))
   summary['telegram_check'] = telegram_info
+  manifest_after = fetch_json(STATE_MANIFEST_URL)
+  manifest_items_after = {item['slug']: item for item in manifest_after['items']}
+  summary['manifest_after_registration'] = {
+    'generated_at': manifest_after.get('generatedAt'),
+    'before': manifest_items_before.get(examples['registration_open'].slug),
+    'after': manifest_items_after.get(examples['registration_open'].slug),
+  }
+  cleanup_info = asyncio.run(
+    cleanup_test_run(
+      env,
+      args.bot_username,
+      run_id,
+      examples['registration_open'].slug,
+      manifest_items_after.get(examples['registration_open'].slug, {}).get('seatsTaken'),
+    )
+  )
+  summary['cleanup'] = cleanup_info
 
   with sync_playwright() as playwright:
     browser = playwright.chromium.launch(headless=True)
@@ -537,6 +739,8 @@ def main() -> None:
       - Generated at: `{summary['generated_at_utc']}`
       - Preview URL: `{base_url}`
       - Live manifest generated at: `{summary['live_manifest_generated_at']}`
+      - Manifest after registration: `{summary['manifest_after_registration']['generated_at']}`
+      - Cleanup manifest timestamp: `{summary['cleanup']['generated_at']}`
       - Registration status: `{summary['register_status']}`
       - Ticket URL: `{summary['ticket_url']}`
 
@@ -551,6 +755,8 @@ def main() -> None:
 
       - Latest `/help` response: `{(summary['telegram_check']['recent_messages'][0] if summary['telegram_check']['recent_messages'] else 'no messages')}`
       - Fresh matches for `{full_name}`: `{len(summary['telegram_check']['matches'])}`
+      - Consent link statuses: `{[item['status'] for item in summary['consent_links']]}`
+      - Cleanup result: `{(summary['cleanup']['recent_messages'][0] if summary['cleanup']['recent_messages'] else 'no messages')}`
       """
     ).strip() + '\n',
     encoding='utf-8',

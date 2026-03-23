@@ -3489,6 +3489,11 @@ body.registration-modal-open {
   position: fixed;
   inset: 0;
   z-index: 1200;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  overflow: auto;
+  padding: clamp(1rem, 3vh, 2rem) 1rem;
 }
 
 .registration-modal__backdrop {
@@ -3501,11 +3506,11 @@ body.registration-modal-open {
 .registration-modal {
   position: relative;
   z-index: 1;
-  width: min(100vw - 2rem, 42rem);
-  max-height: calc(100dvh - 2rem);
+  width: min(100%, 42rem);
+  max-height: calc(100dvh - clamp(2rem, 6vh, 4rem));
   overflow: auto;
-  margin: 1rem auto;
-  padding: 1.35rem;
+  margin: 0;
+  padding: 1.5rem;
   border-radius: 1.7rem;
   background:
     radial-gradient(circle at top right, rgba(240, 91, 63, 0.12), transparent 28%),
@@ -3546,15 +3551,30 @@ body.registration-modal-open {
 }
 
 .registration-modal__summary {
-  margin: 0.85rem 0 0;
+  margin: 0.9rem 0 0;
   color: var(--ink-soft);
   font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.registration-modal__speaker {
+  margin: 0.85rem 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(184, 63, 47, 0.08);
+  border: 1px solid rgba(184, 63, 47, 0.14);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .registration-form {
   display: grid;
   gap: 0.9rem;
-  margin-top: 1.35rem;
+  margin-top: 1.55rem;
 }
 
 .registration-form__field {
@@ -3595,8 +3615,19 @@ body.registration-modal-open {
   align-items: start;
 }
 
+.registration-form__checkbox span {
+  line-height: 1.45;
+}
+
 .registration-form__checkbox input {
   margin-top: 0.2rem;
+}
+
+.registration-form__checkbox a {
+  color: var(--accent-deep);
+  font-weight: 700;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
 }
 
 .registration-form__honeypot {
@@ -3623,13 +3654,21 @@ body.registration-modal-open {
 }
 
 @media (max-width: 759px) {
+  .registration-modal-shell {
+    align-items: start;
+    padding:
+      max(0.75rem, env(safe-area-inset-top))
+      0.5rem
+      max(0.75rem, env(safe-area-inset-bottom));
+  }
+
   .registration-modal {
-    width: calc(100vw - 1rem);
-    min-height: calc(100dvh - 1rem);
-    max-height: calc(100dvh - 1rem);
-    margin: 0.5rem;
+    width: 100%;
+    min-height: calc(100dvh - max(0.75rem, env(safe-area-inset-top)) - max(0.75rem, env(safe-area-inset-bottom)));
+    max-height: calc(100dvh - max(0.75rem, env(safe-area-inset-top)) - max(0.75rem, env(safe-area-inset-bottom)));
+    margin: 0;
     border-radius: 1.35rem;
-    padding: 1rem;
+    padding: 1.2rem 1rem 1rem;
   }
 }
 
