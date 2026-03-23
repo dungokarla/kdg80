@@ -41,6 +41,8 @@ export async function cleanupTestRun(
     return {
       removedRegistrations: 0,
       affectedEvents: 0,
+      artifactDeleteFailures: 0,
+      failedArtifactHashes: [] as string[],
     };
   }
 
@@ -71,14 +73,21 @@ export async function cleanupTestRun(
 
   apply();
 
+  const failedArtifactHashes: string[] = [];
   if (options.storagePublisher) {
     for (const publicHash of ticketHashes) {
-      await options.storagePublisher.deleteTicketArtifacts(publicHash);
+      try {
+        await options.storagePublisher.deleteTicketArtifacts(publicHash);
+      } catch {
+        failedArtifactHashes.push(publicHash);
+      }
     }
   }
 
   return {
     removedRegistrations: rows.length,
     affectedEvents: affectedEventIds.length,
+    artifactDeleteFailures: failedArtifactHashes.length,
+    failedArtifactHashes,
   };
 }

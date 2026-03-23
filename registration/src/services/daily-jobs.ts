@@ -11,10 +11,12 @@ type DailyJobDeps = {
   logger: FastifyBaseLogger;
   privateKeyPemBase64: string | null;
   timeZone: string;
+  syncPublicStateManifest: (reason: string) => Promise<boolean>;
 };
 
 const DAILY_EXPORT_JOB = 'daily_export_all';
 const DAILY_BACKUP_JOB = 'daily_backup_sqlite';
+const DAILY_STATE_MANIFEST_JOB = 'daily_public_state_manifest';
 const DAILY_HOUR = 4;
 const DAILY_MINUTE = 30;
 const POLL_INTERVAL_MS = 60_000;
@@ -179,16 +181,17 @@ export function startDailyJobs(deps: DailyJobDeps) {
       return;
     }
 
-    const hasSuperadmin = listTelegramAdmins(deps.db).some((item) => item.role === 'superadmin');
-    if (!hasSuperadmin) {
-      return;
-    }
-
     running = true;
     try {
       const now = new Date();
-      await maybeRunJob(deps, DAILY_EXPORT_JOB, now, async () => runDailyExport(deps));
-      await maybeRunJob(deps, DAILY_BACKUP_JOB, now, async () => runDailyBackup(deps));
+      const hasSuperadmin = listTelegramAdmins(deps.db).some((item) => item.role === 'superadmin');
+
+      if (hasSuperadmin) {
+        await maybeRunJob(deps, DAILY_EXPORT_JOB, now, async () => runDailyExport(deps));
+        await maybeRunJob(deps, DAILY_BACKUP_JOB, now, async () => runDailyBackup(deps));
+      }
+
+      await maybeRunJob(deps, DAILY_STATE_MANIFEST_JOB, now, async () => deps.syncPublicStateManifest('daily'));
     } finally {
       running = false;
     }

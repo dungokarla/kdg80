@@ -14,6 +14,7 @@ import { syncCatalog } from './services/catalog';
 import { startDailyJobs } from './services/daily-jobs';
 import { registerTelegramBot } from './services/telegram-bot';
 import { startTelegramOutboxWorker } from './services/telegram-outbox';
+import { publishPublicStateManifest } from './services/state-manifest';
 
 const config = loadConfig();
 const db = createDatabase(config.sqlitePath);
@@ -42,6 +43,18 @@ const app = Fastify({
   trustProxy: true,
   bodyLimit: 64 * 1024,
 });
+
+async function syncPublicStateManifest(reason: string) {
+  try {
+    await publishPublicStateManifest(db, storagePublisher);
+    app.log.info({ reason }, 'public_state_manifest_published');
+    return true;
+  } catch (error) {
+    app.log.error({ err: error, reason }, 'public_state_manifest_publish_failed');
+    return false;
+  }
+}
+
 const telegramBot = config.telegramBotToken && config.telegramWebhookSecret
   ? registerTelegramBot(app, {
       db,
@@ -51,6 +64,7 @@ const telegramBot = config.telegramBotToken && config.telegramWebhookSecret
       webhookPath: config.telegramWebhookPath,
       privateKeyPemBase64: config.piiPrivateKeyPemBase64,
       storagePublisher,
+      syncPublicStateManifest,
     })
   : null;
 
@@ -106,7 +120,10 @@ await registerRegistrationApi(app, {
   publicTicketBaseUrl: config.publicTicketBaseUrl,
   ticketsPrefix: config.ticketsPrefix,
   storagePublisher,
+  syncPublicStateManifest,
 });
+
+await syncPublicStateManifest('startup');
 
 await app.listen({
   host: config.host,
@@ -121,6 +138,7 @@ if (telegramBot) {
     logger: app.log,
     privateKeyPemBase64: config.piiPrivateKeyPemBase64,
     timeZone: config.timeZone,
+    syncPublicStateManifest,
   });
 
   if (config.piiPrivateKeyPemBase64) {

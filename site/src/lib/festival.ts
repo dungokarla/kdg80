@@ -93,7 +93,12 @@ const MONTHS: Record<string, { number: string; label: string; anchor: string }> 
 };
 
 const ROOT_DIR = path.resolve(process.cwd(), '..');
-const MASTER_PATH = path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master.md');
+const MASTER_PATH_CANDIDATES = [
+  process.env.FESTIVAL_MASTER_PATH?.trim(),
+  path.resolve(ROOT_DIR, 'site', 'src', 'data', 'festival_site_master.md'),
+  path.resolve(ROOT_DIR, 'Исходные данные', 'festival_site_master.md'),
+].filter((value): value is string => Boolean(value));
+const MASTER_PATH = MASTER_PATH_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || MASTER_PATH_CANDIDATES[0];
 const DEFAULT_CITY = 'Калининград';
 const SPEAKER_SHOWCASE_KEYWORD_WEIGHTS: Array<{ pattern: RegExp; bonus: number }> = [
   { pattern: /доктор|д\.\s*н\./i, bonus: 3.2 },

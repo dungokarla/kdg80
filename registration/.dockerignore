@@ -7,15 +7,6 @@
 !registration/Dockerfile
 !registration/src/
 !registration/src/**
-!site/
-!site/src/
-!site/src/lib/
-!site/src/lib/festival.ts
-!site/src/data/
-!site/src/data/media-manifest.json
-!site/src/data/summary-overrides.json
-!Исходные данные/
-!Исходные данные/festival_site_master.md
 
 registration/node_modules/
 registration/data/

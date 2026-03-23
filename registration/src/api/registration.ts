@@ -15,6 +15,7 @@ type RegistrationApiDeps = {
   publicTicketBaseUrl: string;
   ticketsPrefix: string;
   storagePublisher: StoragePublisher;
+  syncPublicStateManifest: (reason: string) => Promise<boolean>;
 };
 
 function trimTrailingSlash(value: string) {
@@ -91,6 +92,8 @@ export async function registerRegistrationApi(app: FastifyInstance, deps: Regist
         sourceIp: request.ip,
         userAgent: request.headers['user-agent'],
       });
+
+      void deps.syncPublicStateManifest(`registration:${payload.eventSlug}`);
 
       reply.code(201);
       return created;

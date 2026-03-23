@@ -8,6 +8,8 @@ type ExportRow = {
   pii_wrapped_key: Buffer;
   pii_iv: Buffer;
   pii_alg: string;
+  created_at: string;
+  consent_accepted_at: string;
   title: string;
   starts_at: string;
   venue_name: string;
@@ -18,6 +20,9 @@ type ExportRow = {
 
 export type EventRegistrationExportRow = {
   registrationId: number;
+  registeredAt: string;
+  consentAccepted: boolean;
+  consentAcceptedAt: string;
   fullName: string;
   email: string;
   phone: string;
@@ -31,6 +36,14 @@ export type EventRegistrationExportRow = {
   ticketUrl: string | null;
 };
 
+function formatKaliningradDateTime(value: string) {
+  return new Intl.DateTimeFormat('ru-RU', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+    timeZone: 'Europe/Kaliningrad',
+  }).format(new Date(value));
+}
+
 function mapRows(rows: ExportRow[], privateKeyPemBase64: string) {
   return rows.flatMap((row) => {
     try {
@@ -43,6 +56,9 @@ function mapRows(rows: ExportRow[], privateKeyPemBase64: string) {
 
       return [{
         registrationId: row.registration_id,
+        registeredAt: row.created_at,
+        consentAccepted: Boolean(row.consent_accepted_at),
+        consentAcceptedAt: row.consent_accepted_at,
         fullName: pii.fullName ?? '',
         email: pii.email ?? '',
         phone: pii.phone ?? '',
@@ -85,6 +101,8 @@ export function listRegistrationsForEvent(
       r.pii_wrapped_key,
       r.pii_iv,
       r.pii_alg,
+      r.created_at,
+      r.consent_accepted_at,
       e.title,
       e.starts_at,
       e.venue_name,
@@ -112,6 +130,8 @@ export function listAllRegistrationsForExport(
       r.pii_wrapped_key,
       r.pii_iv,
       r.pii_alg,
+      r.created_at,
+      r.consent_accepted_at,
       e.title,
       e.starts_at,
       e.venue_name,
@@ -153,6 +173,8 @@ export function formatMaskedEventReport(
     `${index + 1}. ${row.fullName}`,
     `   ${row.emailMasked}`,
     `   ${row.phoneMasked}`,
+    `   Регистрация: ${formatKaliningradDateTime(row.registeredAt)}`,
+    `   Согласие на ПДн: ${row.consentAccepted ? 'Да' : 'Нет'}${row.consentAcceptedAt ? ` · ${formatKaliningradDateTime(row.consentAcceptedAt)}` : ''}`,
   ].join('\n'));
 
   if (rows.length > 20) {
@@ -170,6 +192,9 @@ export async function buildRegistrationsXlsxBuffer(rows: EventRegistrationExport
 
   sheet.columns = [
     { header: 'Название события', key: 'eventTitle', width: 48 },
+    { header: 'Дата и время регистрации', key: 'registeredAt', width: 28 },
+    { header: 'Согласие на обработку ПДн', key: 'consentAccepted', width: 22 },
+    { header: 'Дата и время согласия', key: 'consentAcceptedAt', width: 28 },
     { header: 'ФИО', key: 'fullName', width: 32 },
     { header: 'Почта', key: 'email', width: 32 },
     { header: 'Телефон', key: 'phone', width: 20 },
@@ -179,6 +204,9 @@ export async function buildRegistrationsXlsxBuffer(rows: EventRegistrationExport
   for (const row of rows) {
     sheet.addRow({
       eventTitle: row.eventTitle,
+      registeredAt: formatKaliningradDateTime(row.registeredAt),
+      consentAccepted: row.consentAccepted ? 'Да' : 'Нет',
+      consentAcceptedAt: row.consentAcceptedAt ? formatKaliningradDateTime(row.consentAcceptedAt) : '',
       fullName: row.fullName,
       email: row.email,
       phone: row.phone,

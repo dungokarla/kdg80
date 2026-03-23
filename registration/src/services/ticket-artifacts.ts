@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
 import type { TicketArtifacts } from '../types';
 import type { StoragePublisher, TicketArtifactBundle } from '../lib/storage';
@@ -15,11 +18,42 @@ type TicketArtifactInput = {
   venueName: string;
   hallName: string;
   address: string;
+  eventImageUrl?: string | null;
+  ticketImageAsset?: string | null;
 };
+
+const ASSETS_ROOT = fileURLToPath(new URL('../assets/', import.meta.url));
+const FESTIVAL_LOGO_PNG = path.join(ASSETS_ROOT, 'logos', 'logo-znanie-festival.png');
+const FESTIVAL_MARK_PNG = path.join(ASSETS_ROOT, 'logos', 'logo-80-istorii-hero.png');
+const TICKET_IMAGES_DIR = path.join(ASSETS_ROOT, 'ticket-event-images');
+const PDF_FONT_REGULAR = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
+const PDF_FONT_BOLD = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/u, '');
+}
+
+function buildTicketUrl(baseUrl: string, ticketsPrefix: string, publicHash: string) {
+  return `${trimTrailingSlash(baseUrl)}/${ticketsPrefix.replace(/^\/+|\/+$/gu, '')}/${publicHash}/`;
+}
 
 function formatEventDate(isoValue: string) {
   return new Intl.DateTimeFormat('ru-RU', {
     dateStyle: 'long',
+    timeStyle: 'short',
+    timeZone: 'Europe/Kaliningrad',
+  }).format(new Date(isoValue));
+}
+
+function formatEventDateOnly(isoValue: string) {
+  return new Intl.DateTimeFormat('ru-RU', {
+    dateStyle: 'long',
+    timeZone: 'Europe/Kaliningrad',
+  }).format(new Date(isoValue));
+}
+
+function formatEventTimeOnly(isoValue: string) {
+  return new Intl.DateTimeFormat('ru-RU', {
     timeStyle: 'short',
     timeZone: 'Europe/Kaliningrad',
   }).format(new Date(isoValue));
@@ -33,15 +67,41 @@ function escapeHtml(value: string) {
     .replace(/"/gu, '&quot;');
 }
 
+function buildAbsoluteUrl(baseUrl: string, relativePath: string | null | undefined) {
+  if (!relativePath) {
+    return null;
+  }
+
+  if (/^https?:\/\//u.test(relativePath)) {
+    return relativePath;
+  }
+
+  return `${trimTrailingSlash(baseUrl)}${relativePath.startsWith('/') ? '' : '/'}${relativePath}`;
+}
+
+function resolveTicketImagePath(assetName: string | null | undefined) {
+  if (!assetName) {
+    return null;
+  }
+
+  const absolutePath = path.join(TICKET_IMAGES_DIR, assetName);
+  return fs.existsSync(absolutePath) ? absolutePath : null;
+}
+
 function buildHtml(input: TicketArtifactInput) {
-  const ticketUrl = `${input.ticketBaseUrl}/${input.ticketsPrefix}/${input.publicHash}/`;
+  const ticketUrl = buildTicketUrl(input.ticketBaseUrl, input.ticketsPrefix, input.publicHash);
   const pdfUrl = `${ticketUrl}ticket.pdf`;
   const icsUrl = `${ticketUrl}event.ics`;
   const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
   const formattedDate = formatEventDate(input.startsAt);
+  const dateOnly = formatEventDateOnly(input.startsAt);
+  const timeOnly = formatEventTimeOnly(input.startsAt);
   const startsAt = new Date(input.startsAt);
   const endsAt = new Date(startsAt.getTime() + 90 * 60_000);
   const googleDates = `${startsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}/${endsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}`;
+  const festivalLogoUrl = '/shared-assets/logo-znanie-festival.svg';
+  const festivalMarkUrl = '/shared-assets/logo-80-istorii-hero.svg';
+  const eventImageUrl = input.eventImageUrl || '';
 
   googleCalendarUrl.searchParams.set('action', 'TEMPLATE');
   googleCalendarUrl.searchParams.set('text', input.title);
@@ -57,75 +117,308 @@ function buildHtml(input: TicketArtifactInput) {
     <meta name="robots" content="noindex, nofollow, noarchive" />
     <title>Билет — ${escapeHtml(input.title)}</title>
     <style>
+      @font-face {
+        font-family: "Cygre";
+        src: url("/shared-assets/fonts/Cygre-Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Cygre";
+        src: url("/shared-assets/fonts/Cygre-Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "FavoritPro";
+        src: url("/shared-assets/fonts/FavoritPro-Book.otf") format("opentype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "FavoritPro";
+        src: url("/shared-assets/fonts/FavoritPro-Medium.otf") format("opentype");
+        font-weight: 500;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "FavoritPro";
+        src: url("/shared-assets/fonts/FavoritPro-Bold.otf") format("opentype");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
       :root {
         color-scheme: light;
-        --bg: #f6efe6;
-        --card: #fffaf4;
-        --ink: #17120d;
-        --accent: #b83f2f;
-        --line: rgba(23, 18, 13, 0.12);
+        --paper: #f5ede1;
+        --paper-soft: #fbf5ec;
+        --card: rgba(255, 250, 244, 0.92);
+        --ink: #16120d;
+        --ink-soft: rgba(22, 18, 13, 0.68);
+        --line: rgba(22, 18, 13, 0.12);
+        --accent: #d84b31;
+        --accent-deep: #962d1b;
+        --shadow: 0 24px 64px rgba(27, 18, 12, 0.16);
+        --radius-lg: 30px;
+        --radius-md: 20px;
       }
+
+      * { box-sizing: border-box; }
+
       body {
         margin: 0;
-        font-family: "Georgia", "Times New Roman", serif;
-        background: radial-gradient(circle at top, #fdf8f0 0%, var(--bg) 58%, #efe2d2 100%);
+        font-family: "FavoritPro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         color: var(--ink);
+        background:
+          radial-gradient(circle at 12% 0%, rgba(216, 75, 49, 0.18), transparent 22rem),
+          radial-gradient(circle at 84% 8%, rgba(18, 17, 14, 0.1), transparent 24rem),
+          linear-gradient(180deg, #f7f1e8 0%, var(--paper) 44%, #f0e4d4 100%);
       }
+
       .shell {
-        max-width: 760px;
+        width: min(100% - 1.25rem, 980px);
         margin: 0 auto;
-        padding: 32px 16px 56px;
+        padding: 24px 0 56px;
       }
+
       .ticket {
+        overflow: hidden;
+        border-radius: var(--radius-lg);
         background: var(--card);
         border: 1px solid var(--line);
-        border-radius: 28px;
-        padding: 28px;
-        box-shadow: 0 28px 80px rgba(88, 39, 16, 0.12);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
       }
-      .eyebrow {
+
+      .hero {
+        display: grid;
+        gap: 24px;
+        padding: 28px 28px 0;
+      }
+
+      .hero__brand {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .hero__logos {
+        display: grid;
+        gap: 10px;
+      }
+
+      .hero__logos img:first-child {
+        width: clamp(170px, 38vw, 320px);
+        height: auto;
+      }
+
+      .hero__logos img:last-child {
+        width: clamp(78px, 20vw, 132px);
+        height: auto;
+      }
+
+      .hero__eyebrow {
+        margin: 0;
+        color: var(--accent-deep);
         font-size: 12px;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: var(--accent);
-        margin: 0 0 12px;
       }
-      h1 {
-        margin: 0 0 12px;
-        font-size: clamp(28px, 5vw, 46px);
+
+      .hero__badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(150, 45, 27, 0.15);
+        background: rgba(216, 75, 49, 0.1);
+        color: var(--accent-deep);
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .hero__title {
+        margin: 0;
+        font-family: "Cygre", "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(34px, 6vw, 62px);
+        line-height: 0.92;
+        letter-spacing: -0.03em;
+        max-width: 11ch;
+      }
+
+      .hero__summary {
+        margin: 0;
+        max-width: 58ch;
+        color: var(--ink-soft);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .hero__meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .hero__stat {
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid var(--line);
+      }
+
+      .hero__stat-label {
+        display: block;
+        margin-bottom: 6px;
+        color: rgba(22, 18, 13, 0.52);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .hero__stat-value {
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .hero__image {
+        position: relative;
+        min-height: 240px;
+        margin-top: 4px;
+        border-radius: 24px;
+        overflow: hidden;
+        background:
+          linear-gradient(135deg, rgba(216, 75, 49, 0.28), rgba(24, 18, 14, 0.1)),
+          #e9d8c4;
+      }
+
+      .hero__image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .hero__image::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: 46%;
+        background: linear-gradient(180deg, rgba(22, 18, 13, 0) 0%, rgba(22, 18, 13, 0.82) 100%);
+      }
+
+      .hero__image-caption {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 18px;
+        z-index: 1;
+        color: white;
+      }
+
+      .hero__image-caption strong {
+        display: block;
+        font-family: "Cygre", "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(24px, 4vw, 36px);
+        line-height: 0.94;
+        letter-spacing: -0.03em;
+      }
+
+      .hero__image-caption span {
+        display: block;
+        margin-top: 8px;
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 1.25fr 0.95fr;
+        gap: 18px;
+        padding: 24px 28px 28px;
+      }
+
+      .panel {
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+        padding: 20px;
+      }
+
+      .panel__label {
+        display: block;
+        margin-bottom: 10px;
+        color: rgba(22, 18, 13, 0.52);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .panel__value {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.5;
+      }
+
+      .panel__value--person {
+        font-family: "Cygre", "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(26px, 4vw, 38px);
         line-height: 0.98;
       }
-      .grid {
-        display: grid;
-        gap: 16px;
-        margin-top: 24px;
-      }
-      .card {
-        border: 1px solid var(--line);
+
+      .ticket-id {
+        display: inline-flex;
+        align-items: center;
+        min-height: 56px;
+        padding: 0 18px;
         border-radius: 20px;
-        padding: 18px;
+        background: #17120d;
+        color: white;
+        font-family: "Cygre", "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(26px, 5vw, 38px);
+        letter-spacing: 0.1em;
       }
-      .label {
-        display: block;
+
+      .ticket-id-note {
+        margin: 12px 0 0;
+        color: var(--ink-soft);
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      .actions-title {
+        margin: 0 0 10px;
         font-size: 12px;
-        text-transform: uppercase;
         letter-spacing: 0.14em;
-        color: rgba(23, 18, 13, 0.56);
-        margin-bottom: 8px;
+        text-transform: uppercase;
+        color: rgba(22, 18, 13, 0.52);
       }
+
+      .actions-copy {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
       .actions {
         display: flex;
-        gap: 12px;
         flex-wrap: wrap;
-        margin-top: 24px;
+        gap: 10px;
+        margin-top: 18px;
       }
-      .actions-title {
-        margin: 24px 0 12px;
-        font-size: 13px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: rgba(23, 18, 13, 0.56);
-      }
+
       .button {
         display: inline-flex;
         align-items: center;
@@ -133,59 +426,143 @@ function buildHtml(input: TicketArtifactInput) {
         min-height: 48px;
         padding: 0 18px;
         border-radius: 999px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: white;
         text-decoration: none;
         font-weight: 700;
-        color: white;
-        background: var(--accent);
-        flex: 1 1 180px;
+        flex: 1 1 210px;
       }
+
       .button--ghost {
         color: var(--ink);
         background: transparent;
-        border: 1px solid var(--line);
+        border-color: var(--line);
       }
-      .note {
-        margin-top: 18px;
+
+      .footer-note {
+        margin: 18px 0 0;
+        color: var(--ink-soft);
         font-size: 14px;
-        color: rgba(23, 18, 13, 0.72);
+        line-height: 1.55;
       }
-      .note a {
+
+      .footer-note a {
+        color: inherit;
         overflow-wrap: anywhere;
         word-break: break-word;
+      }
+
+      @media (max-width: 860px) {
+        .hero__meta,
+        .body {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .shell {
+          width: min(100% - 0.75rem, 980px);
+          padding-top: 12px;
+        }
+
+        .ticket {
+          border-radius: 24px;
+        }
+
+        .hero,
+        .body {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+
+        .hero {
+          gap: 18px;
+        }
+
+        .hero__brand {
+          gap: 12px;
+        }
+
+        .hero__image {
+          min-height: 204px;
+        }
+
+        .panel__value {
+          font-size: 16px;
+        }
       }
     </style>
   </head>
   <body>
     <main class="shell">
       <article class="ticket">
-        <p class="eyebrow">80 историй о главном</p>
-        <h1>${escapeHtml(input.title)}</h1>
-        <p><strong>Билет № ${escapeHtml(input.shortTicketId)}</strong></p>
-        <div class="grid">
-          <section class="card">
-            <span class="label">Посетитель</span>
-            <div>${escapeHtml(input.fullName)}</div>
-            <div>${escapeHtml(input.emailMasked)}</div>
-            <div>${escapeHtml(input.phoneMasked)}</div>
-          </section>
-          <section class="card">
-            <span class="label">Событие</span>
-            <div>${escapeHtml(formattedDate)}</div>
-            <div>${escapeHtml(input.venueName)}</div>
-            <div>${escapeHtml(input.hallName)}</div>
-            <div>${escapeHtml(input.address)}</div>
-          </section>
-        </div>
-        <p class="actions-title">Добавьте событие в календарь, чтобы не забыть</p>
-        <div class="actions">
-          <a class="button" href="${escapeHtml(pdfUrl)}">Скачать PDF</a>
-          <a class="button button--ghost" href="${escapeHtml(googleCalendarUrl.toString())}" target="_blank" rel="noreferrer">Google Calendar</a>
-          <a class="button button--ghost" href="${escapeHtml(icsUrl)}">iPhone / Apple Calendar</a>
-          <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Android / ICS</a>
-          <a class="button button--ghost" href="${escapeHtml(icsUrl)}" download>Скачать ICS</a>
-        </div>
-        <p class="note">Печать билета не требуется. Рассадка свободная. Добавьте событие в календарь, чтобы не забыть.</p>
-        <p class="note">Постоянная ссылка на билет: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
+        <section class="hero">
+          <div class="hero__brand">
+            <div class="hero__logos">
+              <img src="${festivalLogoUrl}" alt="Российское общество Знание. Фестиваль 80 историй о главном" />
+              <img src="${festivalMarkUrl}" alt="" aria-hidden="true" />
+            </div>
+            <span class="hero__badge">Билет / Приглашение</span>
+          </div>
+          <p class="hero__eyebrow">80 историй о главном</p>
+          <h1 class="hero__title">${escapeHtml(input.title)}</h1>
+          <p class="hero__summary">Сохраните эту страницу или скачайте PDF. Печать билета не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.</p>
+          <div class="hero__meta">
+            <div class="hero__stat">
+              <span class="hero__stat-label">Дата</span>
+              <div class="hero__stat-value">${escapeHtml(dateOnly)}</div>
+            </div>
+            <div class="hero__stat">
+              <span class="hero__stat-label">Время</span>
+              <div class="hero__stat-value">${escapeHtml(timeOnly)}</div>
+            </div>
+            <div class="hero__stat">
+              <span class="hero__stat-label">Площадка</span>
+              <div class="hero__stat-value">${escapeHtml(input.venueName)}</div>
+            </div>
+            <div class="hero__stat">
+              <span class="hero__stat-label">Зал</span>
+              <div class="hero__stat-value">${escapeHtml(input.hallName)}</div>
+            </div>
+          </div>
+          <figure class="hero__image">
+            ${eventImageUrl ? `<img src="${escapeHtml(eventImageUrl)}" alt="Визуальный образ события «${escapeHtml(input.title)}»" />` : ''}
+            <figcaption class="hero__image-caption">
+              <strong>Билет № ${escapeHtml(input.shortTicketId)}</strong>
+              <span>${escapeHtml(formattedDate)} · ${escapeHtml(input.address)}</span>
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="body">
+          <div class="panel">
+            <span class="panel__label">Посетитель</span>
+            <p class="panel__value panel__value--person">${escapeHtml(input.fullName)}</p>
+            <p class="panel__value">${escapeHtml(input.emailMasked)}<br />${escapeHtml(input.phoneMasked)}</p>
+          </div>
+          <div class="panel">
+            <span class="panel__label">Короткий номер билета</span>
+            <div class="ticket-id">${escapeHtml(input.shortTicketId)}</div>
+            <p class="ticket-id-note">Покажите этот номер или откройте билет со страницы мероприятия. Рассадка свободная.</p>
+          </div>
+          <div class="panel">
+            <span class="panel__label">Маршрут</span>
+            <p class="panel__value">${escapeHtml(input.venueName)}<br />${escapeHtml(input.hallName)}<br />${escapeHtml(input.address)}</p>
+          </div>
+          <div class="panel">
+            <p class="actions-title">Добавьте событие в календарь, чтобы не забыть</p>
+            <p class="actions-copy">Лучше сделать это сейчас: в день мероприятия билет не придётся искать в переписке или загрузках.</p>
+            <div class="actions">
+              <a class="button" href="${escapeHtml(pdfUrl)}">Скачать PDF</a>
+              <a class="button button--ghost" href="${escapeHtml(googleCalendarUrl.toString())}" target="_blank" rel="noreferrer">Google Calendar</a>
+              <a class="button button--ghost" href="${escapeHtml(icsUrl)}">iPhone / Apple Calendar</a>
+              <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Android / ICS</a>
+              <a class="button button--ghost" href="${escapeHtml(icsUrl)}" download>Скачать ICS</a>
+            </div>
+            <p class="footer-note">Печать билета не требуется. Свободная рассадка. Постоянная ссылка на билет: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
+          </div>
+        </section>
       </article>
     </main>
   </body>
@@ -198,6 +575,7 @@ function buildIcs(input: TicketArtifactInput) {
   const stamp = new Date().toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z');
   const startIcs = start.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z');
   const endIcs = end.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z');
+  const ticketUrl = buildTicketUrl(input.ticketBaseUrl, input.ticketsPrefix, input.publicHash);
 
   return [
     'BEGIN:VCALENDAR',
@@ -211,18 +589,67 @@ function buildIcs(input: TicketArtifactInput) {
     `DTEND:${endIcs}`,
     `SUMMARY:${input.title.replace(/,/gu, '\\,')}`,
     `LOCATION:${`${input.venueName}, ${input.address}`.replace(/,/gu, '\\,')}`,
-    `DESCRIPTION:${`Билет № ${input.shortTicketId}. Печать не требуется. ${input.ticketBaseUrl}/${input.ticketsPrefix}/${input.publicHash}/`.replace(/,/gu, '\\,')}`,
+    `DESCRIPTION:${`Билет № ${input.shortTicketId}. Печать не требуется. Свободная рассадка. ${ticketUrl}`.replace(/,/gu, '\\,')}`,
     'END:VEVENT',
     'END:VCALENDAR',
     '',
   ].join('\r\n');
 }
 
+function setPdfFont(doc: PDFKit.PDFDocument, fontPath: string, fallback: string) {
+  if (fs.existsSync(fontPath)) {
+    doc.font(fontPath);
+    return;
+  }
+
+  doc.font(fallback);
+}
+
+function setPdfRegularFont(doc: PDFKit.PDFDocument) {
+  setPdfFont(doc, PDF_FONT_REGULAR, 'Helvetica');
+}
+
+function setPdfBoldFont(doc: PDFKit.PDFDocument) {
+  setPdfFont(doc, PDF_FONT_BOLD, 'Helvetica-Bold');
+}
+
+function drawInfoCard(
+  doc: PDFKit.PDFDocument,
+  options: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+    value: string;
+  },
+) {
+  doc.save();
+  doc.roundedRect(options.x, options.y, options.width, options.height, 18).fillAndStroke('#fffaf4', '#e4d7c6');
+  doc.fillColor('#7a7066');
+  setPdfBoldFont(doc);
+  doc.fontSize(10).text(options.label.toUpperCase(), options.x + 14, options.y + 14, {
+    width: options.width - 28,
+    characterSpacing: 1.2,
+  });
+  doc.fillColor('#16120d');
+  setPdfRegularFont(doc);
+  doc.fontSize(12).text(options.value, options.x + 14, options.y + 34, {
+    width: options.width - 28,
+    lineGap: 3,
+  });
+  doc.restore();
+}
+
 function createPdfBuffer(input: TicketArtifactInput) {
   return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
-      margin: 48,
+      margin: 0,
+      info: {
+        Title: `Билет — ${input.title}`,
+        Author: '80 историй о главном',
+      },
     });
 
     const chunks: Buffer[] = [];
@@ -237,25 +664,222 @@ function createPdfBuffer(input: TicketArtifactInput) {
 
     doc.on('error', reject);
 
-    doc.fillColor('#b83f2f').fontSize(12).text('80 историй о главном', { characterSpacing: 2 });
-    doc.moveDown(0.6);
-    doc.fillColor('#17120d').fontSize(26).text(input.title);
-    doc.moveDown(0.8);
-    doc.fontSize(14).text(`Билет № ${input.shortTicketId}`);
-    doc.moveDown(0.6);
-    doc.fontSize(12).text(`Посетитель: ${input.fullName}`);
-    doc.text(`Email: ${input.emailMasked}`);
-    doc.text(`Телефон: ${input.phoneMasked}`);
-    doc.moveDown(0.8);
-    doc.text(`Дата и время: ${formatEventDate(input.startsAt)}`);
-    doc.text(`Площадка: ${input.venueName}`);
-    doc.text(`Зал: ${input.hallName}`);
-    doc.text(`Адрес: ${input.address}`);
-    doc.moveDown(0.8);
-    doc.text('Рассадка свободная.');
-    doc.text('Печать билета не требуется.');
-    doc.moveDown(0.8);
-    doc.fillColor('#b83f2f').text(`Ссылка на билет: ${input.ticketBaseUrl}/${input.ticketsPrefix}/${input.publicHash}/`);
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const contentX = 42;
+    const contentWidth = pageWidth - contentX * 2;
+    const ticketUrl = buildTicketUrl(input.ticketBaseUrl, input.ticketsPrefix, input.publicHash);
+    doc.rect(0, 0, pageWidth, pageHeight).fill('#f5ede1');
+    doc.save();
+    doc.fillColor('#d84b31').circle(pageWidth - 88, 86, 82).fill();
+    doc.restore();
+    doc.save();
+    doc.fillColor('#18120e').circle(94, pageHeight - 96, 70).fillOpacity(0.08).fill();
+    doc.restore();
+
+    if (fs.existsSync(FESTIVAL_LOGO_PNG)) {
+      doc.image(FESTIVAL_LOGO_PNG, contentX, 36, { fit: [290, 50] });
+    }
+
+    if (fs.existsSync(FESTIVAL_MARK_PNG)) {
+      doc.image(FESTIVAL_MARK_PNG, pageWidth - 150, 30, { fit: [92, 92] });
+    }
+
+    doc.save();
+    doc.roundedRect(contentX, 106, 138, 30, 15).fill('#f3d6d0');
+    doc.fillColor('#962d1b');
+    setPdfBoldFont(doc);
+    doc.fontSize(11).text('БИЛЕТ / ПРИГЛАШЕНИЕ', contentX + 14, 116, {
+      width: 110,
+      characterSpacing: 1.2,
+    });
+    doc.restore();
+
+    setPdfBoldFont(doc);
+    doc.fillColor('#16120d');
+    doc.fontSize(28).text(input.title, contentX, 154, {
+      width: contentWidth * 0.72,
+      lineGap: -1,
+    });
+
+    setPdfRegularFont(doc);
+    doc.fillColor('#544b42');
+    doc.fontSize(13).text(
+      'Сохраните этот билет в телефоне. Печать не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.',
+      contentX,
+      242,
+      {
+        width: contentWidth * 0.7,
+        lineGap: 4,
+      },
+    );
+
+    const heroY = 320;
+    const heroHeight = 192;
+    doc.save();
+    doc.roundedRect(contentX, heroY, contentWidth, heroHeight, 28).fillAndStroke('#f8f0e6', '#dbcdbb');
+    doc.restore();
+    doc.save();
+    doc.roundedRect(contentX + 18, heroY + 18, contentWidth - 36, heroHeight - 36, 22).fill('#17120d');
+    doc.restore();
+
+    if (fs.existsSync(FESTIVAL_LOGO_PNG)) {
+      doc.image(FESTIVAL_LOGO_PNG, contentX + 26, heroY + 28, { fit: [220, 38] });
+    }
+
+    if (fs.existsSync(FESTIVAL_MARK_PNG)) {
+      doc.image(FESTIVAL_MARK_PNG, pageWidth - 136, heroY + 18, { fit: [84, 84] });
+    }
+
+    setPdfBoldFont(doc);
+    doc.fillColor('#f0e6d7');
+    doc.fontSize(11).text('ФЕСТИВАЛЬНЫЙ БИЛЕТ', contentX + 26, heroY + 82, {
+      width: contentWidth - 52,
+      characterSpacing: 1.5,
+    });
+
+    setPdfBoldFont(doc);
+    doc.fillColor('#ffffff');
+    doc.fontSize(30).text(`Билет № ${input.shortTicketId}`, contentX + 26, heroY + 104, {
+      width: contentWidth - 160,
+      lineGap: 0,
+    });
+
+    setPdfRegularFont(doc);
+    doc.fillColor('#d7ccc0');
+    doc.fontSize(12).text(
+      `${formatEventDate(input.startsAt)} · ${input.venueName}`,
+      contentX + 26,
+      heroY + 146,
+      {
+        width: contentWidth - 52,
+        lineGap: 3,
+      },
+    );
+
+    doc.fontSize(11).text(
+      'Билет собран в облегчённом PDF-формате: логотипы и данные события сохраняются надёжно даже под нагрузкой.',
+      contentX + 26,
+      heroY + 166,
+      {
+        width: contentWidth - 150,
+        lineGap: 3,
+      },
+    );
+
+    const cardsY = heroY + heroHeight + 22;
+    const cardGap = 14;
+    const smallCardWidth = (contentWidth - cardGap * 3) / 4;
+
+    drawInfoCard(doc, {
+      x: contentX,
+      y: cardsY,
+      width: smallCardWidth,
+      height: 86,
+      label: 'Дата',
+      value: formatEventDateOnly(input.startsAt),
+    });
+    drawInfoCard(doc, {
+      x: contentX + smallCardWidth + cardGap,
+      y: cardsY,
+      width: smallCardWidth,
+      height: 86,
+      label: 'Время',
+      value: formatEventTimeOnly(input.startsAt),
+    });
+    drawInfoCard(doc, {
+      x: contentX + (smallCardWidth + cardGap) * 2,
+      y: cardsY,
+      width: smallCardWidth,
+      height: 86,
+      label: 'Площадка',
+      value: input.venueName,
+    });
+    drawInfoCard(doc, {
+      x: contentX + (smallCardWidth + cardGap) * 3,
+      y: cardsY,
+      width: smallCardWidth,
+      height: 86,
+      label: 'Зал',
+      value: input.hallName,
+    });
+
+    const lowerY = cardsY + 102;
+    const leftWidth = contentWidth * 0.58;
+    const rightX = contentX + leftWidth + cardGap;
+    const rightWidth = contentWidth - leftWidth - cardGap;
+
+    doc.save();
+    doc.roundedRect(contentX, lowerY, leftWidth, 122, 22).fillAndStroke('#fffaf4', '#e4d7c6');
+    doc.restore();
+    doc.fillColor('#7a7066');
+    setPdfBoldFont(doc);
+    doc.fontSize(10).text('ПОСЕТИТЕЛЬ', contentX + 18, lowerY + 16, {
+      width: leftWidth - 36,
+      characterSpacing: 1.2,
+    });
+    doc.fillColor('#16120d');
+    setPdfBoldFont(doc);
+    doc.fontSize(24).text(input.fullName, contentX + 18, lowerY + 36, {
+      width: leftWidth - 36,
+      lineGap: 2,
+    });
+    setPdfRegularFont(doc);
+    doc.fillColor('#544b42');
+    doc.fontSize(12).text(`${input.emailMasked}\n${input.phoneMasked}`, contentX + 18, lowerY + 84, {
+      width: leftWidth - 36,
+      lineGap: 3,
+    });
+
+    doc.save();
+    doc.roundedRect(rightX, lowerY, rightWidth, 122, 22).fillAndStroke('#18120e', '#18120e');
+    doc.restore();
+    doc.fillColor('#f5ede1');
+    setPdfBoldFont(doc);
+    doc.fontSize(10).text('КОРОТКИЙ НОМЕР БИЛЕТА', rightX + 18, lowerY + 16, {
+      width: rightWidth - 36,
+      characterSpacing: 1.2,
+    });
+    setPdfBoldFont(doc);
+    doc.fontSize(31).text(input.shortTicketId, rightX + 18, lowerY + 42, {
+      width: rightWidth - 36,
+      characterSpacing: 4,
+    });
+    setPdfRegularFont(doc);
+    doc.fontSize(11).text('Свободная рассадка. Достаточно открыть этот билет на телефоне.', rightX + 18, lowerY + 88, {
+      width: rightWidth - 36,
+      lineGap: 3,
+    });
+
+    const footerY = lowerY + 142;
+    doc.fillColor('#16120d');
+    setPdfBoldFont(doc);
+    doc.fontSize(13).text('Полный адрес площадки', contentX, footerY);
+    setPdfRegularFont(doc);
+    doc.fillColor('#544b42');
+    doc.fontSize(12).text(`${input.venueName}, ${input.hallName}\n${input.address}`, contentX, footerY + 18, {
+      width: contentWidth * 0.56,
+      lineGap: 4,
+    });
+
+    setPdfBoldFont(doc);
+    doc.fillColor('#16120d');
+    doc.fontSize(13).text('На странице билета доступны календарные действия', rightX, footerY);
+    setPdfRegularFont(doc);
+    doc.fillColor('#544b42');
+    doc.fontSize(12).text('Google Calendar, Apple Calendar, Android / ICS и скачивание ICS-файла.', rightX, footerY + 18, {
+      width: rightWidth,
+      lineGap: 4,
+    });
+
+    doc.fillColor('#962d1b');
+    doc.fontSize(11).text(`Ссылка на билет: ${ticketUrl}`, contentX, pageHeight - 62, {
+      width: contentWidth,
+      lineGap: 3,
+    });
+    doc.fillColor('#544b42');
+    doc.fontSize(11).text('Печать билета не требуется.', contentX, pageHeight - 36);
+
     doc.end();
   });
 }
@@ -287,6 +911,8 @@ export async function publishTicketArtifacts(
     venueName: string;
     hallName: string;
     address: string;
+    eventImageUrl?: string | null;
+    ticketImageAsset?: string | null;
   },
 ): Promise<TicketArtifacts> {
   const htmlInput: TicketArtifactInput = {
@@ -302,6 +928,8 @@ export async function publishTicketArtifacts(
     venueName: input.venueName,
     hallName: input.hallName,
     address: input.address,
+    eventImageUrl: buildAbsoluteUrl(input.ticketBaseUrl, input.eventImageUrl ?? null),
+    ticketImageAsset: input.ticketImageAsset ?? null,
   };
 
   const bundle: TicketArtifactBundle = {

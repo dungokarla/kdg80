@@ -1,5 +1,9 @@
 ---
-const registrationApiBaseUrl = (import.meta.env.PUBLIC_REGISTRATION_API_BASE_URL || 'http://localhost:3001').replace(/\/+$/u, '');
+const registrationApiBaseUrl = (
+  import.meta.env.PUBLIC_REGISTRATION_API_BASE_URL
+  || 'https://znanie-kgd80-fest.fly.dev'
+).replace(/\/+$/u, '');
+const registrationStateManifestPath = import.meta.env.PUBLIC_REGISTRATION_STATE_MANIFEST_PATH || '/tickets/registration/states.json';
 const consentUrl = '/docs/registration-personal-data-consent-draft.pdf';
 const privacyUrl = 'https://znanierussia.ru/privacy_policy';
 const supportEmail = 'bilet@kdg80.ru';
@@ -61,9 +65,10 @@ const supportEmail = 'bilet@kdg80.ru';
   </section>
 </div>
 
-<script is:inline define:vars={{ registrationApiBaseUrl, supportEmail }}>
+<script is:inline define:vars={{ registrationApiBaseUrl, registrationStateManifestPath, supportEmail }}>
   (() => {
     const apiBaseUrl = registrationApiBaseUrl;
+    const manifestPath = registrationStateManifestPath;
     const ctaButtons = Array.from(document.querySelectorAll('[data-registration-cta]'));
     const shell = document.querySelector('[data-registration-shell]');
     const form = shell?.querySelector('[data-registration-form]');
@@ -151,15 +156,38 @@ const supportEmail = 'bilet@kdg80.ru';
 
     function updateButton(button, item) {
       const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
-      button.dataset.publicState = item.publicState;
-      button.textContent = item.ctaLabel;
+      const startsAtMs = new Date(item.startsAt).getTime();
+      const endsAtMs = new Date(item.endsAt).getTime();
+      const nowMs = Date.now();
+      const isPast = (
+        (!Number.isNaN(startsAtMs) && nowMs >= startsAtMs)
+        || (!Number.isNaN(endsAtMs) && nowMs >= endsAtMs)
+      );
+      const visibleState = isPast
+        ? {
+            ...item,
+            publicState: 'past',
+            ctaLabel: 'Событие прошло',
+            ctaNotice: '',
+          }
+        : item;
+
+      button.dataset.publicState = visibleState.publicState;
+      button.textContent = visibleState.ctaLabel;
 
       if (notice instanceof HTMLElement) {
-        notice.hidden = !item.ctaNotice;
-        notice.textContent = item.ctaNotice || '';
+        const stackedNoticeAllowed = ![
+          'registration_soon',
+          'registration_closed',
+          'sold_out',
+          'past',
+        ].includes(visibleState.publicState);
+        const noticeText = stackedNoticeAllowed ? (visibleState.ctaNotice || '') : '';
+        notice.hidden = !noticeText;
+        notice.textContent = noticeText;
       }
 
-      const isOpen = item.publicState === 'registration_open';
+      const isOpen = visibleState.publicState === 'registration_open';
       button.disabled = !isOpen;
       button.setAttribute('aria-disabled', isOpen ? 'false' : 'true');
       button.classList.toggle('button--disabled', !isOpen);
@@ -167,13 +195,22 @@ const supportEmail = 'bilet@kdg80.ru';
       button.classList.toggle('button--primary', isOpen);
     }
 
-    async function fetchStates() {
-      const slugs = Array.from(new Set(
-        ctaButtons
-          .map((button) => button.dataset.eventSlug || '')
-          .filter(Boolean),
-      ));
+    function setCheckingState(button, message = '') {
+      const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
+      button.dataset.publicState = 'loading';
+      button.textContent = 'Проверяем регистрацию…';
+      button.disabled = true;
+      button.setAttribute('aria-disabled', 'true');
+      button.classList.add('button--disabled', 'button--ghost');
+      button.classList.remove('button--primary');
 
+      if (notice instanceof HTMLElement) {
+        notice.hidden = !message;
+        notice.textContent = message;
+      }
+    }
+
+    async function fetchStatesFromApi(slugs) {
       const chunkSize = 24;
       for (let index = 0; index < slugs.length; index += chunkSize) {
         const chunk = slugs.slice(index, index + chunkSize);
@@ -188,6 +225,63 @@ const supportEmail = 'bilet@kdg80.ru';
           stateCache.set(item.slug, item);
         }
       }
+    }
+
+    async function fetchStatesFromManifest(slugs) {
+      const response = await fetch(manifestPath, {
+        headers: {
+          accept: 'application/json',
+        },
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error('manifest_fetch_failed');
+      }
+
+      const data = await response.json();
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const slugSet = new Set(slugs);
+      const found = new Set();
+
+      for (const item of items) {
+        if (!item || typeof item.slug !== 'string' || !slugSet.has(item.slug)) {
+          continue;
+        }
+
+        stateCache.set(item.slug, item);
+        found.add(item.slug);
+      }
+
+      return found;
+    }
+
+    async function fetchStates() {
+      const slugs = Array.from(new Set(
+        ctaButtons
+          .map((button) => button.dataset.eventSlug || '')
+          .filter(Boolean),
+      ));
+      const unresolved = new Set(slugs);
+      let fallbackFetchFailed = false;
+
+      try {
+        const foundInManifest = await fetchStatesFromManifest(slugs);
+        for (const slug of foundInManifest) {
+          unresolved.delete(slug);
+        }
+      } catch {
+        // fallback to API below
+      }
+
+      if (unresolved.size) {
+        try {
+          await fetchStatesFromApi(Array.from(unresolved));
+          unresolved.clear();
+        } catch {
+          fallbackFetchFailed = true;
+        }
+      }
 
       for (const button of ctaButtons) {
         const slug = button.dataset.eventSlug || '';
@@ -198,9 +292,10 @@ const supportEmail = 'bilet@kdg80.ru';
           continue;
         }
 
-        button.textContent = 'Регистрация недоступна';
-        button.disabled = true;
-        button.classList.add('button--disabled', 'button--ghost');
+        setCheckingState(
+          button,
+          fallbackFetchFailed ? 'Статус регистрации временно недоступен. Попробуйте обновить страницу.' : '',
+        );
       }
     }
 
@@ -404,14 +499,7 @@ const supportEmail = 'bilet@kdg80.ru';
 
     fetchStates().catch(() => {
       for (const button of ctaButtons) {
-        button.textContent = 'Регистрация недоступна';
-        button.disabled = true;
-        button.classList.add('button--disabled', 'button--ghost');
-        const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
-        if (notice instanceof HTMLElement) {
-          notice.hidden = false;
-          notice.textContent = 'Не удалось получить актуальный статус регистрации.';
-        }
+        setCheckingState(button, 'Статус регистрации временно недоступен. Попробуйте обновить страницу.');
       }
     });
   })();

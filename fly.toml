@@ -1,6 +1,5 @@
-# Перед первым deploy поменяйте app на реальное имя Fly app, если оно будет другим.
-app = "kgd80-registration"
-primary_region = "waw"
+app = "znanie-kgd80-fest"
+primary_region = "ams"
 kill_signal = "SIGINT"
 kill_timeout = "30s"
 swap_size_mb = 512
@@ -12,9 +11,15 @@ swap_size_mb = 512
 [env]
   HOST = "0.0.0.0"
   PORT = "8080"
+  PUBLIC_SITE_BASE_URL = "https://kgd80.ru"
+  PUBLIC_TICKET_BASE_URL = "https://kgd80.ru"
+  CORS_ORIGINS = "https://kgd80.ru,https://www.kgd80.ru"
   SQLITE_PATH = "/data/registration.sqlite"
   LOCAL_PUBLIC_ROOT = "/data/public"
   TELEGRAM_WEBHOOK_PATH = "/api/v1/telegram/webhook"
+  S3_BUCKET = "kgd80.ru"
+  S3_ENDPOINT = "https://storage.yandexcloud.net"
+  S3_REGION = "ru-central1"
   TICKETS_PREFIX = "tickets"
   EXPORTS_PREFIX = "exports"
   TZ = "Europe/Kaliningrad"

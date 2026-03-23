@@ -38,6 +38,7 @@ type TelegramBotDeps = {
   webhookPath: string;
   privateKeyPemBase64: string | null;
   storagePublisher: StoragePublisher;
+  syncPublicStateManifest: (reason: string) => Promise<boolean>;
 };
 
 const EVENTS_PER_PAGE = 6;
@@ -104,6 +105,7 @@ async function applyRegistrationStateFromCommand(
   telegramUserId: string,
   commandText: string,
   commandName: 'registration_open' | 'registration_close',
+  syncPublicStateManifest: (reason: string) => Promise<boolean>,
 ) {
   const admin = getTelegramAdminByUserId(db, telegramUserId);
   if (!admin || admin.role !== 'superadmin') {
@@ -136,12 +138,18 @@ async function applyRegistrationStateFromCommand(
     return;
   }
 
+  const manifestUpdated = await syncPublicStateManifest(`${commandName}:${updated.slug}`);
+
   await ctx.reply(
     `${commandName === 'registration_open' ? 'Регистрация открыта' : 'Регистрация закрыта'} для события «${updated.title}».`,
     {
       reply_markup: buildMainKeyboard(admin.role),
     },
   );
+
+  if (!manifestUpdated) {
+    await ctx.reply('Состояние в базе обновлено, но не удалось сразу обновить публичный state-file для сайта.');
+  }
 }
 
 function formatEventDate(isoValue: string) {
@@ -443,6 +451,7 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       String(ctx.from?.id ?? ''),
       ctx.message?.text ?? '',
       'registration_open',
+      deps.syncPublicStateManifest,
     );
   });
 
@@ -453,6 +462,7 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       String(ctx.from?.id ?? ''),
       ctx.message?.text ?? '',
       'registration_close',
+      deps.syncPublicStateManifest,
     );
   });
 
@@ -549,10 +559,32 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
       storagePublisher: deps.storagePublisher,
     });
 
+    if (!result.removedRegistrations) {
+      await ctx.reply('Для этого run_id тестовых регистраций не найдено.');
+      return;
+    }
+
+    const manifestUpdated = await deps.syncPublicStateManifest(`cleanup:${runId}`);
+
+    if (result.artifactDeleteFailures) {
+      app.log.warn({
+        testRunId: runId,
+        failedArtifactHashes: result.failedArtifactHashes,
+      }, 'cleanup_test_run_partial_storage_delete_failure');
+
+      await ctx.reply(
+        `Тестовый прогон очищен в БД. Удалено регистраций: ${result.removedRegistrations}. `
+        + `Затронуто событий: ${result.affectedEvents}. `
+        + `Но не удалось удалить ${result.artifactDeleteFailures} ticket artifacts из storage. `
+        + 'Проверьте права DeleteObject/DeleteObjects на tickets/*.'
+        + `${manifestUpdated ? '' : ' Публичный state-file для сайта тоже не обновился автоматически.'}`,
+      );
+      return;
+    }
+
     await ctx.reply(
-      result.removedRegistrations
-        ? `Тестовый прогон очищен. Удалено регистраций: ${result.removedRegistrations}. Затронуто событий: ${result.affectedEvents}.`
-        : 'Для этого run_id тестовых регистраций не найдено.',
+      `Тестовый прогон очищен. Удалено регистраций: ${result.removedRegistrations}. Затронуто событий: ${result.affectedEvents}.`
+      + `${manifestUpdated ? '' : ' Но публичный state-file для сайта пока не обновился автоматически.'}`,
     );
   });
 
@@ -755,10 +787,13 @@ export function registerTelegramBot(app: FastifyInstance, deps: TelegramBotDeps)
     const [, eventIdRaw, action, filter, pageRaw] = ctx.match;
     const nextState = action === 'o' ? 'open' : 'closed';
     const updated = setTelegramEventRegistrationState(deps.db, Number(eventIdRaw), nextState);
+    const manifestUpdated = updated
+      ? await deps.syncPublicStateManifest(`inline:${updated.slug}:${action}`)
+      : false;
 
     await ctx.answerCallbackQuery({
       text: updated
-        ? action === 'o' ? 'Регистрация открыта.' : 'Регистрация закрыта.'
+        ? `${action === 'o' ? 'Регистрация открыта.' : 'Регистрация закрыта.'}${manifestUpdated ? '' : ' State-file не обновился.'}`
         : 'Событие не найдено.',
     });
 

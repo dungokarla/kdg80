@@ -12,17 +12,13 @@ COPY registration/package.json registration/package-lock.json registration/tscon
 RUN npm ci
 
 COPY registration/src ./src
-COPY site/src/lib/festival.ts ../site/src/lib/festival.ts
-COPY site/src/data/media-manifest.json ../site/src/data/media-manifest.json
-COPY site/src/data/summary-overrides.json ../site/src/data/summary-overrides.json
-COPY Исходные\ данные/festival_site_master.md ../Исходные\ данные/festival_site_master.md
 
 RUN npm run check
 
 FROM node:22-bookworm-slim AS runtime
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends tini ca-certificates \
+  && apt-get install -y --no-install-recommends tini ca-certificates fonts-dejavu-core \
   && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
@@ -33,8 +29,6 @@ ENV TZ=Europe/Kaliningrad
 WORKDIR /app/registration
 
 COPY --from=build /app/registration /app/registration
-COPY --from=build /app/site /app/site
-COPY --from=build /app/Исходные\ данные /app/Исходные\ данные
 
 RUN mkdir -p /data /data/public \
   && chown -R node:node /app /data
