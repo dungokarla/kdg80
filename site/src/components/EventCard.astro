@@ -169,6 +169,27 @@ function getDialogueMonogram(name: string) {
     .join('');
 }
 
+function normalizeMetaValue(value: string | undefined) {
+  return (value ?? '').trim();
+}
+
+function isTimePlaceholder(value: string) {
+  const normalized = normalizeMetaValue(value).toLowerCase();
+  return normalized.includes('будет объявлено') || normalized.includes('время уточняется');
+}
+
+function isDurationPlaceholder(value: string) {
+  const normalized = normalizeMetaValue(value).toLowerCase();
+  return normalized === 'уточняется' || normalized.includes('продолжительность уточняется');
+}
+
+function isLocationPlaceholder(value: string) {
+  const normalized = normalizeMetaValue(value).toLowerCase();
+  return normalized === 'уточняется'
+    || normalized === 'адрес уточняется'
+    || normalized === 'площадка уточняется';
+}
+
 const dateParts = getDateParts(event.dateLabel);
 const rangeDateParts = event.kind === 'range' ? getRangeDateParts(event.dateLabel) : null;
 const isDialogueEvent = event.formatLabel.includes('Открытый диалог') && event.dialogueParticipants.length > 0;
@@ -193,12 +214,22 @@ const hasExpandableCardSummary = hasExpandableSummary(event);
 const hasSpeakerAbout = shouldShowSpeakerAbout(event);
 const useScientificLibraryVisitSchedule = usesScientificLibraryVisitSchedule(event);
 const accessLabel = event.accessLabel ?? 'Бесплатно';
+const metaVenue = normalizeMetaValue(event.venue);
+const metaAddress = normalizeMetaValue(event.address);
+const metaDuration = isDurationPlaceholder(event.durationLabel) ? '' : normalizeMetaValue(event.durationLabel);
+const shouldShowMetaAddress = Boolean(metaAddress) && !isLocationPlaceholder(metaAddress) && metaAddress !== metaVenue;
 const specialServiceLabels = isSpecialEvent
   ? [
       event.dateLabel === 'Дата будет объявлена' ? 'Дата будет объявлена дополнительно' : event.dateLabel,
-      event.timeLabel === 'Время будет объявлено' ? 'Время будет объявлено дополнительно' : event.timeLabel,
+      isTimePlaceholder(event.timeLabel)
+        ? ''
+        : event.timeLabel === 'Время будет объявлено'
+          ? 'Время будет объявлено дополнительно'
+          : event.timeLabel,
       event.showingsLabel,
-    ].filter(Boolean)
+    ]
+      .map((label) => normalizeMetaValue(label))
+      .filter(Boolean)
   : [];
 const temporalState = getEventTemporalState(event, now);
 const hasActionRow = !isRangeEvent && !isSpecialEvent;
@@ -451,10 +482,10 @@ const hasActionRow = !isRangeEvent && !isSpecialEvent;
 
       {!isRangeEvent && (
         <div class="event-card__meta">
-          <span class="event-card__meta-pill event-card__meta-pill--compact">{event.venue}</span>
-          {event.durationLabel && <span class="event-card__meta-pill event-card__meta-pill--compact">{event.durationLabel}</span>}
-          <span class="event-card__meta-break" aria-hidden="true"></span>
-          <span class="event-card__meta-pill event-card__meta-pill--wide event-card__meta-pill--address">{event.address}</span>
+          {metaVenue && <span class="event-card__meta-pill event-card__meta-pill--compact">{metaVenue}</span>}
+          {metaDuration && <span class="event-card__meta-pill event-card__meta-pill--compact">{metaDuration}</span>}
+          {shouldShowMetaAddress && <span class="event-card__meta-break" aria-hidden="true"></span>}
+          {shouldShowMetaAddress && <span class="event-card__meta-pill event-card__meta-pill--wide event-card__meta-pill--address">{metaAddress}</span>}
         </div>
       )}
 
