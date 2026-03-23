@@ -397,6 +397,18 @@ function buildHtml(input: TicketArtifactInput) {
         line-height: 1.45;
       }
 
+      .actions-stack {
+        display: grid;
+        gap: 16px;
+      }
+
+      .calendar-block {
+        padding: 18px;
+        border-radius: 24px;
+        border: 1px solid rgba(150, 45, 27, 0.14);
+        background: linear-gradient(180deg, rgba(255, 250, 244, 0.96) 0%, rgba(247, 239, 228, 0.96) 100%);
+      }
+
       .actions-title {
         margin: 0 0 10px;
         font-size: 12px;
@@ -416,6 +428,9 @@ function buildHtml(input: TicketArtifactInput) {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+      }
+
+      .actions--calendar {
         margin-top: 18px;
       }
 
@@ -432,12 +447,14 @@ function buildHtml(input: TicketArtifactInput) {
         text-decoration: none;
         font-weight: 700;
         flex: 1 1 210px;
+        box-shadow: 0 12px 30px rgba(150, 45, 27, 0.16);
       }
 
       .button--ghost {
         color: var(--ink);
-        background: transparent;
-        border-color: var(--line);
+        background: rgba(255, 255, 255, 0.88);
+        border-color: rgba(22, 18, 13, 0.1);
+        box-shadow: 0 10px 24px rgba(22, 18, 13, 0.08);
       }
 
       .footer-note {
@@ -490,6 +507,10 @@ function buildHtml(input: TicketArtifactInput) {
 
         .panel__value {
           font-size: 16px;
+        }
+
+        .button {
+          flex-basis: 100%;
         }
       }
     </style>
@@ -551,14 +572,17 @@ function buildHtml(input: TicketArtifactInput) {
             <p class="panel__value">${escapeHtml(input.venueName)}<br />${escapeHtml(input.hallName)}<br />${escapeHtml(input.address)}</p>
           </div>
           <div class="panel">
-            <p class="actions-title">Добавьте событие в календарь, чтобы не забыть</p>
-            <p class="actions-copy">Лучше сделать это сейчас: в день мероприятия билет не придётся искать в переписке или загрузках.</p>
-            <div class="actions">
+            <div class="actions-stack">
               <a class="button" href="${escapeHtml(pdfUrl)}">Скачать PDF</a>
-              <a class="button button--ghost" href="${escapeHtml(googleCalendarUrl.toString())}" target="_blank" rel="noreferrer">Google Calendar</a>
-              <a class="button button--ghost" href="${escapeHtml(icsUrl)}">iPhone / Apple Calendar</a>
-              <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Android / ICS</a>
-              <a class="button button--ghost" href="${escapeHtml(icsUrl)}" download>Скачать ICS</a>
+              <div class="calendar-block">
+                <p class="actions-title">📅 Добавить в календарь</p>
+                <p class="actions-copy">Добавьте событие сейчас, чтобы не искать билет в день мероприятия.</p>
+                <div class="actions actions--calendar">
+                  <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Android (ICS)</a>
+                  <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Календарь Apple</a>
+                  <a class="button button--ghost" href="${escapeHtml(googleCalendarUrl.toString())}" target="_blank" rel="noreferrer">Google</a>
+                </div>
+              </div>
             </div>
             <p class="footer-note">Печать билета не требуется. Свободная рассадка. Постоянная ссылка на билет: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
           </div>
@@ -864,10 +888,10 @@ function createPdfBuffer(input: TicketArtifactInput) {
 
     setPdfBoldFont(doc);
     doc.fillColor('#16120d');
-    doc.fontSize(13).text('На странице билета доступны календарные действия', rightX, footerY);
+    doc.fontSize(13).text('На странице билета есть блок "Добавить в календарь"', rightX, footerY);
     setPdfRegularFont(doc);
     doc.fillColor('#544b42');
-    doc.fontSize(12).text('Google Calendar, Apple Calendar, Android / ICS и скачивание ICS-файла.', rightX, footerY + 18, {
+    doc.fontSize(12).text('Кнопки: Android (ICS), Календарь Apple и Google.', rightX, footerY + 18, {
       width: rightWidth,
       lineGap: 4,
     });
