@@ -33,7 +33,7 @@ const SPEAKER_SHOWCASE_LIMIT = 8;
 const allSpeakerShowcase = getSpeakerShowcase(events, Number.POSITIVE_INFINITY);
 const speakerShowcase = allSpeakerShowcase.slice(0, SPEAKER_SHOWCASE_LIMIT);
 const speakerLoadHref = '/data/speakers-more.json';
-const openDialogues = getOpenDialogues(events).slice(0, 5);
+const openDialogues = getOpenDialogues(events);
 type RelatedEventCard = NonNullable<(typeof events)[number]['relatedEvent']>;
 type HeroQuoteType = 'festival' | 'lecture';
 type HeroVariantBase = {
@@ -150,7 +150,7 @@ const HERO_SCENE_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
   { match: 'Никитин', style: '--hero-mobile-portrait-right: -20%;' },
   { match: 'Мосиенко', style: '--hero-mobile-portrait-right: -20%; --hero-mobile-copy-width: 44%;' },
   { match: 'Казакова', style: '--hero-mobile-copy-width: 46%;' },
-  { match: 'Соколова', style: '--hero-mobile-portrait-height: 62%; --hero-copy-width: 30rem; --hero-copy-start: 7.75rem;' },
+  { match: 'Соколова', style: '--hero-mobile-portrait-height: 62%; --hero-copy-width: 38rem; --hero-copy-start: 4.9rem; --hero-quote-max-width: 16.4ch;' },
   { match: 'Долотова', style: '--hero-mobile-portrait-right: -20%; --hero-mobile-copy-width: 50%;' },
   { match: 'Конюхова', style: '--hero-mobile-portrait-right: -20%; --hero-mobile-copy-width: 50%;' },
 ];
@@ -401,7 +401,62 @@ function getFestivalPeriodLabel(items: typeof events) {
   return `${stripWeekday(first.dateLabel)} - ${stripWeekday(last.dateLabel)}`;
 }
 
+function getParticipantCount(items: typeof events) {
+  const names = new Set<string>();
+
+  for (const event of items) {
+    if (event.speakerLabel) {
+      names.add(event.speakerLabel);
+    }
+
+    for (const participant of event.dialogueParticipants) {
+      names.add(participant.name);
+    }
+  }
+
+  return names.size;
+}
+
 const festivalPeriodLabel = getFestivalPeriodLabel(events);
+const participantCount = getParticipantCount(events);
+const lectureCount = events.filter((event) => event.formatLabel === 'Лекция').length;
+const publicDiscussionCount = openDialogues.length;
+const specialProjectCount = events.filter((event) => event.kind === 'range' || event.kind === 'special').length;
+const expertiseStats = [
+  { value: '1', label: 'доктор наук' },
+  { value: '6', label: 'кандидатов наук' },
+  { value: '5', label: 'авторов книг' },
+  { value: '4', label: 'руководителя госучреждений' },
+  { value: '5', label: 'руководителей НКО и частных организаций' },
+];
+const institutionHighlights = [
+  'Янтарный комбинат',
+  'нацпарк «Куршская коса»',
+  'АтлантНИРО',
+  'биостанция «Рыбачий» / «Фрингилла»',
+  'Калининградский зоопарк',
+  'музей «Фридландские ворота»',
+  'БФУ им. И. Канта',
+  'Музей Мирового океана',
+];
+const fieldHighlights = [
+  'кино',
+  'медицина',
+  'космос',
+  'промышленность',
+  'архитектура',
+  'искусство',
+  'историческая память',
+  'океанология',
+  'кулинария',
+  'жизнь замечательных людей',
+  'спорт',
+  'быт и повседневность',
+  'демография',
+  'природа',
+  'социология',
+  'городской фольклор',
+];
 type PortraitSliceBounds = {
   y: number;
   visibleLeft: number;
@@ -706,8 +761,10 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
               </h1>
               <p class="hero__lead">
                 Истории людей, мест и привычек, из которых складывалась новая Калининградская область.
-                Первый экран теперь чередует сильные цитаты и мифы, чтобы быстрее показать, о чём спорит фестиваль и с какой истории начать.
+                Советское прошлое и современность, встречи со значимыми людьми, заблуждения в современных форматах открытых диалогах,
+                лекциях и спецформатах. Участие в мероприятиях бесплатное по регистрации*
               </p>
+              <p class="hero__footnote">* За исключением спецпроектов.</p>
 
               <div class="hero__meta" aria-label="Ключевые параметры фестиваля">
                 <span>Калининград</span>
@@ -832,6 +889,81 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
       </section>
 
       <SpeakerPoster entries={speakerShowcase} totalCount={allSpeakerShowcase.length} loadHref={speakerLoadHref} />
+
+      <section class="section section--facts" aria-labelledby="facts-title">
+        <div class="container">
+          <div class="facts-overview">
+            <div class="section__header section__header--split">
+              <div>
+                <p class="section__eyebrow">Фестиваль в цифрах</p>
+                <h2 id="facts-title">Собрали в одной секции масштаб программы, людей и институции, которые дают фестивалю вес.</h2>
+              </div>
+              <p class="section__text">
+                Проверили текущий состав участников по согласованным регалиям и вывели цифры, которые помогают быстро понять размах темы:
+                от науки и музейного дела до городской среды, природы и повседневной памяти региона.
+              </p>
+            </div>
+
+            <div class="facts-overview__grid" aria-label="Ключевые показатели фестиваля">
+              <article class="facts-card facts-card--accent">
+                <strong>{participantCount}</strong>
+                <span>участников фестиваля</span>
+              </article>
+              <article class="facts-card">
+                <strong>{events.length}</strong>
+                <span>события в программе</span>
+              </article>
+              <article class="facts-card">
+                <strong>{publicDiscussionCount}</strong>
+                <span>публичных дискуссий</span>
+              </article>
+              <article class="facts-card">
+                <strong>{lectureCount}</strong>
+                <span>лекции</span>
+              </article>
+              <article class="facts-card">
+                <strong>{specialProjectCount}</strong>
+                <span>спецпроекта</span>
+              </article>
+              <article class="facts-card facts-card--wide">
+                <strong>{festivalPeriodLabel}</strong>
+                <span>период проведения фестиваля</span>
+              </article>
+            </div>
+
+            <div class="facts-overview__grid facts-overview__grid--expertise" aria-label="Профессиональный профиль участников">
+              {expertiseStats.map((item) => (
+                <article class="facts-card facts-card--compact">
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                </article>
+              ))}
+            </div>
+
+            <div class="facts-panels">
+              <article class="facts-panel">
+                <p class="facts-panel__eyebrow">Институции</p>
+                <h3>Кого уже видно в составе участников</h3>
+                <div class="facts-tags" aria-label="Ключевые организации фестиваля">
+                  {institutionHighlights.map((item) => (
+                    <span>{item}</span>
+                  ))}
+                </div>
+              </article>
+
+              <article class="facts-panel">
+                <p class="facts-panel__eyebrow">Темы</p>
+                <h3>Какие отрасли и сюжеты собраны в программе</h3>
+                <div class="facts-tags" aria-label="Темы фестивальной программы">
+                  {fieldHighlights.map((item) => (
+                    <span>{item}</span>
+                  ))}
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <InterestChooser items={routeItems} />
 

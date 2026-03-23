@@ -26,8 +26,14 @@ const ASSETS_ROOT = fileURLToPath(new URL('../assets/', import.meta.url));
 const FESTIVAL_LOGO_PNG = path.join(ASSETS_ROOT, 'logos', 'logo-znanie-festival.png');
 const FESTIVAL_MARK_PNG = path.join(ASSETS_ROOT, 'logos', 'logo-80-istorii-hero.png');
 const TICKET_IMAGES_DIR = path.join(ASSETS_ROOT, 'ticket-event-images');
-const PDF_FONT_REGULAR = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
-const PDF_FONT_BOLD = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+const SHARED_FONTS_ROOT = path.resolve(ASSETS_ROOT, '..', '..', '..', 'assets', 'fonts');
+const CYGRE_REGULAR_FONT = path.join(SHARED_FONTS_ROOT, 'Cygre-Regular.woff2');
+const CYGRE_BOLD_FONT = path.join(SHARED_FONTS_ROOT, 'Cygre-Bold.woff2');
+const FAVORIT_BOOK_FONT = path.join(SHARED_FONTS_ROOT, 'FavoritPro-Book.otf');
+const FAVORIT_MEDIUM_FONT = path.join(SHARED_FONTS_ROOT, 'FavoritPro-Medium.otf');
+const FAVORIT_BOLD_FONT = path.join(SHARED_FONTS_ROOT, 'FavoritPro-Bold.otf');
+const PDF_FONT_REGULAR_FALLBACK = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
+const PDF_FONT_BOLD_FALLBACK = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
 
 // Pre-load logos as base64 data URIs so the HTML ticket is self-contained
 // (no dependency on /shared-assets/ when opened from S3 or file://).
@@ -39,8 +45,34 @@ function loadPngDataUri(filePath: string): string | null {
   return `data:image/png;base64,${b64}`;
 }
 
+function getFontMimeType(filePath: string) {
+  if (filePath.endsWith('.woff2')) {
+    return 'font/woff2';
+  }
+
+  if (filePath.endsWith('.otf')) {
+    return 'font/otf';
+  }
+
+  return 'application/octet-stream';
+}
+
+function loadFontDataUri(filePath: string): string | null {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  const b64 = fs.readFileSync(filePath).toString('base64');
+  return `data:${getFontMimeType(filePath)};base64,${b64}`;
+}
+
 const FESTIVAL_LOGO_DATA_URI = loadPngDataUri(FESTIVAL_LOGO_PNG);
 const FESTIVAL_MARK_DATA_URI = loadPngDataUri(FESTIVAL_MARK_PNG);
+const CYGRE_REGULAR_DATA_URI = loadFontDataUri(CYGRE_REGULAR_FONT);
+const CYGRE_BOLD_DATA_URI = loadFontDataUri(CYGRE_BOLD_FONT);
+const FAVORIT_BOOK_DATA_URI = loadFontDataUri(FAVORIT_BOOK_FONT);
+const FAVORIT_MEDIUM_DATA_URI = loadFontDataUri(FAVORIT_MEDIUM_FONT);
+const FAVORIT_BOLD_DATA_URI = loadFontDataUri(FAVORIT_BOLD_FONT);
 
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/u, '');
@@ -66,7 +98,7 @@ function buildCalendarUrls(input: Pick<
   googleCalendarUrl.searchParams.set('text', input.title);
   googleCalendarUrl.searchParams.set('dates', googleDates);
   googleCalendarUrl.searchParams.set('location', `${input.venueName}, ${input.address}`);
-  googleCalendarUrl.searchParams.set('details', `Билет № ${input.shortTicketId}. Печать не требуется. ${ticketUrl}`);
+  googleCalendarUrl.searchParams.set('details', `Пригласительное № ${input.shortTicketId}. Печать не требуется. ${ticketUrl}`);
 
   return {
     ticketUrl,
@@ -136,6 +168,11 @@ function buildHtml(input: TicketArtifactInput) {
   // Fall back to /shared-assets/ paths if the PNG assets are not present.
   const festivalLogoUrl = FESTIVAL_LOGO_DATA_URI ?? '/shared-assets/logo-znanie-festival.svg';
   const festivalMarkUrl = FESTIVAL_MARK_DATA_URI ?? '/shared-assets/logo-80-istorii-hero.svg';
+  const cygreRegularUrl = CYGRE_REGULAR_DATA_URI ?? '/shared-assets/fonts/Cygre-Regular.woff2';
+  const cygreBoldUrl = CYGRE_BOLD_DATA_URI ?? '/shared-assets/fonts/Cygre-Bold.woff2';
+  const favoritBookUrl = FAVORIT_BOOK_DATA_URI ?? '/shared-assets/fonts/FavoritPro-Book.otf';
+  const favoritMediumUrl = FAVORIT_MEDIUM_DATA_URI ?? '/shared-assets/fonts/FavoritPro-Medium.otf';
+  const favoritBoldUrl = FAVORIT_BOLD_DATA_URI ?? '/shared-assets/fonts/FavoritPro-Bold.otf';
   const eventImageUrl = input.eventImageUrl || '';
 
   return `<!doctype html>
@@ -144,39 +181,39 @@ function buildHtml(input: TicketArtifactInput) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow, noarchive" />
-    <title>Билет — ${escapeHtml(input.title)}</title>
+    <title>Пригласительное — ${escapeHtml(input.title)}</title>
     <style>
       @font-face {
         font-family: "Cygre";
-        src: url("/shared-assets/fonts/Cygre-Regular.woff2") format("woff2");
+        src: url("${cygreRegularUrl}") format("woff2");
         font-weight: 400;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "Cygre";
-        src: url("/shared-assets/fonts/Cygre-Bold.woff2") format("woff2");
+        src: url("${cygreBoldUrl}") format("woff2");
         font-weight: 700;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "FavoritPro";
-        src: url("/shared-assets/fonts/FavoritPro-Book.otf") format("opentype");
+        src: url("${favoritBookUrl}") format("opentype");
         font-weight: 400;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "FavoritPro";
-        src: url("/shared-assets/fonts/FavoritPro-Medium.otf") format("opentype");
+        src: url("${favoritMediumUrl}") format("opentype");
         font-weight: 500;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "FavoritPro";
-        src: url("/shared-assets/fonts/FavoritPro-Bold.otf") format("opentype");
+        src: url("${favoritBoldUrl}") format("opentype");
         font-weight: 700;
         font-style: normal;
         font-display: swap;
@@ -553,11 +590,11 @@ function buildHtml(input: TicketArtifactInput) {
               <img src="${festivalLogoUrl}" alt="Российское общество Знание. Фестиваль 80 историй о главном" />
               <img src="${festivalMarkUrl}" alt="" aria-hidden="true" />
             </div>
-            <span class="hero__badge">Билет / Приглашение</span>
+            <span class="hero__badge">Пригласительное</span>
           </div>
           <p class="hero__eyebrow">80 историй о главном</p>
           <h1 class="hero__title">${escapeHtml(input.title)}</h1>
-          <p class="hero__summary">Сохраните эту страницу или скачайте PDF. Печать билета не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.</p>
+          <p class="hero__summary">Сохраните эту страницу или скачайте PDF. Печать пригласительного не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.</p>
           <div class="hero__meta">
             <div class="hero__stat">
               <span class="hero__stat-label">Дата</span>
@@ -579,7 +616,7 @@ function buildHtml(input: TicketArtifactInput) {
           <figure class="hero__image">
             ${eventImageUrl ? `<img src="${escapeHtml(eventImageUrl)}" alt="Визуальный образ события «${escapeHtml(input.title)}»" />` : ''}
             <figcaption class="hero__image-caption">
-              <strong>Билет № ${escapeHtml(input.shortTicketId)}</strong>
+              <strong>Пригласительное № ${escapeHtml(input.shortTicketId)}</strong>
               <span>${escapeHtml(formattedDate)} · ${escapeHtml(input.address)}</span>
             </figcaption>
           </figure>
@@ -592,9 +629,9 @@ function buildHtml(input: TicketArtifactInput) {
             <p class="panel__value">${escapeHtml(input.emailMasked)}<br />${escapeHtml(input.phoneMasked)}</p>
           </div>
           <div class="panel">
-            <span class="panel__label">Короткий номер билета</span>
+            <span class="panel__label">Короткий номер пригласительного</span>
             <div class="ticket-id">${escapeHtml(input.shortTicketId)}</div>
-            <p class="ticket-id-note">Покажите этот номер или откройте билет со страницы мероприятия. Рассадка свободная.</p>
+            <p class="ticket-id-note">Покажите этот номер или откройте пригласительное со страницы мероприятия. Рассадка свободная.</p>
           </div>
           <div class="panel">
             <span class="panel__label">Маршрут</span>
@@ -613,7 +650,7 @@ function buildHtml(input: TicketArtifactInput) {
                 </div>
               </div>
             </div>
-            <p class="footer-note">Печать билета не требуется. Свободная рассадка. Постоянная ссылка на билет: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
+            <p class="footer-note">Печать пригласительного не требуется. Свободная рассадка. Постоянная ссылка на пригласительное: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
           </div>
         </section>
       </article>
@@ -642,7 +679,7 @@ function buildIcs(input: TicketArtifactInput) {
     `DTEND:${endIcs}`,
     `SUMMARY:${input.title.replace(/,/gu, '\\,')}`,
     `LOCATION:${`${input.venueName}, ${input.address}`.replace(/,/gu, '\\,')}`,
-    `DESCRIPTION:${`Билет № ${input.shortTicketId}. Печать не требуется. Свободная рассадка. ${ticketUrl}`.replace(/,/gu, '\\,')}`,
+    `DESCRIPTION:${`Пригласительное № ${input.shortTicketId}. Печать не требуется. Свободная рассадка. ${ticketUrl}`.replace(/,/gu, '\\,')}`,
     'END:VEVENT',
     'END:VCALENDAR',
     '',
@@ -659,11 +696,21 @@ function setPdfFont(doc: PDFKit.PDFDocument, fontPath: string, fallback: string)
 }
 
 function setPdfRegularFont(doc: PDFKit.PDFDocument) {
-  setPdfFont(doc, PDF_FONT_REGULAR, 'Helvetica');
+  setPdfFont(doc, FAVORIT_BOOK_FONT, PDF_FONT_REGULAR_FALLBACK);
+}
+
+function setPdfMediumFont(doc: PDFKit.PDFDocument) {
+  setPdfFont(doc, FAVORIT_MEDIUM_FONT, PDF_FONT_REGULAR_FALLBACK);
 }
 
 function setPdfBoldFont(doc: PDFKit.PDFDocument) {
-  setPdfFont(doc, PDF_FONT_BOLD, 'Helvetica-Bold');
+  setPdfFont(doc, FAVORIT_BOLD_FONT, PDF_FONT_BOLD_FALLBACK);
+}
+
+function setPdfDisplayFont(doc: PDFKit.PDFDocument) {
+  // PDFKit/fontkit crashes while subsetting the bundled Cygre woff2 files.
+  // Use the site's body-display companion in OTF so PDF artifacts stay stable.
+  setPdfFont(doc, FAVORIT_BOLD_FONT, PDF_FONT_BOLD_FALLBACK);
 }
 
 function drawInfoCard(
@@ -729,7 +776,7 @@ function createPdfBuffer(input: TicketArtifactInput) {
       size: 'A4',
       margin: 0,
       info: {
-        Title: `Билет — ${input.title}`,
+        Title: `Пригласительное — ${input.title}`,
         Author: '80 историй о главном',
       },
     });
@@ -770,19 +817,17 @@ function createPdfBuffer(input: TicketArtifactInput) {
     doc.save();
     doc.roundedRect(contentX, 106, 138, 30, 15).fill('#f3d6d0');
     doc.fillColor('#962d1b');
-    setPdfBoldFont(doc);
-    doc.fontSize(11).text('БИЛЕТ / ПРИГЛАШЕНИЕ', contentX + 14, 116, {
+    setPdfMediumFont(doc);
+    doc.fontSize(11).text('ПРИГЛАСИТЕЛЬНОЕ', contentX + 14, 116, {
       width: 110,
       characterSpacing: 1.2,
     });
     doc.restore();
 
-    setPdfBoldFont(doc);
+    setPdfDisplayFont(doc);
     doc.fillColor('#16120d');
-    // Adapt font size so very long titles don't overflow into the hero panel.
-    // Rough estimate: DejaVuSans Bold at 28pt ≈ 13.5 pt/char average.
     const titleWidth = contentWidth * 0.72;
-    const charsPerLineAt28 = Math.round(titleWidth / 13.5);
+    const charsPerLineAt28 = Math.round(titleWidth / 15.2);
     const estimatedLines = Math.ceil(input.title.length / charsPerLineAt28);
     const titleFontSize = estimatedLines > 4 ? 20 : estimatedLines > 3 ? 23 : 28;
     doc.fontSize(titleFontSize).text(input.title, contentX, 154, {
@@ -796,7 +841,7 @@ function createPdfBuffer(input: TicketArtifactInput) {
     setPdfRegularFont(doc);
     doc.fillColor('#544b42');
     doc.fontSize(13).text(
-      'Сохраните этот билет в телефоне. Печать не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.',
+      'Сохраните это пригласительное в телефоне. Печать не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.',
       contentX,
       subtitleY,
       {
@@ -823,16 +868,16 @@ function createPdfBuffer(input: TicketArtifactInput) {
       doc.image(FESTIVAL_MARK_PNG, pageWidth - 136, heroY + 18, { fit: [84, 84] });
     }
 
-    setPdfBoldFont(doc);
+    setPdfMediumFont(doc);
     doc.fillColor('#f0e6d7');
-    doc.fontSize(11).text('ФЕСТИВАЛЬНЫЙ БИЛЕТ', contentX + 26, heroY + 82, {
+    doc.fontSize(11).text('ФЕСТИВАЛЬНОЕ ПРИГЛАСИТЕЛЬНОЕ', contentX + 26, heroY + 82, {
       width: contentWidth - 52,
-      characterSpacing: 1.5,
+      characterSpacing: 1.2,
     });
 
-    setPdfBoldFont(doc);
+    setPdfDisplayFont(doc);
     doc.fillColor('#ffffff');
-    doc.fontSize(30).text(`Билет № ${input.shortTicketId}`, contentX + 26, heroY + 104, {
+    doc.fontSize(28).text(`Пригласительное № ${input.shortTicketId}`, contentX + 26, heroY + 104, {
       width: contentWidth - 160,
       lineGap: 0,
     });
@@ -850,7 +895,7 @@ function createPdfBuffer(input: TicketArtifactInput) {
     );
 
     doc.fontSize(11).text(
-      'Билет собран в облегчённом PDF-формате: логотипы и данные события сохраняются надёжно даже под нагрузкой.',
+      'Пригласительное собрано в облегчённом PDF-формате: логотипы и данные события сохраняются надёжно даже под нагрузкой.',
       contentX + 26,
       heroY + 166,
       {
@@ -911,7 +956,7 @@ function createPdfBuffer(input: TicketArtifactInput) {
       characterSpacing: 1.2,
     });
     doc.fillColor('#16120d');
-    setPdfBoldFont(doc);
+    setPdfDisplayFont(doc);
     doc.fontSize(24).text(input.fullName, contentX + 18, lowerY + 36, {
       width: leftWidth - 36,
       lineGap: 2,
@@ -927,18 +972,18 @@ function createPdfBuffer(input: TicketArtifactInput) {
     doc.roundedRect(rightX, lowerY, rightWidth, 122, 22).fillAndStroke('#18120e', '#18120e');
     doc.restore();
     doc.fillColor('#f5ede1');
-    setPdfBoldFont(doc);
-    doc.fontSize(10).text('КОРОТКИЙ НОМЕР БИЛЕТА', rightX + 18, lowerY + 16, {
+    setPdfMediumFont(doc);
+    doc.fontSize(10).text('КОРОТКИЙ НОМЕР ПРИГЛАСИТЕЛЬНОГО', rightX + 18, lowerY + 16, {
       width: rightWidth - 36,
-      characterSpacing: 1.2,
+      characterSpacing: 0.9,
     });
-    setPdfBoldFont(doc);
+    setPdfDisplayFont(doc);
     doc.fontSize(31).text(input.shortTicketId, rightX + 18, lowerY + 42, {
       width: rightWidth - 36,
       characterSpacing: 4,
     });
     setPdfRegularFont(doc);
-    doc.fontSize(11).text('Свободная рассадка. Достаточно открыть этот билет на телефоне.', rightX + 18, lowerY + 88, {
+    doc.fontSize(11).text('Свободная рассадка. Достаточно открыть это пригласительное на телефоне.', rightX + 18, lowerY + 88, {
       width: rightWidth - 36,
       lineGap: 3,
     });
@@ -997,14 +1042,14 @@ function createPdfBuffer(input: TicketArtifactInput) {
     // Ticket URL: float relative to footer, but never above a reasonable bottom margin.
     const urlY = Math.min(footerY + 58, pageHeight - 58);
     doc.fillColor('#962d1b');
-    doc.fontSize(10).text(`Ссылка на билет: ${ticketUrl}`, contentX, urlY, {
+    doc.fontSize(10).text(`Ссылка на пригласительное: ${ticketUrl}`, contentX, urlY, {
       width: contentWidth,
       lineGap: 2,
       link: ticketUrl,
       underline: true,
     });
     doc.fillColor('#7a7066');
-    doc.fontSize(9).text('Печать билета не требуется. Рассадка свободная.', contentX, doc.y + 4);
+    doc.fontSize(9).text('Печать пригласительного не требуется. Рассадка свободная.', contentX, doc.y + 4);
 
     doc.end();
   });

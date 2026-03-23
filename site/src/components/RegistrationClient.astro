@@ -211,6 +211,38 @@ const supportEmail = 'bilet@kdg80.ru';
       button.classList.toggle('button--primary', isOpen);
     }
 
+    function buildOptimisticItem(button) {
+      return {
+        slug: button.dataset.eventSlug || '',
+        title: button.dataset.eventTitle || 'Событие фестиваля',
+        startsAt: button.dataset.eventStart || new Date().toISOString(),
+        endsAt: button.dataset.eventStart || new Date().toISOString(),
+        venueName: button.dataset.eventVenue || '',
+        hallName: '',
+        address: button.dataset.eventAddress || '',
+        speakerLabel: button.dataset.eventSpeaker || '',
+        publicState: 'registration_open',
+        ctaLabel: 'Регистрация',
+        ctaNotice: '',
+      };
+    }
+
+    function setOptimisticOpenState(button, message = '') {
+      const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
+
+      button.dataset.publicState = 'registration_open_unverified';
+      button.textContent = 'Регистрация';
+      button.disabled = false;
+      button.setAttribute('aria-disabled', 'false');
+      button.classList.remove('button--disabled', 'button--ghost');
+      button.classList.add('button--primary');
+
+      if (notice instanceof HTMLElement) {
+        notice.hidden = !message;
+        notice.textContent = message;
+      }
+    }
+
     function setCheckingState(button, message = '') {
       const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
       button.dataset.publicState = 'loading';
@@ -308,9 +340,9 @@ const supportEmail = 'bilet@kdg80.ru';
           continue;
         }
 
-        setCheckingState(
+        setOptimisticOpenState(
           button,
-          fallbackFetchFailed ? 'Статус регистрации временно недоступен. Попробуйте обновить страницу.' : '',
+          fallbackFetchFailed ? 'Статус временно недоступен. Проверим доступность при открытии формы.' : '',
         );
       }
     }
@@ -519,6 +551,11 @@ const supportEmail = 'bilet@kdg80.ru';
             ...item,
             speakerLabel: button.dataset.eventSpeaker || '',
           });
+          return;
+        }
+
+        if (button.dataset.publicState === 'registration_open_unverified') {
+          openModal(buildOptimisticItem(button));
         }
       });
     }
@@ -535,7 +572,7 @@ const supportEmail = 'bilet@kdg80.ru';
 
     fetchStates().catch(() => {
       for (const button of ctaButtons) {
-        setCheckingState(button, 'Статус регистрации временно недоступен. Попробуйте обновить страницу.');
+        setOptimisticOpenState(button, 'Статус временно недоступен. Проверим доступность при открытии формы.');
       }
     });
   })();

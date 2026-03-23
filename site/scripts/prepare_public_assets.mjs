@@ -41,6 +41,13 @@ const NORMALIZATION_SPECS = [
     quality: 84,
   },
   {
+    label: 'speaker-strip',
+    root: path.join(generatedRoot, 'speaker-strip'),
+    maxWidth: 720,
+    maxHeight: 960,
+    quality: 82,
+  },
+  {
     label: 'lecture-portraits',
     root: path.join(generatedRoot, 'lecture-portraits'),
     maxWidth: 760,

@@ -479,34 +479,34 @@
     "slices": {
       "head": {
         "y": 0.22,
-        "visibleLeft": 0.3481,
-        "visibleRight": 0.7646,
-        "coverage": 0.4165
+        "visibleLeft": 0.3515,
+        "visibleRight": 0.7661,
+        "coverage": 0.4146
       },
       "shoulder": {
         "y": 0.34,
-        "visibleLeft": 0.1969,
-        "visibleRight": 0.8017,
-        "coverage": 0.6049
+        "visibleLeft": 0.1835,
+        "visibleRight": 0.8389,
+        "coverage": 0.6555
       },
       "chest": {
         "y": 0.48,
-        "visibleLeft": 0.1141,
-        "visibleRight": 0.9244,
-        "coverage": 0.8103
+        "visibleLeft": 0.1092,
+        "visibleRight": 0.9272,
+        "coverage": 0.8179
       },
       "waist": {
         "y": 0.62,
-        "visibleLeft": 0.0371,
-        "visibleRight": 0.9615,
-        "coverage": 0.9244
+        "visibleLeft": 0.035,
+        "visibleRight": 0.9636,
+        "coverage": 0.9286
       }
     },
-    "width": 701,
+    "width": 714,
     "height": 1200,
-    "visibleLeft": 0.0285,
+    "visibleLeft": 0.028,
     "visibleTop": 0.0167,
-    "visibleRight": 0.9715,
+    "visibleRight": 0.972,
     "visibleBottom": 1
   },
   "/generated/speaker-strip/mankevich-dmitriy.webp": {
