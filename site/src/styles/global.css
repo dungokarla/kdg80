@@ -3977,22 +3977,12 @@ body.registration-modal-open {
   }
 
   .registration-modal__header {
-    position: sticky;
-    top: 0;
-    z-index: 3;
     margin: 0 -1rem;
     padding:
       1.2rem
       1rem
       0.95rem;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(252, 246, 237, 0.995) 0%,
-        rgba(252, 246, 237, 0.99) 80%,
-        rgba(252, 246, 237, 0.92) 100%
-      );
-    backdrop-filter: blur(12px);
+    background: transparent;
   }
 
   .registration-modal__body {
