@@ -133,21 +133,21 @@ Feature: Проверка регистрации через сайт и Telegram
 
   @state_manifest @playwright
   Scenario: Статусы карточек читаются из same-origin state-file без лишних запросов на Fly
-    Given на основном домене сайта опубликован актуальный файл "/registration/states.json"
+    Given на основном домене сайта опубликован актуальный файл "/tickets/registration/states.json"
     When посетитель открывает страницу "/programma/"
     Then карточки событий показывают актуальные CTA-состояния из state-file
     And браузер не делает лишних запросов на Fly states API для этих карточек
 
   @state_manifest_fallback @playwright
   Scenario: При отсутствии state-file сайт падает назад на Fly states API
-    Given файл "/registration/states.json" временно недоступен
+    Given файл "/tickets/registration/states.json" временно недоступен
     When посетитель открывает страницу "/programma/"
     Then карточки событий всё равно показывают актуальные CTA-состояния
     And сайт получает состояния через Fly states API
 
   @state_manifest_outage @playwright
   Scenario: При двойной недоступности источников статуса сайт не врёт пользователю
-    Given файл "/registration/states.json" временно недоступен
+    Given файл "/tickets/registration/states.json" временно недоступен
     And Fly states API временно недоступен
     When посетитель открывает страницу "/programma/"
     Then карточка события показывает disabled-состояние "Проверяем регистрацию…"

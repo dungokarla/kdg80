@@ -185,7 +185,7 @@
 
 ### G. Manifest-first доставка состояний регистрации
 
-1. На same-origin домене сайта опубликован актуальный `/registration/states.json`.
+1. На same-origin домене сайта опубликован актуальный `/tickets/registration/states.json`.
 2. Playwright открывает страницу `/programma/` с несколькими карточками событий.
 3. Проверяется, что CTA-состояния берутся из state-file.
 4. Проверяется, что браузер не делает лишних запросов на Fly states API для карточек, уже покрытых manifest.
@@ -198,7 +198,7 @@
 
 ### H. Fallback на Fly states API при отсутствии manifest
 
-1. Same-origin `/registration/states.json` временно недоступен или отсутствует.
+1. Same-origin `/tickets/registration/states.json` временно недоступен или отсутствует.
 2. Playwright открывает страницу `/programma/`.
 3. Проверяется, что сайт догружает состояния через Fly states API.
 
@@ -209,7 +209,7 @@
 
 ### I. Честная деградация при одновременной недоступности manifest и states API
 
-1. Same-origin `/registration/states.json` недоступен.
+1. Same-origin `/tickets/registration/states.json` недоступен.
 2. Fly states API тоже временно недоступен.
 3. Playwright открывает страницу `/programma/`.
 
@@ -348,7 +348,7 @@
 - Работа формы на desktop viewport.
 - Работа формы на mobile viewport.
 - Проверка manifest-first чтения состояний без лишних запросов на Fly states API.
-- Проверка fallback на Fly states API при отсутствии `/registration/states.json`.
+- Проверка fallback на Fly states API при отсутствии `/tickets/registration/states.json`.
 - Проверка честной деградации `Проверяем регистрацию…`, если одновременно недоступны manifest и states API.
 - Проверка input mask и UX телефона.
 - Проверка inline validation.
@@ -368,8 +368,8 @@
 
 - Все happy-path сценарии проходят на каждом открытом событии. — Статус: `Зафиксировано`
 - Ни один негативный тест не создаёт “битую” регистрацию. — Статус: `Зафиксировано`
-- При штатной работе публичный сайт берёт CTA-состояния из same-origin `/registration/states.json`, а не засыпает Fly API массовыми read-запросами. — Статус: `Не подтверждено пользователем`
-- Если `/registration/states.json` временно недоступен, сайт корректно падает назад на Fly states API. — Статус: `Не подтверждено пользователем`
+- При штатной работе публичный сайт берёт CTA-состояния из same-origin `/tickets/registration/states.json`, а не засыпает Fly API массовыми read-запросами. — Статус: `Не подтверждено пользователем`
+- Если `/tickets/registration/states.json` временно недоступен, сайт корректно падает назад на Fly states API. — Статус: `Не подтверждено пользователем`
 - Если и manifest, и fallback API одновременно недоступны, интерфейс показывает честное `Проверяем регистрацию…`, а не ложное `Регистрация недоступна`. — Статус: `Не подтверждено пользователем`
 - При конкурентной записи система никогда не отдаёт больше билетов, чем есть мест. — Статус: `Зафиксировано`
 - При Telegram outage регистрация продолжает работать. — Статус: `Зафиксировано`

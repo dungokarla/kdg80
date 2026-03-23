@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3';
 import type { StoragePublisher } from '../lib/storage';
 import { listPublicEventStates } from './catalog';
 
-export const REGISTRATION_STATE_MANIFEST_KEY = 'registration/states.json';
+export const REGISTRATION_STATE_MANIFEST_KEY = 'tickets/registration/states.json';
 
 export function buildPublicStateManifest(db: Database.Database) {
   return {
