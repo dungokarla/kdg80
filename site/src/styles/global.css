@@ -3745,7 +3745,7 @@ body.registration-modal-open {
 }
 
 .registration-modal__backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(18, 14, 12, 0.58);
   backdrop-filter: blur(10px);
