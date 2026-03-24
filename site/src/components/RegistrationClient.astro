@@ -71,9 +71,14 @@ const supportEmail = 'info@kgd80.ru';
         </p>
         <p class="registration-form__status" data-registration-status hidden aria-live="polite"></p>
 
-        <button class="button button--primary registration-form__submit" type="submit" data-registration-submit>
-          Зарегистрироваться
-        </button>
+        <div class="registration-form__actions">
+          <button class="registration-modal__share registration-form__share" type="button" data-registration-share hidden>
+            Скопировать ссылку
+          </button>
+          <button class="button button--primary registration-form__submit" type="submit" data-registration-submit>
+            Зарегистрироваться
+          </button>
+        </div>
       </form>
     </div>
   </section>
@@ -89,10 +94,14 @@ const supportEmail = 'info@kgd80.ru';
     const titleNode = shell?.querySelector('[data-registration-event-title]');
     const summaryNode = shell?.querySelector('[data-registration-event-summary]');
     const speakerNode = shell?.querySelector('[data-registration-event-speaker]');
-    const shareButton = shell?.querySelector('[data-registration-share]');
+    const shareButtons = shell ? Array.from(shell.querySelectorAll('[data-registration-share]')) : [];
     const shareFeedbackNode = shell?.querySelector('[data-registration-share-feedback]');
     const shareManualNode = shell?.querySelector('[data-registration-share-manual]');
     const shareInputNode = shell?.querySelector('[data-registration-share-input]');
+    const eventShareButtons = Array.from(document.querySelectorAll('[data-event-share]'));
+    const eventShareFeedbackNode = document.querySelector('[data-event-share-feedback]');
+    const eventShareManualNode = document.querySelector('[data-event-share-manual]');
+    const eventShareInputNode = document.querySelector('[data-event-share-input]');
     const statusNode = shell?.querySelector('[data-registration-status]');
     const submitButton = shell?.querySelector('[data-registration-submit]');
     const consentRow = shell?.querySelector('[data-registration-consent]');
@@ -101,10 +110,11 @@ const supportEmail = 'info@kgd80.ru';
     let activeEvent = null;
     let slowRequestTimer = 0;
     let shareFeedbackTimer = 0;
+    let eventShareFeedbackTimer = 0;
     let autoOpenAttempted = false;
     const coarsePointerQuery = window.matchMedia('(max-width: 759px), (pointer: coarse)');
 
-    if (!(shell instanceof HTMLElement) || !(form instanceof HTMLFormElement) || !ctaButtons.length) {
+    if (!(shell instanceof HTMLElement) || !(form instanceof HTMLFormElement)) {
       return;
     }
 
@@ -130,6 +140,15 @@ const supportEmail = 'info@kgd80.ru';
 
     function buildRegistrationIntentUrl(slug) {
       return new URL(`${getSiteBasePrefix()}/sobytiya/${slug}/?register=1`, window.location.origin).toString();
+    }
+
+    function buildCanonicalEventUrl(path) {
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      const siteBasePrefix = getSiteBasePrefix();
+      const sharePath = siteBasePrefix && normalizedPath.startsWith(`${siteBasePrefix}/`)
+        ? normalizedPath
+        : `${siteBasePrefix}${normalizedPath}`;
+      return new URL(sharePath, window.location.origin).toString();
     }
 
     function syncViewportHeight() {
@@ -262,6 +281,29 @@ const supportEmail = 'info@kgd80.ru';
       }, 2600);
     }
 
+    function hideEventShareFeedback() {
+      clearTimeout(eventShareFeedbackTimer);
+      eventShareFeedbackTimer = 0;
+      if (eventShareFeedbackNode instanceof HTMLElement) {
+        eventShareFeedbackNode.hidden = true;
+        eventShareFeedbackNode.textContent = '';
+      }
+    }
+
+    function showEventShareFeedback(message) {
+      if (!(eventShareFeedbackNode instanceof HTMLElement)) {
+        return;
+      }
+
+      clearTimeout(eventShareFeedbackTimer);
+      eventShareFeedbackNode.hidden = false;
+      eventShareFeedbackNode.textContent = message;
+      eventShareFeedbackTimer = window.setTimeout(() => {
+        eventShareFeedbackNode.hidden = true;
+        eventShareFeedbackNode.textContent = '';
+      }, 2600);
+    }
+
     function hideShareManualFallback() {
       if (shareManualNode instanceof HTMLElement) {
         shareManualNode.hidden = true;
@@ -292,24 +334,72 @@ const supportEmail = 'info@kgd80.ru';
       }, 0);
     }
 
+    function hideEventShareManualFallback() {
+      if (eventShareManualNode instanceof HTMLElement) {
+        eventShareManualNode.hidden = true;
+      }
+
+      if (eventShareInputNode instanceof HTMLInputElement) {
+        eventShareInputNode.value = '';
+      }
+    }
+
+    function showEventShareManualFallback(url) {
+      if (eventShareInputNode instanceof HTMLInputElement) {
+        eventShareInputNode.value = url;
+      }
+
+      if (eventShareManualNode instanceof HTMLElement) {
+        eventShareManualNode.hidden = false;
+      }
+
+      window.setTimeout(() => {
+        if (eventShareInputNode instanceof HTMLInputElement) {
+          eventShareInputNode.focus({
+            preventScroll: true,
+          });
+          eventShareInputNode.select();
+          eventShareInputNode.setSelectionRange(0, eventShareInputNode.value.length);
+        }
+      }, 0);
+    }
+
     function getShareActionMode() {
       return coarsePointerQuery.matches && typeof navigator.share === 'function'
         ? 'share'
         : 'copy';
     }
 
-    function syncShareButton() {
-      if (!(shareButton instanceof HTMLButtonElement)) {
-        return;
-      }
-
+    function syncRegistrationShareButtons() {
       const mode = getShareActionMode();
-      shareButton.hidden = false;
-      shareButton.dataset.shareMode = mode;
-      shareButton.textContent = mode === 'share' ? 'Поделиться' : 'Скопировать ссылку';
-      shareButton.setAttribute('aria-label', mode === 'share'
-        ? 'Поделиться прямой ссылкой на регистрацию'
-        : 'Скопировать прямую ссылку на регистрацию');
+      for (const shareButton of shareButtons) {
+        if (!(shareButton instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        shareButton.hidden = false;
+        shareButton.dataset.shareMode = mode;
+        shareButton.textContent = mode === 'share' ? 'Поделиться' : 'Скопировать ссылку';
+        shareButton.setAttribute('aria-label', mode === 'share'
+          ? 'Поделиться прямой ссылкой на регистрацию'
+          : 'Скопировать прямую ссылку на регистрацию');
+      }
+    }
+
+    function syncEventShareButtons() {
+      const mode = getShareActionMode();
+      for (const eventShareButton of eventShareButtons) {
+        if (!(eventShareButton instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        eventShareButton.hidden = false;
+        eventShareButton.dataset.shareMode = mode;
+        eventShareButton.textContent = mode === 'share' ? 'Поделиться' : 'Скопировать ссылку';
+        eventShareButton.setAttribute('aria-label', mode === 'share'
+          ? 'Поделиться страницей события'
+          : 'Скопировать ссылку на страницу события');
+      }
     }
 
     async function copyRegistrationUrl(url) {
@@ -336,13 +426,14 @@ const supportEmail = 'info@kgd80.ru';
       }
     }
 
-    async function handleShareAction() {
-      if (!(shareButton instanceof HTMLButtonElement) || !activeEvent?.slug) {
+    async function handleRegistrationShareAction() {
+      if (!activeEvent?.slug) {
         return;
       }
 
       const url = buildRegistrationIntentUrl(activeEvent.slug);
-      const mode = shareButton.dataset.shareMode || 'copy';
+      const shareButton = shareButtons.find((button) => button instanceof HTMLButtonElement);
+      const mode = shareButton?.dataset.shareMode || 'copy';
       hideShareFeedback();
       hideShareManualFallback();
 
@@ -366,6 +457,40 @@ const supportEmail = 'info@kgd80.ru';
         showShareFeedback('Ссылка скопирована');
       } catch {
         showShareManualFallback(url);
+      }
+    }
+
+    async function handleEventShareAction(button) {
+      if (!(button instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const url = buildCanonicalEventUrl(button.dataset.sharePath || window.location.pathname);
+      const title = button.dataset.shareTitle || document.title;
+      const mode = button.dataset.shareMode || 'copy';
+      hideEventShareFeedback();
+      hideEventShareManualFallback();
+
+      if (mode === 'share' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title,
+            text: `Событие фестиваля: ${title}`,
+            url,
+          });
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+
+      try {
+        await copyRegistrationUrl(url);
+        showEventShareFeedback('Ссылка на событие скопирована');
+      } catch {
+        showEventShareManualFallback(url);
       }
     }
 
@@ -657,7 +782,9 @@ const supportEmail = 'info@kgd80.ru';
       clearErrors();
       hideShareFeedback();
       hideShareManualFallback();
-      syncShareButton();
+      hideEventShareFeedback();
+      hideEventShareManualFallback();
+      syncRegistrationShareButtons();
       hydrateDraft();
       document.body.classList.add('registration-modal-open');
       shell.hidden = false;
@@ -805,14 +932,21 @@ const supportEmail = 'info@kgd80.ru';
     }
 
     syncViewportHeight();
-    syncShareButton();
+    syncRegistrationShareButtons();
+    syncEventShareButtons();
     window.addEventListener('resize', syncViewportHeight);
     window.addEventListener('orientationchange', syncViewportHeight);
     window.visualViewport?.addEventListener('resize', syncViewportHeight);
     if (typeof coarsePointerQuery.addEventListener === 'function') {
-      coarsePointerQuery.addEventListener('change', syncShareButton);
+      coarsePointerQuery.addEventListener('change', () => {
+        syncRegistrationShareButtons();
+        syncEventShareButtons();
+      });
     } else if (typeof coarsePointerQuery.addListener === 'function') {
-      coarsePointerQuery.addListener(syncShareButton);
+      coarsePointerQuery.addListener(() => {
+        syncRegistrationShareButtons();
+        syncEventShareButtons();
+      });
     }
 
     function validateForm(options = { reveal: false }) {
@@ -870,10 +1004,20 @@ const supportEmail = 'info@kgd80.ru';
       }
     }
 
-    if (shareButton instanceof HTMLButtonElement) {
-      shareButton.addEventListener('click', () => {
-        handleShareAction();
-      });
+    for (const shareButton of shareButtons) {
+      if (shareButton instanceof HTMLButtonElement) {
+        shareButton.addEventListener('click', () => {
+          handleRegistrationShareAction();
+        });
+      }
+    }
+
+    for (const eventShareButton of eventShareButtons) {
+      if (eventShareButton instanceof HTMLButtonElement) {
+        eventShareButton.addEventListener('click', () => {
+          handleEventShareAction(eventShareButton);
+        });
+      }
     }
 
     form.phone.addEventListener('keydown', handlePhoneBackspace);
@@ -989,14 +1133,18 @@ const supportEmail = 'info@kgd80.ru';
       }
     });
 
-    fetchStates()
-      .catch(() => {
-        for (const button of ctaButtons) {
-          setOptimisticOpenState(button, 'Статус временно недоступен. Проверим доступность при открытии формы.');
-        }
-      })
-      .finally(() => {
-        maybeAutoOpenFromUrl();
-      });
+    if (ctaButtons.length) {
+      fetchStates()
+        .catch(() => {
+          for (const button of ctaButtons) {
+            setOptimisticOpenState(button, 'Статус временно недоступен. Проверим доступность при открытии формы.');
+          }
+        })
+        .finally(() => {
+          maybeAutoOpenFromUrl();
+        });
+    } else {
+      maybeAutoOpenFromUrl();
+    }
   })();
 </script>

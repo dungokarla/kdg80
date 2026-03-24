@@ -4050,12 +4050,26 @@ body.registration-modal-open {
   display: none;
 }
 
+.registration-form__actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.registration-form__share,
+.registration-form__submit {
+  width: 100%;
+  justify-content: center;
+}
+
+.registration-form__share {
+  min-height: 3.2rem;
+  font-weight: 600;
+}
+
 .registration-form__submit {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  width: 100%;
-  justify-content: center;
   cursor: pointer;
 }
 
@@ -4211,6 +4225,73 @@ body.registration-modal-open {
 
 .event-leaf__registration .button {
   width: 100%;
+}
+
+.event-leaf__share {
+  min-width: max-content;
+}
+
+.event-leaf__share-feedback {
+  width: fit-content;
+  max-width: 100%;
+  margin: -0.3rem 0 0;
+  padding: 0.72rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(38, 81, 58, 0.94);
+  color: #fffaf5;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.event-leaf__share-feedback[hidden] {
+  display: none;
+}
+
+.event-leaf__share-manual {
+  display: grid;
+  gap: 0.45rem;
+  margin: -0.15rem 0 0;
+  max-width: 36rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 252, 248, 0.92);
+  border: 1px solid rgba(18, 17, 14, 0.08);
+  box-shadow: 0 12px 22px rgba(18, 17, 14, 0.06);
+}
+
+.event-leaf__share-manual[hidden] {
+  display: none;
+}
+
+.event-leaf__share-manual-title,
+.event-leaf__share-manual-copy {
+  margin: 0;
+}
+
+.event-leaf__share-manual-title {
+  font-weight: 700;
+}
+
+.event-leaf__share-manual-copy {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.event-leaf__share-input {
+  min-height: 3rem;
+  padding: 0 0.95rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(18, 17, 14, 0.12);
+  background: rgba(252, 246, 237, 0.88);
+  font: inherit;
+  color: var(--ink);
+}
+
+.event-leaf__share-input:focus-visible {
+  outline: 2px solid rgba(184, 63, 47, 0.35);
+  outline-offset: 2px;
 }
 
 .event-leaf__visual {
@@ -4386,11 +4467,22 @@ body.registration-modal-open {
   .event-leaf__registration {
     min-width: 100%;
   }
+
+  .event-leaf__share {
+    width: 100%;
+  }
 }
 
 @media (min-width: 960px) {
   .event-leaf__hero {
     padding: 1.35rem;
+  }
+}
+
+@media (min-width: 760px) {
+  .registration-form__actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: stretch;
   }
 }
 

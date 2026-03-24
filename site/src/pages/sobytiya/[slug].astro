@@ -140,7 +140,29 @@ const structuredData = {
                     </div>
                   )}
 
+                  <button
+                    class="button button--ghost event-leaf__share"
+                    type="button"
+                    data-event-share
+                    data-share-path={canonicalPath}
+                    data-share-title={event.title}
+                    hidden
+                  >
+                    Скопировать ссылку
+                  </button>
                   <a class="button button--ghost" href={programMonthHref}>Смотреть другие события</a>
+                </div>
+                <p class="event-leaf__share-feedback" data-event-share-feedback hidden aria-live="polite"></p>
+                <div class="event-leaf__share-manual" data-event-share-manual hidden>
+                  <p class="event-leaf__share-manual-title">Ссылка на событие готова</p>
+                  <p class="event-leaf__share-manual-copy">Браузер не дал доступ к буферу обмена. Скопируйте ссылку вручную.</p>
+                  <input
+                    class="event-leaf__share-input"
+                    type="text"
+                    readonly
+                    data-event-share-input
+                    aria-label="Прямая ссылка на событие"
+                  />
                 </div>
 
                 {temporalState !== 'past' && event.calendarReady ? (
