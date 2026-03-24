@@ -4,12 +4,32 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  canonicalPath?: string;
+  robots?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  structuredData?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
 const {
   title = '80 историй о главном | Прототип главной страницы фестиваля',
   description = 'Прототип фестивального лендинга: открытая лента событий, видимые CTA регистрации и календаря, mobile-first архитектура.',
+  canonicalPath,
+  robots,
+  ogImage,
+  ogType = 'website',
+  structuredData,
 } = Astro.props;
+
+const siteOrigin = (import.meta.env.PUBLIC_SITE_ORIGIN || 'https://kgd80.ru').replace(/\/+$/u, '');
+const toAbsoluteUrl = (value: string) => new URL(value, `${siteOrigin}/`).toString();
+const canonicalUrl = canonicalPath ? toAbsoluteUrl(canonicalPath) : undefined;
+const ogImageUrl = ogImage ? toAbsoluteUrl(ogImage) : undefined;
+const structuredDataItems = Array.isArray(structuredData)
+  ? structuredData
+  : structuredData
+    ? [structuredData]
+    : [];
 ---
 
 <!doctype html>
@@ -23,10 +43,27 @@ const {
     <meta name="theme-color" content="#0f4ce7" />
     <meta name="geo.region" content="RU-KGD" />
     <meta name="geo.placename" content="Калининград" />
+    {robots && <meta name="robots" content={robots} />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:site_name" content="80 историй о главном" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    <meta name="twitter:card" content={ogImageUrl ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
     <link rel="icon" type="image/svg+xml" href="/favicon-80.svg?v=20260319b" sizes="any" />
     <link rel="icon" type="image/x-icon" href="/favicon-80.ico?v=20260319b" />
     <link rel="shortcut icon" href="/favicon-80.ico?v=20260319b" />
     <title>{title}</title>
+    {structuredDataItems.map((item) => (
+      <script type="application/ld+json" set:html={JSON.stringify(item)}></script>
+    ))}
+    <slot name="head" />
     <script is:inline type="text/javascript">
       (function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};

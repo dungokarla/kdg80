@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { derivePublicState, getCtaCopy } from '../lib/public-state';
+import { derivePublicState, getCtaCopy, isDeferredPublicEvent } from '../lib/public-state';
 import festivalEvents from '../data/festival-events.json';
 import type {
   CatalogEventSeed,
@@ -57,8 +57,8 @@ const HALLS: HallSeed[] = [
   {
     code: 'friedland-gate-hall',
     venueName: 'Музей «Фридландские ворота»',
-    hallName: 'Зал',
-    address: 'улица Дзержинского, 30',
+    hallName: 'Корпус Блокгауз',
+    address: 'улица Дзержинского, 30, вход через музейный дворик',
     capacity: 50,
   },
   {
@@ -67,6 +67,13 @@ const HALLS: HallSeed[] = [
     hallName: 'ОКЕАНиЯ',
     address: 'Набережная Петра Великого, 1',
     capacity: 140,
+  },
+  {
+    code: 'kghm-conference-hall',
+    venueName: 'Калининградский областной историко-художественный музей',
+    hallName: 'Конференц-зал',
+    address: 'улица Клиническая, 21',
+    capacity: 80,
   },
 ];
 
@@ -110,6 +117,10 @@ function matchHall(event: FestivalEvent) {
 
   if (venue.includes('мирового океана')) {
     return HALLS[4];
+  }
+
+  if (venue.includes('историко') || venue.includes('клиническ')) {
+    return HALLS[5];
   }
 
   return null;
@@ -269,15 +280,16 @@ export function listPublicEventStates(db: Database.Database, slugs: string[] = [
   return rows.map((row) => {
     const publicState = derivePublicState(row);
     const copy = getCtaCopy(publicState);
+    const hidePublicDetails = isDeferredPublicEvent(row);
 
     return {
       slug: row.slug,
       title: row.title,
       startsAt: row.starts_at,
       endsAt: row.ends_at,
-      venueName: row.venue_name,
-      hallName: row.hall_name,
-      address: row.address,
+      venueName: hidePublicDetails ? '' : row.venue_name,
+      hallName: hidePublicDetails ? '' : row.hall_name,
+      address: hidePublicDetails ? '' : row.address,
       capacity: row.capacity,
       seatsTaken: row.seats_taken,
       seatsLeft: Math.max(row.capacity - row.seats_taken, 0),

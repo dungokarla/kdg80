@@ -4,64 +4,83 @@ const registrationApiBaseUrl = (
   || 'https://znanie-kgd80-fest.fly.dev'
 ).replace(/\/+$/u, '');
 const registrationStateManifestPath = import.meta.env.PUBLIC_REGISTRATION_STATE_MANIFEST_PATH || '/tickets/registration/states.json';
-const consentUrl = '/docs/registration-personal-data-consent-draft.pdf';
+const consentUrl = '/docs/registration-personal-data-consent.html';
 const privacyUrl = 'https://znanierussia.ru/privacy_policy';
-const supportEmail = 'bilet@kdg80.ru';
+const supportEmail = 'info@kgd80.ru';
 ---
 
 <div class="registration-modal-shell" data-registration-shell hidden>
   <div class="registration-modal__backdrop" data-registration-close></div>
   <section class="registration-modal" role="dialog" aria-modal="true" aria-labelledby="registration-modal-title">
-    <button class="registration-modal__close" type="button" data-registration-close aria-label="Закрыть форму регистрации">Закрыть</button>
-    <p class="registration-modal__eyebrow">Регистрация</p>
-    <h2 id="registration-modal-title" data-registration-event-title>Регистрация на событие</h2>
-    <p class="registration-modal__summary" data-registration-event-summary></p>
+    <p class="registration-modal__share-feedback" data-registration-share-feedback hidden aria-live="polite"></p>
+    <div class="registration-modal__header">
+      <div class="registration-modal__header-actions">
+        <button class="registration-modal__share" type="button" data-registration-share hidden>Скопировать ссылку</button>
+        <button class="registration-modal__close" type="button" data-registration-close aria-label="Закрыть форму регистрации">Закрыть</button>
+      </div>
+      <p class="registration-modal__eyebrow">Регистрация</p>
+      <h2 id="registration-modal-title" data-registration-event-title>Регистрация на событие</h2>
+      <p class="registration-modal__summary" data-registration-event-summary></p>
+      <p class="registration-modal__speaker" data-registration-event-speaker hidden></p>
+    </div>
 
-    <form class="registration-form" data-registration-form novalidate>
-      <label class="registration-form__field">
-        <span>ФИО</span>
-        <input name="fullName" type="text" autocomplete="name" required maxlength="120" placeholder="Имя и фамилия" />
-        <small data-registration-error-for="fullName"></small>
-      </label>
+    <div class="registration-modal__body" data-registration-modal-body>
+      <div class="registration-modal__share-manual" data-registration-share-manual hidden>
+        <p class="registration-modal__share-manual-title">Ссылка готова</p>
+        <p class="registration-modal__share-manual-copy">Браузер не дал доступ к буферу обмена. Скопируйте ссылку вручную.</p>
+        <input class="registration-modal__share-input" type="text" readonly data-registration-share-input aria-label="Прямая ссылка на регистрацию" />
+      </div>
+      <form class="registration-form" data-registration-form novalidate>
+        <label class="registration-form__field">
+          <span>ФИО</span>
+          <input name="fullName" type="text" autocomplete="name" required maxlength="120" placeholder="Имя и фамилия" />
+          <small data-registration-error-for="fullName" aria-live="polite"></small>
+        </label>
 
-      <label class="registration-form__field">
-        <span>Email</span>
-        <input name="email" type="email" autocomplete="email" required maxlength="254" placeholder="name@example.com" />
-        <small data-registration-error-for="email"></small>
-      </label>
+        <label class="registration-form__field">
+          <span>Email</span>
+          <input name="email" type="email" autocomplete="email" required maxlength="254" placeholder="name@example.com" />
+          <small data-registration-error-for="email" aria-live="polite"></small>
+        </label>
 
-      <label class="registration-form__field">
-        <span>Телефон</span>
-        <input name="phone" type="tel" inputmode="numeric" autocomplete="tel" required placeholder="+7 (___) ___-__-__" />
-        <small data-registration-error-for="phone"></small>
-      </label>
+        <label class="registration-form__field">
+          <span>Телефон</span>
+          <input name="phone" type="tel" inputmode="numeric" autocomplete="tel" required placeholder="+7 (___) ___-__-__" />
+          <small data-registration-error-for="phone" aria-live="polite"></small>
+        </label>
 
-      <label class="registration-form__checkbox">
-        <input name="consentAccepted" type="checkbox" />
-        <span>
-          Я подтверждаю, что ознакомлен(а) с
-          <a href={privacyUrl} target="_blank" rel="noreferrer">политикой конфиденциальности</a>
-          и
-          <a href={consentUrl} target="_blank" rel="noreferrer">согласием на обработку персональных данных</a>.
-        </span>
-      </label>
-      <small data-registration-error-for="consentAccepted"></small>
+        <label class="registration-form__checkbox" data-registration-consent>
+          <input name="consentAccepted" type="checkbox" aria-describedby="registration-consent-error" />
+          <span>
+            Я подтверждаю, что ознакомлен(а) с
+            <a href={privacyUrl} target="_blank" rel="noreferrer">политикой конфиденциальности</a>
+            и
+            <a href={consentUrl} target="_blank" rel="noreferrer">согласием на обработку персональных данных</a>.
+          </span>
+        </label>
+        <small id="registration-consent-error" data-registration-error-for="consentAccepted" aria-live="polite"></small>
 
-      <label class="registration-form__honeypot" aria-hidden="true">
-        <span>Ваш сайт</span>
-        <input name="website" type="text" tabindex="-1" autocomplete="off" />
-      </label>
+        <label class="registration-form__honeypot" aria-hidden="true">
+          <span>Ваш сайт</span>
+          <input name="website" type="text" tabindex="-1" autocomplete="off" />
+        </label>
 
-      <p class="registration-form__note">
-        Каждый участник регистрируется сам. По вопросам, связанным с билетами, пишите на
-        <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
-      </p>
-      <p class="registration-form__status" data-registration-status hidden></p>
+        <p class="registration-form__note">
+          Каждый участник регистрируется сам. По вопросам, связанным с билетами, пишите на
+          <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+        </p>
+        <p class="registration-form__status" data-registration-status hidden aria-live="polite"></p>
 
-      <button class="button button--primary registration-form__submit" type="submit" data-registration-submit>
-        Зарегистрироваться
-      </button>
-    </form>
+        <div class="registration-form__actions">
+          <button class="registration-modal__share registration-form__share" type="button" data-registration-share hidden>
+            Скопировать ссылку
+          </button>
+          <button class="button button--primary registration-form__submit" type="submit" data-registration-submit>
+            Зарегистрироваться
+          </button>
+        </div>
+      </form>
+    </div>
   </section>
 </div>
 
@@ -74,35 +93,109 @@ const supportEmail = 'bilet@kdg80.ru';
     const form = shell?.querySelector('[data-registration-form]');
     const titleNode = shell?.querySelector('[data-registration-event-title]');
     const summaryNode = shell?.querySelector('[data-registration-event-summary]');
+    const speakerNode = shell?.querySelector('[data-registration-event-speaker]');
+    const shareButtons = shell ? Array.from(shell.querySelectorAll('[data-registration-share]')) : [];
+    const shareFeedbackNode = shell?.querySelector('[data-registration-share-feedback]');
+    const shareManualNode = shell?.querySelector('[data-registration-share-manual]');
+    const shareInputNode = shell?.querySelector('[data-registration-share-input]');
+    const eventShareButtons = Array.from(document.querySelectorAll('[data-event-share]'));
+    const eventShareFeedbackNode = document.querySelector('[data-event-share-feedback]');
+    const eventShareManualNode = document.querySelector('[data-event-share-manual]');
+    const eventShareInputNode = document.querySelector('[data-event-share-input]');
     const statusNode = shell?.querySelector('[data-registration-status]');
     const submitButton = shell?.querySelector('[data-registration-submit]');
+    const consentRow = shell?.querySelector('[data-registration-consent]');
     const closeTriggers = shell ? Array.from(shell.querySelectorAll('[data-registration-close]')) : [];
-    const errorNodes = shell ? Array.from(shell.querySelectorAll('[data-registration-error-for]')) : [];
     const stateCache = new Map();
     let activeEvent = null;
     let slowRequestTimer = 0;
+    let shareFeedbackTimer = 0;
+    let eventShareFeedbackTimer = 0;
+    let autoOpenAttempted = false;
+    const coarsePointerQuery = window.matchMedia('(max-width: 759px), (pointer: coarse)');
 
-    if (!(shell instanceof HTMLElement) || !(form instanceof HTMLFormElement) || !ctaButtons.length) {
+    if (!(shell instanceof HTMLElement) || !(form instanceof HTMLFormElement)) {
       return;
     }
 
     const fieldNames = ['fullName', 'email', 'phone', 'consentAccepted'];
+    const fieldContainers = {
+      fullName: form.fullName?.closest('.registration-form__field'),
+      email: form.email?.closest('.registration-form__field'),
+      phone: form.phone?.closest('.registration-form__field'),
+      consentAccepted: consentRow,
+    };
+
+    function clearStatus() {
+      if (statusNode instanceof HTMLElement) {
+        statusNode.hidden = true;
+        statusNode.textContent = '';
+      }
+    }
+
+    function getSiteBasePrefix() {
+      const previewMatch = window.location.pathname.match(/^\/(preview-[^/]+)/u);
+      return previewMatch ? `/${previewMatch[1]}` : '';
+    }
+
+    function buildRegistrationIntentUrl(slug) {
+      return new URL(`${getSiteBasePrefix()}/sobytiya/${slug}/?register=1`, window.location.origin).toString();
+    }
+
+    function buildCanonicalEventUrl(path) {
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      const siteBasePrefix = getSiteBasePrefix();
+      const sharePath = siteBasePrefix && normalizedPath.startsWith(`${siteBasePrefix}/`)
+        ? normalizedPath
+        : `${siteBasePrefix}${normalizedPath}`;
+      return new URL(sharePath, window.location.origin).toString();
+    }
+
+    function syncViewportHeight() {
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      shell.style.setProperty('--registration-viewport-height', `${Math.round(viewportHeight)}px`);
+    }
+
+    function shouldAutofocusFirstField() {
+      return !coarsePointerQuery.matches;
+    }
+
+    function setFieldInvalidState(field, invalid) {
+      const container = fieldContainers[field];
+      const control = form[field];
+
+      if (container instanceof HTMLElement) {
+        container.dataset.invalid = invalid ? 'true' : 'false';
+        if (field === 'consentAccepted') {
+          container.classList.toggle('registration-form__checkbox--error', invalid);
+          if (!invalid) {
+            container.classList.remove('registration-form__checkbox--shake');
+          }
+        }
+      }
+
+      if (control instanceof HTMLElement) {
+        control.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+      }
+    }
 
     function getDraftKey(slug) {
       return `registration-draft:${slug}`;
     }
 
     function clearErrors() {
-      for (const node of errorNodes) {
-        if (node instanceof HTMLElement) {
-          node.textContent = '';
-        }
+      for (const fieldName of fieldNames) {
+        clearFieldError(fieldName);
       }
+      clearStatus();
+    }
 
-      if (statusNode instanceof HTMLElement) {
-        statusNode.hidden = true;
-        statusNode.textContent = '';
+    function clearFieldError(field) {
+      const node = shell.querySelector(`[data-registration-error-for="${field}"]`);
+      if (node instanceof HTMLElement) {
+        node.textContent = '';
       }
+      setFieldInvalidState(field, false);
     }
 
     function setFieldError(field, message) {
@@ -110,6 +203,7 @@ const supportEmail = 'bilet@kdg80.ru';
       if (node instanceof HTMLElement) {
         node.textContent = message;
       }
+      setFieldInvalidState(field, true);
     }
 
     function setStatus(message) {
@@ -119,15 +213,26 @@ const supportEmail = 'bilet@kdg80.ru';
       }
     }
 
-    function normalizePhoneInput(value) {
+    function getPhoneDigits(value) {
       let digits = value.replace(/\D+/g, '');
+      if (!digits) {
+        return '';
+      }
       if (digits.startsWith('8')) {
         digits = `7${digits.slice(1)}`;
       }
       if (!digits.startsWith('7')) {
-        digits = `7${digits.replace(/^7*/, '')}`;
+        digits = digits.length <= 10
+          ? `7${digits}`
+          : `7${digits.replace(/^7+/u, '')}`;
       }
-      digits = digits.slice(0, 11);
+      return digits.slice(0, 11);
+    }
+
+    function formatPhoneDigits(digits) {
+      if (!digits) {
+        return '';
+      }
 
       const country = digits.slice(0, 1);
       const area = digits.slice(1, 4);
@@ -144,6 +249,275 @@ const supportEmail = 'bilet@kdg80.ru';
       return result;
     }
 
+    function normalizePhoneInput(value) {
+      return formatPhoneDigits(getPhoneDigits(value));
+    }
+
+    function normalizePhoneForSubmit(value) {
+      const digits = getPhoneDigits(value);
+      return digits.length === 11 ? `+${digits}` : value.trim();
+    }
+
+    function hideShareFeedback() {
+      clearTimeout(shareFeedbackTimer);
+      shareFeedbackTimer = 0;
+      if (shareFeedbackNode instanceof HTMLElement) {
+        shareFeedbackNode.hidden = true;
+        shareFeedbackNode.textContent = '';
+      }
+    }
+
+    function showShareFeedback(message) {
+      if (!(shareFeedbackNode instanceof HTMLElement)) {
+        return;
+      }
+
+      clearTimeout(shareFeedbackTimer);
+      shareFeedbackNode.hidden = false;
+      shareFeedbackNode.textContent = message;
+      shareFeedbackTimer = window.setTimeout(() => {
+        shareFeedbackNode.hidden = true;
+        shareFeedbackNode.textContent = '';
+      }, 2600);
+    }
+
+    function hideEventShareFeedback() {
+      clearTimeout(eventShareFeedbackTimer);
+      eventShareFeedbackTimer = 0;
+      if (eventShareFeedbackNode instanceof HTMLElement) {
+        eventShareFeedbackNode.hidden = true;
+        eventShareFeedbackNode.textContent = '';
+      }
+    }
+
+    function showEventShareFeedback(message) {
+      if (!(eventShareFeedbackNode instanceof HTMLElement)) {
+        return;
+      }
+
+      clearTimeout(eventShareFeedbackTimer);
+      eventShareFeedbackNode.hidden = false;
+      eventShareFeedbackNode.textContent = message;
+      eventShareFeedbackTimer = window.setTimeout(() => {
+        eventShareFeedbackNode.hidden = true;
+        eventShareFeedbackNode.textContent = '';
+      }, 2600);
+    }
+
+    function hideShareManualFallback() {
+      if (shareManualNode instanceof HTMLElement) {
+        shareManualNode.hidden = true;
+      }
+
+      if (shareInputNode instanceof HTMLInputElement) {
+        shareInputNode.value = '';
+      }
+    }
+
+    function showShareManualFallback(url) {
+      if (shareInputNode instanceof HTMLInputElement) {
+        shareInputNode.value = url;
+      }
+
+      if (shareManualNode instanceof HTMLElement) {
+        shareManualNode.hidden = false;
+      }
+
+      window.setTimeout(() => {
+        if (shareInputNode instanceof HTMLInputElement) {
+          shareInputNode.focus({
+            preventScroll: true,
+          });
+          shareInputNode.select();
+          shareInputNode.setSelectionRange(0, shareInputNode.value.length);
+        }
+      }, 0);
+    }
+
+    function hideEventShareManualFallback() {
+      if (eventShareManualNode instanceof HTMLElement) {
+        eventShareManualNode.hidden = true;
+      }
+
+      if (eventShareInputNode instanceof HTMLInputElement) {
+        eventShareInputNode.value = '';
+      }
+    }
+
+    function showEventShareManualFallback(url) {
+      if (eventShareInputNode instanceof HTMLInputElement) {
+        eventShareInputNode.value = url;
+      }
+
+      if (eventShareManualNode instanceof HTMLElement) {
+        eventShareManualNode.hidden = false;
+      }
+
+      window.setTimeout(() => {
+        if (eventShareInputNode instanceof HTMLInputElement) {
+          eventShareInputNode.focus({
+            preventScroll: true,
+          });
+          eventShareInputNode.select();
+          eventShareInputNode.setSelectionRange(0, eventShareInputNode.value.length);
+        }
+      }, 0);
+    }
+
+    function getShareActionMode() {
+      return coarsePointerQuery.matches && typeof navigator.share === 'function'
+        ? 'share'
+        : 'copy';
+    }
+
+    function syncRegistrationShareButtons() {
+      const mode = getShareActionMode();
+      for (const shareButton of shareButtons) {
+        if (!(shareButton instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        shareButton.hidden = false;
+        shareButton.dataset.shareMode = mode;
+        shareButton.textContent = mode === 'share' ? 'Поделиться' : 'Скопировать ссылку';
+        shareButton.setAttribute('aria-label', mode === 'share'
+          ? 'Поделиться прямой ссылкой на регистрацию'
+          : 'Скопировать прямую ссылку на регистрацию');
+      }
+    }
+
+    function syncEventShareButtons() {
+      const mode = getShareActionMode();
+      for (const eventShareButton of eventShareButtons) {
+        if (!(eventShareButton instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        eventShareButton.hidden = false;
+        eventShareButton.dataset.shareMode = mode;
+        eventShareButton.textContent = mode === 'share' ? 'Поделиться' : 'Скопировать ссылку';
+        eventShareButton.setAttribute('aria-label', mode === 'share'
+          ? 'Поделиться страницей события'
+          : 'Скопировать ссылку на страницу события');
+      }
+    }
+
+    async function copyRegistrationUrl(url) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        return;
+      }
+
+      const probe = document.createElement('textarea');
+      probe.value = url;
+      probe.setAttribute('readonly', '');
+      probe.style.position = 'fixed';
+      probe.style.opacity = '0';
+      probe.style.pointerEvents = 'none';
+      document.body.append(probe);
+      probe.focus();
+      probe.select();
+
+      const copied = typeof document.execCommand === 'function' && document.execCommand('copy');
+      probe.remove();
+
+      if (!copied) {
+        throw new Error('copy_failed');
+      }
+    }
+
+    async function handleRegistrationShareAction() {
+      if (!activeEvent?.slug) {
+        return;
+      }
+
+      const url = buildRegistrationIntentUrl(activeEvent.slug);
+      const shareButton = shareButtons.find((button) => button instanceof HTMLButtonElement);
+      const mode = shareButton?.dataset.shareMode || 'copy';
+      hideShareFeedback();
+      hideShareManualFallback();
+
+      if (mode === 'share' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title: activeEvent.title,
+            text: `Регистрация: ${activeEvent.title}`,
+            url,
+          });
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+
+      try {
+        await copyRegistrationUrl(url);
+        showShareFeedback('Ссылка скопирована');
+      } catch {
+        showShareManualFallback(url);
+      }
+    }
+
+    async function handleEventShareAction(button) {
+      if (!(button instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const url = buildCanonicalEventUrl(button.dataset.sharePath || window.location.pathname);
+      const title = button.dataset.shareTitle || document.title;
+      const mode = button.dataset.shareMode || 'copy';
+      hideEventShareFeedback();
+      hideEventShareManualFallback();
+
+      if (mode === 'share' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title,
+            text: `Событие фестиваля: ${title}`,
+            url,
+          });
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+
+      try {
+        await copyRegistrationUrl(url);
+        showEventShareFeedback('Ссылка на событие скопирована');
+      } catch {
+        showEventShareManualFallback(url);
+      }
+    }
+
+    function handlePhoneBackspace(event) {
+      if (!(event.target instanceof HTMLInputElement) || event.key !== 'Backspace') {
+        return;
+      }
+
+      const { selectionStart, selectionEnd, value } = event.target;
+      if (selectionStart !== selectionEnd || selectionStart !== value.length) {
+        return;
+      }
+
+      const digits = getPhoneDigits(value);
+      if (!digits) {
+        return;
+      }
+
+      event.preventDefault();
+      event.target.value = formatPhoneDigits(digits.slice(0, -1));
+      persistDraft();
+
+      if (event.target.getAttribute('aria-invalid') === 'true') {
+        validateField('phone');
+      }
+    }
+
     function formatEventSummary(item) {
       const dateLabel = new Intl.DateTimeFormat('ru-RU', {
         dateStyle: 'long',
@@ -151,7 +525,29 @@ const supportEmail = 'bilet@kdg80.ru';
         timeZone: 'Europe/Kaliningrad',
       }).format(new Date(item.startsAt));
 
-      return `${dateLabel} · ${item.venueName}, ${item.hallName} · ${item.address}`;
+      const locationParts = [item.venueName, item.hallName].filter(Boolean);
+      return [dateLabel, locationParts.join(', '), item.address].filter(Boolean).join(' · ');
+    }
+
+    function formatSpeakerLabel(item) {
+      if (typeof item.speakerLabel !== 'string' || !item.speakerLabel.trim()) {
+        return '';
+      }
+
+      return `Спикер: ${item.speakerLabel.trim()}`;
+    }
+
+    function applyStateOverride(button, item) {
+      if (button.dataset.registrationStateOverride !== 'registration_soon') {
+        return item;
+      }
+
+      return {
+        ...item,
+        publicState: 'registration_soon',
+        ctaLabel: 'Регистрация скоро откроется',
+        ctaNotice: '',
+      };
     }
 
     function updateButton(button, item) {
@@ -170,7 +566,7 @@ const supportEmail = 'bilet@kdg80.ru';
             ctaLabel: 'Событие прошло',
             ctaNotice: '',
           }
-        : item;
+        : applyStateOverride(button, item);
 
       button.dataset.publicState = visibleState.publicState;
       button.textContent = visibleState.ctaLabel;
@@ -193,6 +589,47 @@ const supportEmail = 'bilet@kdg80.ru';
       button.classList.toggle('button--disabled', !isOpen);
       button.classList.toggle('button--ghost', !isOpen);
       button.classList.toggle('button--primary', isOpen);
+    }
+
+    function buildOptimisticItem(button) {
+      const publicState = button.dataset.registrationStateOverride === 'registration_soon'
+        ? 'registration_soon'
+        : 'registration_open';
+
+      return {
+        slug: button.dataset.eventSlug || '',
+        title: button.dataset.eventTitle || 'Событие фестиваля',
+        startsAt: button.dataset.eventStart || new Date().toISOString(),
+        endsAt: button.dataset.eventStart || new Date().toISOString(),
+        venueName: button.dataset.eventVenue || '',
+        hallName: '',
+        address: button.dataset.eventAddress || '',
+        speakerLabel: button.dataset.eventSpeaker || '',
+        publicState,
+        ctaLabel: publicState === 'registration_soon' ? 'Регистрация скоро откроется' : 'Регистрация',
+        ctaNotice: '',
+      };
+    }
+
+    function setOptimisticOpenState(button, message = '') {
+      if (button.dataset.registrationStateOverride === 'registration_soon') {
+        updateButton(button, buildOptimisticItem(button));
+        return;
+      }
+
+      const notice = button.closest('[data-registration-card]')?.querySelector('[data-registration-notice]');
+
+      button.dataset.publicState = 'registration_open_unverified';
+      button.textContent = 'Регистрация';
+      button.disabled = false;
+      button.setAttribute('aria-disabled', 'false');
+      button.classList.remove('button--disabled', 'button--ghost');
+      button.classList.add('button--primary');
+
+      if (notice instanceof HTMLElement) {
+        notice.hidden = !message;
+        notice.textContent = message;
+      }
     }
 
     function setCheckingState(button, message = '') {
@@ -292,9 +729,9 @@ const supportEmail = 'bilet@kdg80.ru';
           continue;
         }
 
-        setCheckingState(
+        setOptimisticOpenState(
           button,
-          fallbackFetchFailed ? 'Статус регистрации временно недоступен. Попробуйте обновить страницу.' : '',
+          fallbackFetchFailed ? 'Статус временно недоступен. Проверим доступность при открытии формы.' : '',
         );
       }
     }
@@ -314,7 +751,7 @@ const supportEmail = 'bilet@kdg80.ru';
         const parsed = JSON.parse(draft);
         form.fullName.value = parsed.fullName || '';
         form.email.value = parsed.email || '';
-        form.phone.value = parsed.phone || '';
+        form.phone.value = normalizePhoneInput(parsed.phone || '');
         form.consentAccepted.checked = Boolean(parsed.consentAccepted);
       } catch {
         form.reset();
@@ -343,9 +780,19 @@ const supportEmail = 'bilet@kdg80.ru';
     function openModal(item) {
       activeEvent = item;
       clearErrors();
+      hideShareFeedback();
+      hideShareManualFallback();
+      hideEventShareFeedback();
+      hideEventShareManualFallback();
+      syncRegistrationShareButtons();
       hydrateDraft();
       document.body.classList.add('registration-modal-open');
       shell.hidden = false;
+      syncViewportHeight();
+
+      if (shell instanceof HTMLElement) {
+        shell.scrollTop = 0;
+      }
 
       if (titleNode instanceof HTMLElement) {
         titleNode.textContent = item.title;
@@ -355,69 +802,250 @@ const supportEmail = 'bilet@kdg80.ru';
         summaryNode.textContent = formatEventSummary(item);
       }
 
-      form.fullName.focus();
+      if (speakerNode instanceof HTMLElement) {
+        const speakerLabel = formatSpeakerLabel(item);
+        speakerNode.hidden = !speakerLabel;
+        speakerNode.textContent = speakerLabel;
+      }
+
+      requestAnimationFrame(() => {
+        syncViewportHeight();
+        shell.scrollTop = 0;
+
+        if (shouldAutofocusFirstField()) {
+          form.fullName.focus({
+            preventScroll: true,
+          });
+        }
+      });
     }
 
     function closeModal() {
       clearTimeout(slowRequestTimer);
+      hideShareFeedback();
+      hideShareManualFallback();
+      if (document.activeElement instanceof HTMLElement && shell.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
       shell.hidden = true;
       document.body.classList.remove('registration-modal-open');
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('register') === '1') {
+        currentUrl.searchParams.delete('register');
+        history.replaceState(history.state, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+      }
       activeEvent = null;
       clearErrors();
+      if (speakerNode instanceof HTMLElement) {
+        speakerNode.hidden = true;
+        speakerNode.textContent = '';
+      }
       form.reset();
     }
 
-    function validate() {
-      clearErrors();
-
-      const data = {
+    function collectFormData() {
+      return {
         fullName: form.fullName.value.trim().replace(/\s+/g, ' '),
         email: form.email.value.trim().toLowerCase(),
-        phone: form.phone.value.trim(),
+        phone: normalizePhoneForSubmit(form.phone.value),
         consentAccepted: form.consentAccepted.checked,
       };
-
-      let valid = true;
-      const nameParts = data.fullName.split(' ').filter(Boolean);
-
-      if (!data.fullName) {
-        setFieldError('fullName', 'Укажите имя и фамилию.');
-        valid = false;
-      } else if (nameParts.length < 2 || nameParts.some((item) => item.replace(/[-']/g, '').length < 2)) {
-        setFieldError('fullName', 'Укажите минимум имя и фамилию.');
-        valid = false;
-      }
-
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-        setFieldError('email', 'Проверьте email.');
-        valid = false;
-      }
-
-      const digits = data.phone.replace(/\D+/g, '');
-      if (!(digits.length === 11 && /^[78]\d{10}$/.test(digits))) {
-        setFieldError('phone', 'Введите российский номер в формате +7.');
-        valid = false;
-      }
-
-      if (!data.consentAccepted) {
-        setFieldError('consentAccepted', 'Подтвердите согласие на обработку персональных данных, чтобы продолжить.');
-        valid = false;
-      }
-
-      return { valid, data };
     }
+
+    function getFieldMessage(field, data) {
+      if (field === 'fullName') {
+        const nameParts = data.fullName.split(' ').filter(Boolean);
+        if (!data.fullName) {
+          return 'Укажите имя и фамилию полностью.';
+        }
+
+        if (!/^[A-Za-zА-Яа-яЁё' -]+$/u.test(data.fullName)) {
+          return 'Укажите имя и фамилию полностью.';
+        }
+
+        if (nameParts.length < 2 || nameParts.some((item) => item.replace(/[-']/g, '').length < 2)) {
+          return 'Укажите имя и фамилию полностью.';
+        }
+
+        return '';
+      }
+
+      if (field === 'email') {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)
+          ? ''
+          : 'Проверьте email: адрес выглядит некорректно.';
+      }
+
+      if (field === 'phone') {
+        const digits = data.phone.replace(/\D+/g, '');
+        return digits.length === 11 && /^[78]\d{10}$/.test(digits)
+          ? ''
+          : 'Введите российский номер в формате +7XXXXXXXXXX.';
+      }
+
+      if (field === 'consentAccepted') {
+        return data.consentAccepted
+          ? ''
+          : 'Подтвердите согласие на обработку персональных данных, чтобы продолжить.';
+      }
+
+      return '';
+    }
+
+    function validateField(field) {
+      const data = collectFormData();
+      clearFieldError(field);
+      const message = getFieldMessage(field, data);
+      if (message) {
+        setFieldError(field, message);
+      }
+      return {
+        valid: !message,
+        data,
+      };
+    }
+
+    function revealFirstInvalidField(field) {
+      const control = form[field];
+      const container = fieldContainers[field];
+      const target = container instanceof HTMLElement ? container : control;
+
+      if (target instanceof HTMLElement) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+
+      if (control instanceof HTMLElement) {
+        control.focus({
+          preventScroll: true,
+        });
+      }
+
+      if (field === 'consentAccepted' && container instanceof HTMLElement) {
+        container.classList.remove('registration-form__checkbox--shake');
+        void container.offsetWidth;
+        container.classList.add('registration-form__checkbox--shake');
+        setStatus('Чтобы завершить регистрацию, подтвердите согласие на обработку персональных данных.');
+      }
+    }
+
+    syncViewportHeight();
+    syncRegistrationShareButtons();
+    syncEventShareButtons();
+    window.addEventListener('resize', syncViewportHeight);
+    window.addEventListener('orientationchange', syncViewportHeight);
+    window.visualViewport?.addEventListener('resize', syncViewportHeight);
+    if (typeof coarsePointerQuery.addEventListener === 'function') {
+      coarsePointerQuery.addEventListener('change', () => {
+        syncRegistrationShareButtons();
+        syncEventShareButtons();
+      });
+    } else if (typeof coarsePointerQuery.addListener === 'function') {
+      coarsePointerQuery.addListener(() => {
+        syncRegistrationShareButtons();
+        syncEventShareButtons();
+      });
+    }
+
+    function validateForm(options = { reveal: false }) {
+      clearErrors();
+      const data = collectFormData();
+      let firstInvalidField = '';
+
+      for (const fieldName of fieldNames) {
+        const message = getFieldMessage(fieldName, data);
+        if (!message) {
+          continue;
+        }
+
+        setFieldError(fieldName, message);
+        if (!firstInvalidField) {
+          firstInvalidField = fieldName;
+        }
+      }
+
+      if (firstInvalidField && options.reveal) {
+        revealFirstInvalidField(firstInvalidField);
+      }
+
+      return {
+        valid: !firstInvalidField,
+        data,
+      };
+    }
+
+    function syncSubmitState(isLoading) {
+      submitButton.disabled = isLoading;
+      submitButton.dataset.loading = isLoading ? 'true' : 'false';
+      submitButton.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+      submitButton.textContent = isLoading ? 'Регистрируем…' : 'Зарегистрироваться';
+    }
+
+    function maybeAutoOpenFromUrl() {
+      if (autoOpenAttempted) {
+        return;
+      }
+
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('register') !== '1') {
+        return;
+      }
+
+      autoOpenAttempted = true;
+      const target = document.querySelector('[data-registration-autoload] [data-registration-cta], [data-registration-cta][data-registration-autoload]');
+      if (!(target instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      if (target.dataset.publicState === 'registration_open' || target.dataset.publicState === 'registration_open_unverified') {
+        target.click();
+      }
+    }
+
+    for (const shareButton of shareButtons) {
+      if (shareButton instanceof HTMLButtonElement) {
+        shareButton.addEventListener('click', () => {
+          handleRegistrationShareAction();
+        });
+      }
+    }
+
+    for (const eventShareButton of eventShareButtons) {
+      if (eventShareButton instanceof HTMLButtonElement) {
+        eventShareButton.addEventListener('click', () => {
+          handleEventShareAction(eventShareButton);
+        });
+      }
+    }
+
+    form.phone.addEventListener('keydown', handlePhoneBackspace);
 
     form.phone.addEventListener('input', () => {
       form.phone.value = normalizePhoneInput(form.phone.value);
       persistDraft();
+      if (form.phone.getAttribute('aria-invalid') === 'true') {
+        validateField('phone');
+      }
     });
 
     for (const fieldName of fieldNames) {
       const field = form[fieldName];
       if (field instanceof HTMLElement) {
-        field.addEventListener('blur', validate);
-        field.addEventListener('input', persistDraft);
-        field.addEventListener('change', persistDraft);
+        field.addEventListener('blur', () => {
+          validateField(fieldName);
+        });
+        field.addEventListener('input', () => {
+          persistDraft();
+          if (field.getAttribute('aria-invalid') === 'true') {
+            validateField(fieldName);
+          }
+        });
+        field.addEventListener('change', () => {
+          persistDraft();
+          validateField(fieldName);
+        });
       }
     }
 
@@ -433,13 +1061,14 @@ const supportEmail = 'bilet@kdg80.ru';
         return;
       }
 
-      const { valid, data } = validate();
+      const { valid, data } = validateForm({
+        reveal: true,
+      });
       if (!valid) {
         return;
       }
 
-      submitButton.disabled = true;
-      submitButton.textContent = 'Регистрируем…';
+      syncSubmitState(true);
       clearTimeout(slowRequestTimer);
       slowRequestTimer = window.setTimeout(() => {
         setStatus('Проверяем данные и резервируем место. Это может занять несколько секунд.');
@@ -472,8 +1101,7 @@ const supportEmail = 'bilet@kdg80.ru';
         setStatus(`Связь с регистрацией прервалась. Если проблема повторяется, напишите на ${supportEmail}.`);
       } finally {
         clearTimeout(slowRequestTimer);
-        submitButton.disabled = false;
-        submitButton.textContent = 'Зарегистрироваться';
+        syncSubmitState(false);
       }
     });
 
@@ -482,7 +1110,15 @@ const supportEmail = 'bilet@kdg80.ru';
         const slug = button.dataset.eventSlug || '';
         const item = stateCache.get(slug);
         if (item?.publicState === 'registration_open') {
-          openModal(item);
+          openModal({
+            ...item,
+            speakerLabel: button.dataset.eventSpeaker || '',
+          });
+          return;
+        }
+
+        if (button.dataset.publicState === 'registration_open_unverified') {
+          openModal(buildOptimisticItem(button));
         }
       });
     }
@@ -497,10 +1133,18 @@ const supportEmail = 'bilet@kdg80.ru';
       }
     });
 
-    fetchStates().catch(() => {
-      for (const button of ctaButtons) {
-        setCheckingState(button, 'Статус регистрации временно недоступен. Попробуйте обновить страницу.');
-      }
-    });
+    if (ctaButtons.length) {
+      fetchStates()
+        .catch(() => {
+          for (const button of ctaButtons) {
+            setOptimisticOpenState(button, 'Статус временно недоступен. Проверим доступность при открытии формы.');
+          }
+        })
+        .finally(() => {
+          maybeAutoOpenFromUrl();
+        });
+    } else {
+      maybeAutoOpenFromUrl();
+    }
   })();
 </script>

@@ -1,0 +1,31 @@
+---
+import ProgramSection from '../../components/ProgramSection.astro';
+import RegistrationClient from '../../components/RegistrationClient.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Layout from '../../layouts/Layout.astro';
+import { getFestivalEvents, getMonthGroups } from '../../lib/festival';
+import { getRouteNavItems, getSmartProgramHref } from '../../lib/routes';
+
+const events = getFestivalEvents();
+const monthGroups = getMonthGroups(events);
+const routeItems = getRouteNavItems();
+const now = new Date();
+const programHref = getSmartProgramHref(events, true, now);
+const title = 'Программа фестиваля | 80 историй о главном';
+const description = 'Полная программа фестиваля в отдельном маршруте: хронологическая лента, навигация по месяцам и та же система регистрации, что и на главной.';
+---
+
+<Layout title={title} description={description} canonicalPath="/programma/">
+  <div class="page page--program">
+    <div id="top" aria-hidden="true"></div>
+    <SiteHeader routeItems={routeItems} programHref={programHref} />
+
+    <main>
+      <ProgramSection monthGroups={monthGroups} now={now} standalone />
+    </main>
+
+    <SiteFooter routeItems={routeItems} programHref={programHref} />
+    <RegistrationClient />
+  </div>
+</Layout>

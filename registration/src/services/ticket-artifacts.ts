@@ -4,9 +4,11 @@ import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
 import type { TicketArtifacts } from '../types';
 import type { StoragePublisher, TicketArtifactBundle } from '../lib/storage';
+import festivalEventSpeakers from '../data/festival-event-speakers.json';
 
 type TicketArtifactInput = {
   publicHash: string;
+  eventSlug?: string | null;
   shortTicketId: string;
   ticketBaseUrl: string;
   ticketsPrefix: string;
@@ -14,6 +16,7 @@ type TicketArtifactInput = {
   emailMasked: string;
   phoneMasked: string;
   title: string;
+  speakerLabel?: string | null;
   startsAt: string;
   venueName: string;
   hallName: string;
@@ -26,8 +29,54 @@ const ASSETS_ROOT = fileURLToPath(new URL('../assets/', import.meta.url));
 const FESTIVAL_LOGO_PNG = path.join(ASSETS_ROOT, 'logos', 'logo-znanie-festival.png');
 const FESTIVAL_MARK_PNG = path.join(ASSETS_ROOT, 'logos', 'logo-80-istorii-hero.png');
 const TICKET_IMAGES_DIR = path.join(ASSETS_ROOT, 'ticket-event-images');
-const PDF_FONT_REGULAR = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
-const PDF_FONT_BOLD = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+const SHARED_FONTS_ROOT = path.resolve(ASSETS_ROOT, '..', '..', '..', 'assets', 'fonts');
+const CYGRE_REGULAR_FONT = path.join(SHARED_FONTS_ROOT, 'Cygre-Regular.woff2');
+const CYGRE_BOLD_FONT = path.join(SHARED_FONTS_ROOT, 'Cygre-Bold.woff2');
+const FAVORIT_BOOK_FONT = path.join(SHARED_FONTS_ROOT, 'FavoritPro-Book.otf');
+const FAVORIT_MEDIUM_FONT = path.join(SHARED_FONTS_ROOT, 'FavoritPro-Medium.otf');
+const FAVORIT_BOLD_FONT = path.join(SHARED_FONTS_ROOT, 'FavoritPro-Bold.otf');
+const PDF_FONT_REGULAR_FALLBACK = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
+const PDF_FONT_BOLD_FALLBACK = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+
+// Pre-load logos as base64 data URIs so the HTML ticket is self-contained
+// (no dependency on /shared-assets/ when opened from S3 or file://).
+function loadPngDataUri(filePath: string): string | null {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  const b64 = fs.readFileSync(filePath).toString('base64');
+  return `data:image/png;base64,${b64}`;
+}
+
+function getFontMimeType(filePath: string) {
+  if (filePath.endsWith('.woff2')) {
+    return 'font/woff2';
+  }
+
+  if (filePath.endsWith('.otf')) {
+    return 'font/otf';
+  }
+
+  return 'application/octet-stream';
+}
+
+function loadFontDataUri(filePath: string): string | null {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  const b64 = fs.readFileSync(filePath).toString('base64');
+  return `data:${getFontMimeType(filePath)};base64,${b64}`;
+}
+
+const FESTIVAL_LOGO_DATA_URI = loadPngDataUri(FESTIVAL_LOGO_PNG);
+const CYGRE_REGULAR_DATA_URI = loadFontDataUri(CYGRE_REGULAR_FONT);
+const CYGRE_BOLD_DATA_URI = loadFontDataUri(CYGRE_BOLD_FONT);
+const FAVORIT_BOOK_DATA_URI = loadFontDataUri(FAVORIT_BOOK_FONT);
+const FAVORIT_MEDIUM_DATA_URI = loadFontDataUri(FAVORIT_MEDIUM_FONT);
+const FAVORIT_BOLD_DATA_URI = loadFontDataUri(FAVORIT_BOLD_FONT);
+const FESTIVAL_EVENT_SPEAKERS = festivalEventSpeakers as Record<string, string>;
+const warnedFontFallbacks = new Set<string>();
 
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/u, '');
@@ -35,6 +84,32 @@ function trimTrailingSlash(value: string) {
 
 function buildTicketUrl(baseUrl: string, ticketsPrefix: string, publicHash: string) {
   return `${trimTrailingSlash(baseUrl)}/${ticketsPrefix.replace(/^\/+|\/+$/gu, '')}/${publicHash}/`;
+}
+
+function buildCalendarUrls(input: Pick<
+  TicketArtifactInput,
+  'ticketBaseUrl' | 'ticketsPrefix' | 'publicHash' | 'startsAt' | 'title' | 'venueName' | 'hallName' | 'address' | 'shortTicketId'
+>) {
+  const ticketUrl = buildTicketUrl(input.ticketBaseUrl, input.ticketsPrefix, input.publicHash);
+  const pdfUrl = `${ticketUrl}ticket.pdf`;
+  const icsUrl = `${ticketUrl}event.ics`;
+  const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
+  const startsAt = new Date(input.startsAt);
+  const endsAt = new Date(startsAt.getTime() + 90 * 60_000);
+  const googleDates = `${startsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}/${endsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}`;
+
+  googleCalendarUrl.searchParams.set('action', 'TEMPLATE');
+  googleCalendarUrl.searchParams.set('text', input.title);
+  googleCalendarUrl.searchParams.set('dates', googleDates);
+  googleCalendarUrl.searchParams.set('location', `${input.venueName}, ${input.hallName}, ${input.address}`);
+  googleCalendarUrl.searchParams.set('details', `Пригласительный билет № ${input.shortTicketId}. Распечатывать не требуется. Рассадка свободная. ${ticketUrl}`);
+
+  return {
+    ticketUrl,
+    pdfUrl,
+    icsUrl,
+    googleCalendarUrl: googleCalendarUrl.toString(),
+  };
 }
 
 function formatEventDate(isoValue: string) {
@@ -79,6 +154,18 @@ function buildAbsoluteUrl(baseUrl: string, relativePath: string | null | undefin
   return `${trimTrailingSlash(baseUrl)}${relativePath.startsWith('/') ? '' : '/'}${relativePath}`;
 }
 
+function resolveSpeakerLabel(input: Pick<TicketArtifactInput, 'eventSlug' | 'speakerLabel'>) {
+  if (typeof input.speakerLabel === 'string' && input.speakerLabel.trim()) {
+    return input.speakerLabel.trim();
+  }
+
+  if (typeof input.eventSlug === 'string' && input.eventSlug.trim()) {
+    return FESTIVAL_EVENT_SPEAKERS[input.eventSlug.trim()] ?? '';
+  }
+
+  return '';
+}
+
 function resolveTicketImagePath(assetName: string | null | undefined) {
   if (!assetName) {
     return null;
@@ -89,25 +176,20 @@ function resolveTicketImagePath(assetName: string | null | undefined) {
 }
 
 function buildHtml(input: TicketArtifactInput) {
-  const ticketUrl = buildTicketUrl(input.ticketBaseUrl, input.ticketsPrefix, input.publicHash);
-  const pdfUrl = `${ticketUrl}ticket.pdf`;
-  const icsUrl = `${ticketUrl}event.ics`;
-  const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
+  const { ticketUrl, pdfUrl, icsUrl, googleCalendarUrl } = buildCalendarUrls(input);
   const formattedDate = formatEventDate(input.startsAt);
   const dateOnly = formatEventDateOnly(input.startsAt);
   const timeOnly = formatEventTimeOnly(input.startsAt);
-  const startsAt = new Date(input.startsAt);
-  const endsAt = new Date(startsAt.getTime() + 90 * 60_000);
-  const googleDates = `${startsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}/${endsAt.toISOString().replace(/[-:]/gu, '').replace(/\.\d{3}Z$/u, 'Z')}`;
-  const festivalLogoUrl = '/shared-assets/logo-znanie-festival.svg';
-  const festivalMarkUrl = '/shared-assets/logo-80-istorii-hero.svg';
+  const speakerLabel = resolveSpeakerLabel(input);
+  // Use embedded data URIs so the ticket HTML is self-contained from any origin.
+  // Fall back to /shared-assets/ paths if the PNG assets are not present.
+  const festivalLogoUrl = FESTIVAL_LOGO_DATA_URI ?? '/shared-assets/logo-znanie-festival.svg';
+  const cygreRegularUrl = CYGRE_REGULAR_DATA_URI ?? '/shared-assets/fonts/Cygre-Regular.woff2';
+  const cygreBoldUrl = CYGRE_BOLD_DATA_URI ?? '/shared-assets/fonts/Cygre-Bold.woff2';
+  const favoritBookUrl = FAVORIT_BOOK_DATA_URI ?? '/shared-assets/fonts/FavoritPro-Book.otf';
+  const favoritMediumUrl = FAVORIT_MEDIUM_DATA_URI ?? '/shared-assets/fonts/FavoritPro-Medium.otf';
+  const favoritBoldUrl = FAVORIT_BOLD_DATA_URI ?? '/shared-assets/fonts/FavoritPro-Bold.otf';
   const eventImageUrl = input.eventImageUrl || '';
-
-  googleCalendarUrl.searchParams.set('action', 'TEMPLATE');
-  googleCalendarUrl.searchParams.set('text', input.title);
-  googleCalendarUrl.searchParams.set('dates', googleDates);
-  googleCalendarUrl.searchParams.set('location', `${input.venueName}, ${input.address}`);
-  googleCalendarUrl.searchParams.set('details', `Билет № ${input.shortTicketId}. Печать не требуется. ${ticketUrl}`);
 
   return `<!doctype html>
 <html lang="ru">
@@ -115,39 +197,39 @@ function buildHtml(input: TicketArtifactInput) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow, noarchive" />
-    <title>Билет — ${escapeHtml(input.title)}</title>
+    <title>Пригласительный — ${escapeHtml(input.title)}</title>
     <style>
       @font-face {
         font-family: "Cygre";
-        src: url("/shared-assets/fonts/Cygre-Regular.woff2") format("woff2");
+        src: url("${cygreRegularUrl}") format("woff2");
         font-weight: 400;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "Cygre";
-        src: url("/shared-assets/fonts/Cygre-Bold.woff2") format("woff2");
+        src: url("${cygreBoldUrl}") format("woff2");
         font-weight: 700;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "FavoritPro";
-        src: url("/shared-assets/fonts/FavoritPro-Book.otf") format("opentype");
+        src: url("${favoritBookUrl}") format("opentype");
         font-weight: 400;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "FavoritPro";
-        src: url("/shared-assets/fonts/FavoritPro-Medium.otf") format("opentype");
+        src: url("${favoritMediumUrl}") format("opentype");
         font-weight: 500;
         font-style: normal;
         font-display: swap;
       }
       @font-face {
         font-family: "FavoritPro";
-        src: url("/shared-assets/fonts/FavoritPro-Bold.otf") format("opentype");
+        src: url("${favoritBoldUrl}") format("opentype");
         font-weight: 700;
         font-style: normal;
         font-display: swap;
@@ -210,18 +292,23 @@ function buildHtml(input: TicketArtifactInput) {
       }
 
       .hero__logos {
-        display: grid;
-        gap: 10px;
+        display: block;
       }
 
-      .hero__logos img:first-child {
+      .hero__logos img {
         width: clamp(170px, 38vw, 320px);
         height: auto;
       }
 
-      .hero__logos img:last-child {
-        width: clamp(78px, 20vw, 132px);
-        height: auto;
+      .hero__tagline {
+        margin: 0;
+        max-width: 17ch;
+        color: rgba(22, 18, 13, 0.66);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.22;
+        letter-spacing: 0.03em;
+        text-wrap: balance;
       }
 
       .hero__eyebrow {
@@ -262,6 +349,21 @@ function buildHtml(input: TicketArtifactInput) {
         color: var(--ink-soft);
         font-size: 17px;
         line-height: 1.55;
+      }
+
+      .hero__speaker {
+        display: inline-flex;
+        align-items: center;
+        max-width: min(100%, 54rem);
+        margin: 0;
+        padding: 10px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(216, 75, 49, 0.18);
+        background: rgba(216, 75, 49, 0.08);
+        color: #2f241a;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.45;
       }
 
       .hero__meta {
@@ -397,6 +499,18 @@ function buildHtml(input: TicketArtifactInput) {
         line-height: 1.45;
       }
 
+      .actions-stack {
+        display: grid;
+        gap: 16px;
+      }
+
+      .calendar-block {
+        padding: 18px;
+        border-radius: 24px;
+        border: 1px solid rgba(150, 45, 27, 0.14);
+        background: linear-gradient(180deg, rgba(255, 250, 244, 0.96) 0%, rgba(247, 239, 228, 0.96) 100%);
+      }
+
       .actions-title {
         margin: 0 0 10px;
         font-size: 12px;
@@ -416,6 +530,9 @@ function buildHtml(input: TicketArtifactInput) {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+      }
+
+      .actions--calendar {
         margin-top: 18px;
       }
 
@@ -432,12 +549,14 @@ function buildHtml(input: TicketArtifactInput) {
         text-decoration: none;
         font-weight: 700;
         flex: 1 1 210px;
+        box-shadow: 0 12px 30px rgba(150, 45, 27, 0.16);
       }
 
       .button--ghost {
         color: var(--ink);
-        background: transparent;
-        border-color: var(--line);
+        background: rgba(255, 255, 255, 0.88);
+        border-color: rgba(22, 18, 13, 0.1);
+        box-shadow: 0 10px 24px rgba(22, 18, 13, 0.08);
       }
 
       .footer-note {
@@ -491,6 +610,10 @@ function buildHtml(input: TicketArtifactInput) {
         .panel__value {
           font-size: 16px;
         }
+
+        .button {
+          flex-basis: 100%;
+        }
       }
     </style>
   </head>
@@ -501,13 +624,13 @@ function buildHtml(input: TicketArtifactInput) {
           <div class="hero__brand">
             <div class="hero__logos">
               <img src="${festivalLogoUrl}" alt="Российское общество Знание. Фестиваль 80 историй о главном" />
-              <img src="${festivalMarkUrl}" alt="" aria-hidden="true" />
             </div>
-            <span class="hero__badge">Билет / Приглашение</span>
+            <span class="hero__badge">Пригласительный</span>
           </div>
           <p class="hero__eyebrow">80 историй о главном</p>
           <h1 class="hero__title">${escapeHtml(input.title)}</h1>
-          <p class="hero__summary">Сохраните эту страницу или скачайте PDF. Печать билета не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.</p>
+          <p class="hero__summary">Сохраните пригласительный в телефоне и покажите на входе. Распечатывать не требуется, рассадка свободная.</p>
+          ${speakerLabel ? `<p class="hero__speaker">Спикер: ${escapeHtml(speakerLabel)}</p>` : ''}
           <div class="hero__meta">
             <div class="hero__stat">
               <span class="hero__stat-label">Дата</span>
@@ -529,7 +652,7 @@ function buildHtml(input: TicketArtifactInput) {
           <figure class="hero__image">
             ${eventImageUrl ? `<img src="${escapeHtml(eventImageUrl)}" alt="Визуальный образ события «${escapeHtml(input.title)}»" />` : ''}
             <figcaption class="hero__image-caption">
-              <strong>Билет № ${escapeHtml(input.shortTicketId)}</strong>
+              <strong>Пригласительный № ${escapeHtml(input.shortTicketId)}</strong>
               <span>${escapeHtml(formattedDate)} · ${escapeHtml(input.address)}</span>
             </figcaption>
           </figure>
@@ -542,25 +665,28 @@ function buildHtml(input: TicketArtifactInput) {
             <p class="panel__value">${escapeHtml(input.emailMasked)}<br />${escapeHtml(input.phoneMasked)}</p>
           </div>
           <div class="panel">
-            <span class="panel__label">Короткий номер билета</span>
+            <span class="panel__label">Короткий номер пригласительного</span>
             <div class="ticket-id">${escapeHtml(input.shortTicketId)}</div>
-            <p class="ticket-id-note">Покажите этот номер или откройте билет со страницы мероприятия. Рассадка свободная.</p>
+            <p class="ticket-id-note">Покажите этот номер на входе или откройте пригласительный со страницы мероприятия. Рассадка свободная.</p>
           </div>
           <div class="panel">
             <span class="panel__label">Маршрут</span>
             <p class="panel__value">${escapeHtml(input.venueName)}<br />${escapeHtml(input.hallName)}<br />${escapeHtml(input.address)}</p>
           </div>
           <div class="panel">
-            <p class="actions-title">Добавьте событие в календарь, чтобы не забыть</p>
-            <p class="actions-copy">Лучше сделать это сейчас: в день мероприятия билет не придётся искать в переписке или загрузках.</p>
-            <div class="actions">
+            <div class="actions-stack">
               <a class="button" href="${escapeHtml(pdfUrl)}">Скачать PDF</a>
-              <a class="button button--ghost" href="${escapeHtml(googleCalendarUrl.toString())}" target="_blank" rel="noreferrer">Google Calendar</a>
-              <a class="button button--ghost" href="${escapeHtml(icsUrl)}">iPhone / Apple Calendar</a>
-              <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Android / ICS</a>
-              <a class="button button--ghost" href="${escapeHtml(icsUrl)}" download>Скачать ICS</a>
+              <div class="calendar-block">
+                <p class="actions-title">📅 Добавить в календарь</p>
+                <p class="actions-copy">Добавьте событие сейчас, чтобы не искать билет в день мероприятия.</p>
+                <div class="actions actions--calendar">
+                  <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Android (ICS)</a>
+                  <a class="button button--ghost" href="${escapeHtml(icsUrl)}">Календарь Apple</a>
+                  <a class="button button--ghost" href="${escapeHtml(googleCalendarUrl)}" target="_blank" rel="noreferrer">Google</a>
+                </div>
+              </div>
             </div>
-            <p class="footer-note">Печать билета не требуется. Свободная рассадка. Постоянная ссылка на билет: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
+            <p class="footer-note">Распечатывать не требуется, рассадка свободная. Постоянная ссылка: <a href="${escapeHtml(ticketUrl)}">${escapeHtml(ticketUrl)}</a></p>
           </div>
         </section>
       </article>
@@ -588,8 +714,8 @@ function buildIcs(input: TicketArtifactInput) {
     `DTSTART:${startIcs}`,
     `DTEND:${endIcs}`,
     `SUMMARY:${input.title.replace(/,/gu, '\\,')}`,
-    `LOCATION:${`${input.venueName}, ${input.address}`.replace(/,/gu, '\\,')}`,
-    `DESCRIPTION:${`Билет № ${input.shortTicketId}. Печать не требуется. Свободная рассадка. ${ticketUrl}`.replace(/,/gu, '\\,')}`,
+    `LOCATION:${`${input.venueName}, ${input.hallName}, ${input.address}`.replace(/,/gu, '\\,')}`,
+    `DESCRIPTION:${`Пригласительный билет № ${input.shortTicketId}. Распечатывать не требуется. Рассадка свободная. ${ticketUrl}`.replace(/,/gu, '\\,')}`,
     'END:VEVENT',
     'END:VCALENDAR',
     '',
@@ -602,15 +728,29 @@ function setPdfFont(doc: PDFKit.PDFDocument, fontPath: string, fallback: string)
     return;
   }
 
+  if (!warnedFontFallbacks.has(fontPath)) {
+    warnedFontFallbacks.add(fontPath);
+    console.warn(`ticket-artifacts: missing PDF font ${fontPath}, falling back to ${fallback}`);
+  }
   doc.font(fallback);
 }
 
 function setPdfRegularFont(doc: PDFKit.PDFDocument) {
-  setPdfFont(doc, PDF_FONT_REGULAR, 'Helvetica');
+  setPdfFont(doc, FAVORIT_BOOK_FONT, PDF_FONT_REGULAR_FALLBACK);
+}
+
+function setPdfMediumFont(doc: PDFKit.PDFDocument) {
+  setPdfFont(doc, FAVORIT_MEDIUM_FONT, PDF_FONT_REGULAR_FALLBACK);
 }
 
 function setPdfBoldFont(doc: PDFKit.PDFDocument) {
-  setPdfFont(doc, PDF_FONT_BOLD, 'Helvetica-Bold');
+  setPdfFont(doc, FAVORIT_BOLD_FONT, PDF_FONT_BOLD_FALLBACK);
+}
+
+function setPdfDisplayFont(doc: PDFKit.PDFDocument) {
+  // PDFKit/fontkit crashes while subsetting the bundled Cygre woff2 files.
+  // Use the site's body-display companion in OTF so PDF artifacts stay stable.
+  setPdfFont(doc, FAVORIT_BOLD_FONT, PDF_FONT_BOLD_FALLBACK);
 }
 
 function drawInfoCard(
@@ -622,23 +762,145 @@ function drawInfoCard(
     height: number;
     label: string;
     value: string;
+    valueFontSize?: number;
+    valueLineGap?: number;
   },
 ) {
   doc.save();
   doc.roundedRect(options.x, options.y, options.width, options.height, 18).fillAndStroke('#fffaf4', '#e4d7c6');
   doc.fillColor('#7a7066');
   setPdfBoldFont(doc);
-  doc.fontSize(10).text(options.label.toUpperCase(), options.x + 14, options.y + 14, {
+  drawFixedText(doc, options.label.toUpperCase(), options.x + 14, options.y + 14, {
+    fontSize: 10,
     width: options.width - 28,
     characterSpacing: 1.2,
   });
   doc.fillColor('#16120d');
   setPdfRegularFont(doc);
-  doc.fontSize(12).text(options.value, options.x + 14, options.y + 34, {
+  drawFixedText(doc, options.value, options.x + 14, options.y + 34, {
+    fontSize: options.valueFontSize ?? 12,
     width: options.width - 28,
-    lineGap: 3,
+    lineGap: options.valueLineGap ?? 3,
   });
   doc.restore();
+}
+
+function drawFixedText(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  options: PDFKit.Mixins.TextOptions & {
+    fontSize?: number;
+  } = {},
+) {
+  const previousX = doc.x;
+  const previousY = doc.y;
+  const { fontSize, ...textOptions } = options;
+
+  doc.x = 0;
+  doc.y = 0;
+  if (typeof fontSize === 'number') {
+    doc.fontSize(fontSize);
+  }
+  doc.text(text, x, y, textOptions);
+  doc.x = previousX;
+  doc.y = previousY;
+}
+
+function measureTextHeight(
+  doc: PDFKit.PDFDocument,
+  options: {
+    text: string;
+    width: number;
+    fontSize: number;
+    lineGap?: number;
+    font: 'regular' | 'medium' | 'bold' | 'display';
+  },
+) {
+  doc.save();
+  if (options.font === 'display') {
+    setPdfDisplayFont(doc);
+  } else if (options.font === 'bold') {
+    setPdfBoldFont(doc);
+  } else if (options.font === 'medium') {
+    setPdfMediumFont(doc);
+  } else {
+    setPdfRegularFont(doc);
+  }
+
+  doc.fontSize(options.fontSize);
+  const height = doc.heightOfString(options.text, {
+    width: options.width,
+    lineGap: options.lineGap ?? 0,
+  });
+  doc.restore();
+  return height;
+}
+
+function measureInfoCardHeight(
+  doc: PDFKit.PDFDocument,
+  options: {
+    width: number;
+    value: string;
+    minHeight?: number;
+    valueFontSize?: number;
+    valueLineGap?: number;
+  },
+) {
+  const valueHeight = measureTextHeight(doc, {
+    text: options.value,
+    width: options.width - 28,
+    fontSize: options.valueFontSize ?? 12,
+    lineGap: options.valueLineGap ?? 3,
+    font: 'regular',
+  });
+  return Math.max(options.minHeight ?? 78, 34 + valueHeight + 18);
+}
+
+function drawPanelSurface(
+  doc: PDFKit.PDFDocument,
+  options: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    fill: string;
+    stroke: string;
+  },
+) {
+  doc.save();
+  doc.roundedRect(options.x, options.y, options.width, options.height, 22).fillAndStroke(options.fill, options.stroke);
+  doc.restore();
+}
+
+function drawPdfLinkButton(
+  doc: PDFKit.PDFDocument,
+  options: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+    url: string;
+    fillColor: string;
+    borderColor: string;
+    textColor: string;
+    fontSize?: number;
+  },
+) {
+  doc.save();
+  doc.roundedRect(options.x, options.y, options.width, options.height, 12).fillAndStroke(options.fillColor, options.borderColor);
+  doc.fillColor(options.textColor);
+  setPdfBoldFont(doc);
+  const lineHeight = doc.currentLineHeight();
+  drawFixedText(doc, options.label, options.x + 8, options.y + Math.max(6, (options.height - lineHeight) / 2), {
+    fontSize: options.fontSize ?? 10,
+    width: options.width - 16,
+    align: 'center',
+  });
+  doc.restore();
+  doc.link(options.x, options.y, options.width, options.height, options.url);
 }
 
 function createPdfBuffer(input: TicketArtifactInput) {
@@ -647,7 +909,7 @@ function createPdfBuffer(input: TicketArtifactInput) {
       size: 'A4',
       margin: 0,
       info: {
-        Title: `Билет — ${input.title}`,
+        Title: `Пригласительный — ${input.title}`,
         Author: '80 историй о главном',
       },
     });
@@ -668,217 +930,321 @@ function createPdfBuffer(input: TicketArtifactInput) {
     const pageHeight = doc.page.height;
     const contentX = 42;
     const contentWidth = pageWidth - contentX * 2;
-    const ticketUrl = buildTicketUrl(input.ticketBaseUrl, input.ticketsPrefix, input.publicHash);
+    const { ticketUrl, icsUrl, googleCalendarUrl } = buildCalendarUrls(input);
+    const speakerLabel = resolveSpeakerLabel(input);
+    const speakerText = speakerLabel ? `Спикер: ${speakerLabel}` : '';
+    const cardGap = 14;
+    const halfWidth = (contentWidth - cardGap) / 2;
+    const lowerLeftWidth = contentWidth * 0.58;
+    const lowerRightX = contentX + lowerLeftWidth + cardGap;
+    const lowerRightWidth = contentWidth - lowerLeftWidth - cardGap;
+    const titleFontSize = input.title.length > 105 ? 20 : input.title.length > 76 ? 23 : 27;
+
     doc.rect(0, 0, pageWidth, pageHeight).fill('#f5ede1');
-    doc.save();
-    doc.fillColor('#d84b31').circle(pageWidth - 88, 86, 82).fill();
-    doc.restore();
-    doc.save();
-    doc.fillColor('#18120e').circle(94, pageHeight - 96, 70).fillOpacity(0.08).fill();
-    doc.restore();
 
     if (fs.existsSync(FESTIVAL_LOGO_PNG)) {
-      doc.image(FESTIVAL_LOGO_PNG, contentX, 36, { fit: [290, 50] });
-    }
-
-    if (fs.existsSync(FESTIVAL_MARK_PNG)) {
-      doc.image(FESTIVAL_MARK_PNG, pageWidth - 150, 30, { fit: [92, 92] });
+      doc.image(FESTIVAL_LOGO_PNG, contentX, 34, { fit: [248, 42] });
     }
 
     doc.save();
-    doc.roundedRect(contentX, 106, 138, 30, 15).fill('#f3d6d0');
+    doc.roundedRect(contentX, 98, 184, 30, 15).fill('#f3d6d0');
     doc.fillColor('#962d1b');
-    setPdfBoldFont(doc);
-    doc.fontSize(11).text('БИЛЕТ / ПРИГЛАШЕНИЕ', contentX + 14, 116, {
-      width: 110,
-      characterSpacing: 1.2,
+    setPdfMediumFont(doc);
+    drawFixedText(doc, 'ПРИГЛАСИТЕЛЬНЫЙ', contentX + 14, 108, {
+      fontSize: 10.4,
+      width: 156,
+      characterSpacing: 0.9,
     });
     doc.restore();
 
-    setPdfBoldFont(doc);
+    setPdfDisplayFont(doc);
     doc.fillColor('#16120d');
-    doc.fontSize(28).text(input.title, contentX, 154, {
-      width: contentWidth * 0.72,
-      lineGap: -1,
+    doc.fontSize(titleFontSize).text(input.title, contentX, 146, {
+      width: contentWidth,
+      lineGap: titleFontSize <= 20 ? 2 : 0,
     });
 
     setPdfRegularFont(doc);
     doc.fillColor('#544b42');
-    doc.fontSize(13).text(
-      'Сохраните этот билет в телефоне. Печать не требуется, а свободная рассадка позволит спокойно занять удобное место перед началом события.',
+    doc.fontSize(12.2).text(
+      'Сохраните пригласительный в телефоне и покажите на входе. Распечатывать не требуется, рассадка свободная.',
       contentX,
-      242,
+      doc.y + 10,
       {
-        width: contentWidth * 0.7,
-        lineGap: 4,
-      },
-    );
-
-    const heroY = 320;
-    const heroHeight = 192;
-    doc.save();
-    doc.roundedRect(contentX, heroY, contentWidth, heroHeight, 28).fillAndStroke('#f8f0e6', '#dbcdbb');
-    doc.restore();
-    doc.save();
-    doc.roundedRect(contentX + 18, heroY + 18, contentWidth - 36, heroHeight - 36, 22).fill('#17120d');
-    doc.restore();
-
-    if (fs.existsSync(FESTIVAL_LOGO_PNG)) {
-      doc.image(FESTIVAL_LOGO_PNG, contentX + 26, heroY + 28, { fit: [220, 38] });
-    }
-
-    if (fs.existsSync(FESTIVAL_MARK_PNG)) {
-      doc.image(FESTIVAL_MARK_PNG, pageWidth - 136, heroY + 18, { fit: [84, 84] });
-    }
-
-    setPdfBoldFont(doc);
-    doc.fillColor('#f0e6d7');
-    doc.fontSize(11).text('ФЕСТИВАЛЬНЫЙ БИЛЕТ', contentX + 26, heroY + 82, {
-      width: contentWidth - 52,
-      characterSpacing: 1.5,
-    });
-
-    setPdfBoldFont(doc);
-    doc.fillColor('#ffffff');
-    doc.fontSize(30).text(`Билет № ${input.shortTicketId}`, contentX + 26, heroY + 104, {
-      width: contentWidth - 160,
-      lineGap: 0,
-    });
-
-    setPdfRegularFont(doc);
-    doc.fillColor('#d7ccc0');
-    doc.fontSize(12).text(
-      `${formatEventDate(input.startsAt)} · ${input.venueName}`,
-      contentX + 26,
-      heroY + 146,
-      {
-        width: contentWidth - 52,
+        width: contentWidth,
         lineGap: 3,
       },
     );
 
-    doc.fontSize(11).text(
-      'Билет собран в облегчённом PDF-формате: логотипы и данные события сохраняются надёжно даже под нагрузкой.',
-      contentX + 26,
-      heroY + 166,
-      {
-        width: contentWidth - 150,
-        lineGap: 3,
-      },
-    );
+    let cardsY = doc.y + 12;
+    if (speakerText) {
+      const speakerY = cardsY;
+      const speakerHeight = Math.max(
+        34,
+        16 + measureTextHeight(doc, {
+          text: speakerText,
+          width: contentWidth - 28,
+          fontSize: 11.2,
+          lineGap: 2,
+          font: 'medium',
+        }),
+      );
+      doc.save();
+      doc.roundedRect(contentX, speakerY, contentWidth, speakerHeight, 17).fillAndStroke('#f6e4dc', '#e6c4bc');
+      doc.fillColor('#2f241a');
+      setPdfMediumFont(doc);
+      drawFixedText(doc, speakerText, contentX + 14, speakerY + 9, {
+        fontSize: 11.2,
+        width: contentWidth - 28,
+        lineGap: 2,
+      });
+      doc.restore();
+      cardsY = speakerY + speakerHeight + 10;
+    }
 
-    const cardsY = heroY + heroHeight + 22;
-    const cardGap = 14;
-    const smallCardWidth = (contentWidth - cardGap * 3) / 4;
+    const topRowHeight = 70;
+    const venueCardHeight = measureInfoCardHeight(doc, {
+      width: halfWidth,
+      value: input.venueName,
+      minHeight: 76,
+      valueFontSize: 11.2,
+      valueLineGap: 2,
+    });
+    const hallCardHeight = measureInfoCardHeight(doc, {
+      width: halfWidth,
+      value: input.hallName,
+      minHeight: 76,
+      valueFontSize: 11.2,
+      valueLineGap: 2,
+    });
+    const secondRowHeight = Math.max(venueCardHeight, hallCardHeight);
 
     drawInfoCard(doc, {
       x: contentX,
       y: cardsY,
-      width: smallCardWidth,
-      height: 86,
+      width: halfWidth,
+      height: topRowHeight,
       label: 'Дата',
       value: formatEventDateOnly(input.startsAt),
     });
     drawInfoCard(doc, {
-      x: contentX + smallCardWidth + cardGap,
+      x: contentX + halfWidth + cardGap,
       y: cardsY,
-      width: smallCardWidth,
-      height: 86,
+      width: halfWidth,
+      height: topRowHeight,
       label: 'Время',
       value: formatEventTimeOnly(input.startsAt),
     });
     drawInfoCard(doc, {
-      x: contentX + (smallCardWidth + cardGap) * 2,
-      y: cardsY,
-      width: smallCardWidth,
-      height: 86,
+      x: contentX,
+      y: cardsY + topRowHeight + cardGap,
+      width: halfWidth,
+      height: secondRowHeight,
       label: 'Площадка',
       value: input.venueName,
+      valueFontSize: 11.5,
+      valueLineGap: 2,
     });
     drawInfoCard(doc, {
-      x: contentX + (smallCardWidth + cardGap) * 3,
-      y: cardsY,
-      width: smallCardWidth,
-      height: 86,
+      x: contentX + halfWidth + cardGap,
+      y: cardsY + topRowHeight + cardGap,
+      width: halfWidth,
+      height: secondRowHeight,
       label: 'Зал',
       value: input.hallName,
+      valueFontSize: 11.5,
+      valueLineGap: 2,
     });
 
-    const lowerY = cardsY + 102;
-    const leftWidth = contentWidth * 0.58;
-    const rightX = contentX + leftWidth + cardGap;
-    const rightWidth = contentWidth - leftWidth - cardGap;
+    const lowerY = cardsY + topRowHeight + cardGap + secondRowHeight + 8;
+    const contactText = `${input.emailMasked}\n${input.phoneMasked}`;
+    const visitorHeight = Math.max(
+      90,
+      28
+        + measureTextHeight(doc, {
+            text: input.fullName,
+            width: lowerLeftWidth - 36,
+            fontSize: 20,
+            lineGap: 2,
+            font: 'display',
+          })
+        + 6
+        + measureTextHeight(doc, {
+            text: contactText,
+            width: lowerLeftWidth - 36,
+            fontSize: 11,
+            lineGap: 2,
+            font: 'regular',
+          })
+        + 14,
+    );
 
-    doc.save();
-    doc.roundedRect(contentX, lowerY, leftWidth, 122, 22).fillAndStroke('#fffaf4', '#e4d7c6');
-    doc.restore();
+    drawPanelSurface(doc, {
+      x: contentX,
+      y: lowerY,
+      width: lowerLeftWidth,
+      height: visitorHeight,
+      fill: '#fffaf4',
+      stroke: '#e4d7c6',
+    });
     doc.fillColor('#7a7066');
     setPdfBoldFont(doc);
-    doc.fontSize(10).text('ПОСЕТИТЕЛЬ', contentX + 18, lowerY + 16, {
-      width: leftWidth - 36,
+    drawFixedText(doc, 'ПОСЕТИТЕЛЬ', contentX + 18, lowerY + 16, {
+      fontSize: 10,
+      width: lowerLeftWidth - 36,
       characterSpacing: 1.2,
     });
     doc.fillColor('#16120d');
-    setPdfBoldFont(doc);
-    doc.fontSize(24).text(input.fullName, contentX + 18, lowerY + 36, {
-      width: leftWidth - 36,
+    setPdfDisplayFont(doc);
+    drawFixedText(doc, input.fullName, contentX + 18, lowerY + 34, {
+      fontSize: 20,
+      width: lowerLeftWidth - 36,
       lineGap: 2,
     });
     setPdfRegularFont(doc);
     doc.fillColor('#544b42');
-    doc.fontSize(12).text(`${input.emailMasked}\n${input.phoneMasked}`, contentX + 18, lowerY + 84, {
-      width: leftWidth - 36,
-      lineGap: 3,
+    drawFixedText(doc, contactText, contentX + 18, lowerY + visitorHeight - 34, {
+      fontSize: 11,
+      width: lowerLeftWidth - 36,
+      lineGap: 2,
     });
 
-    doc.save();
-    doc.roundedRect(rightX, lowerY, rightWidth, 122, 22).fillAndStroke('#18120e', '#18120e');
-    doc.restore();
+    drawPanelSurface(doc, {
+      x: lowerRightX,
+      y: lowerY,
+      width: lowerRightWidth,
+      height: visitorHeight,
+      fill: '#18120e',
+      stroke: '#18120e',
+    });
     doc.fillColor('#f5ede1');
+    setPdfMediumFont(doc);
+    drawFixedText(doc, 'КОРОТКИЙ НОМЕР ПРИГЛАСИТЕЛЬНОГО', lowerRightX + 18, lowerY + 16, {
+      fontSize: 10,
+      width: lowerRightWidth - 36,
+      characterSpacing: 0.9,
+    });
+    setPdfDisplayFont(doc);
+    drawFixedText(doc, input.shortTicketId, lowerRightX + 18, lowerY + 40, {
+      fontSize: 28,
+      width: lowerRightWidth - 36,
+      characterSpacing: 3,
+    });
+    setPdfRegularFont(doc);
+    drawFixedText(doc, 'Покажите этот номер на входе или откройте пригласительный на телефоне.', lowerRightX + 18, lowerY + 76, {
+      fontSize: 9.5,
+      width: lowerRightWidth - 36,
+      lineGap: 1,
+    });
+
+    const addressY = lowerY + visitorHeight + 14;
+    const routeValue = `${input.venueName}\n${input.hallName}\n${input.address}`;
+    const addressHeight = Math.max(
+      70,
+      28
+        + measureTextHeight(doc, {
+            text: routeValue,
+            width: contentWidth - 36,
+            fontSize: 11,
+            lineGap: 2,
+            font: 'regular',
+          })
+        + 12,
+    );
+
+    drawPanelSurface(doc, {
+      x: contentX,
+      y: addressY,
+      width: contentWidth,
+      height: addressHeight,
+      fill: '#fffaf4',
+      stroke: '#e4d7c6',
+    });
+    doc.fillColor('#7a7066');
     setPdfBoldFont(doc);
-    doc.fontSize(10).text('КОРОТКИЙ НОМЕР БИЛЕТА', rightX + 18, lowerY + 16, {
-      width: rightWidth - 36,
+    drawFixedText(doc, 'ПЛОЩАДКА И АДРЕС', contentX + 18, addressY + 16, {
+      fontSize: 10,
+      width: contentWidth - 36,
       characterSpacing: 1.2,
     });
-    setPdfBoldFont(doc);
-    doc.fontSize(31).text(input.shortTicketId, rightX + 18, lowerY + 42, {
-      width: rightWidth - 36,
-      characterSpacing: 4,
-    });
-    setPdfRegularFont(doc);
-    doc.fontSize(11).text('Свободная рассадка. Достаточно открыть этот билет на телефоне.', rightX + 18, lowerY + 88, {
-      width: rightWidth - 36,
-      lineGap: 3,
-    });
-
-    const footerY = lowerY + 142;
     doc.fillColor('#16120d');
-    setPdfBoldFont(doc);
-    doc.fontSize(13).text('Полный адрес площадки', contentX, footerY);
     setPdfRegularFont(doc);
-    doc.fillColor('#544b42');
-    doc.fontSize(12).text(`${input.venueName}, ${input.hallName}\n${input.address}`, contentX, footerY + 18, {
-      width: contentWidth * 0.56,
-      lineGap: 4,
+    drawFixedText(doc, routeValue, contentX + 18, addressY + 34, {
+      fontSize: 11,
+      width: contentWidth - 36,
+      lineGap: 2,
     });
 
-    setPdfBoldFont(doc);
-    doc.fillColor('#16120d');
-    doc.fontSize(13).text('На странице билета доступны календарные действия', rightX, footerY);
-    setPdfRegularFont(doc);
-    doc.fillColor('#544b42');
-    doc.fontSize(12).text('Google Calendar, Apple Calendar, Android / ICS и скачивание ICS-файла.', rightX, footerY + 18, {
-      width: rightWidth,
-      lineGap: 4,
-    });
-
-    doc.fillColor('#962d1b');
-    doc.fontSize(11).text(`Ссылка на билет: ${ticketUrl}`, contentX, pageHeight - 62, {
+    const calendarY = addressY + addressHeight + 8;
+    const calendarHeight = 56;
+    const calendarButtonGap = 8;
+    const calendarButtonWidth = (contentWidth - (calendarButtonGap * 2)) / 3;
+    drawPanelSurface(doc, {
+      x: contentX,
+      y: calendarY,
       width: contentWidth,
-      lineGap: 3,
+      height: calendarHeight,
+      fill: '#f8efe4',
+      stroke: '#d9c9b5',
     });
-    doc.fillColor('#544b42');
-    doc.fontSize(11).text('Печать билета не требуется.', contentX, pageHeight - 36);
+    doc.fillColor('#7a7066');
+    setPdfBoldFont(doc);
+    drawFixedText(doc, 'ДОБАВИТЬ В КАЛЕНДАРЬ', contentX + 18, calendarY + 12, {
+      fontSize: 9.4,
+      width: contentWidth - 36,
+      characterSpacing: 1.2,
+    });
+    const buttonsY = calendarY + 26;
+    drawPdfLinkButton(doc, {
+      x: contentX,
+      y: buttonsY,
+      width: calendarButtonWidth,
+      height: 24,
+      label: 'Android (ICS)',
+      url: icsUrl,
+      fillColor: '#fffaf4',
+      borderColor: '#e4d7c6',
+      textColor: '#16120d',
+      fontSize: 9.3,
+    });
+    drawPdfLinkButton(doc, {
+      x: contentX + calendarButtonWidth + calendarButtonGap,
+      y: buttonsY,
+      width: calendarButtonWidth,
+      height: 24,
+      label: 'Календарь Apple',
+      url: icsUrl,
+      fillColor: '#fffaf4',
+      borderColor: '#e4d7c6',
+      textColor: '#16120d',
+      fontSize: 8.9,
+    });
+    drawPdfLinkButton(doc, {
+      x: contentX + (calendarButtonWidth + calendarButtonGap) * 2,
+      y: buttonsY,
+      width: calendarButtonWidth,
+      height: 24,
+      label: 'Google',
+      url: googleCalendarUrl,
+      fillColor: '#f3d6d0',
+      borderColor: '#d9b0a8',
+      textColor: '#962d1b',
+      fontSize: 9.3,
+    });
+
+    const footerY = calendarY + calendarHeight + 4;
+    setPdfRegularFont(doc);
+    doc.fillColor('#962d1b');
+    drawFixedText(doc, 'Открыть приглашение онлайн', contentX, footerY, {
+      fontSize: 8.4,
+      width: contentWidth,
+    });
+    doc.link(contentX, footerY, 144, 11, ticketUrl);
+    doc.fillColor('#7a7066');
+    drawFixedText(doc, 'Печать не требуется. Свободная рассадка.', contentX + 164, footerY, {
+      fontSize: 8,
+      width: contentWidth,
+    });
 
     doc.end();
   });
@@ -900,6 +1266,7 @@ export async function publishTicketArtifacts(
   publisher: StoragePublisher,
   input: {
     publicHash: string;
+    eventSlug?: string | null;
     shortTicketId: string;
     ticketBaseUrl: string;
     ticketsPrefix: string;
@@ -907,6 +1274,7 @@ export async function publishTicketArtifacts(
     email: string;
     phone: string;
     title: string;
+    speakerLabel?: string | null;
     startsAt: string;
     venueName: string;
     hallName: string;
@@ -917,6 +1285,7 @@ export async function publishTicketArtifacts(
 ): Promise<TicketArtifacts> {
   const htmlInput: TicketArtifactInput = {
     publicHash: input.publicHash,
+    eventSlug: input.eventSlug ?? null,
     shortTicketId: input.shortTicketId,
     ticketBaseUrl: input.ticketBaseUrl,
     ticketsPrefix: input.ticketsPrefix,
@@ -924,6 +1293,7 @@ export async function publishTicketArtifacts(
     emailMasked: maskEmail(input.email),
     phoneMasked: maskPhone(input.phone),
     title: input.title,
+    speakerLabel: input.speakerLabel ?? null,
     startsAt: input.startsAt,
     venueName: input.venueName,
     hallName: input.hallName,

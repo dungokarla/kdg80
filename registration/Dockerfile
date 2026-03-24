@@ -29,6 +29,7 @@ ENV TZ=Europe/Kaliningrad
 WORKDIR /app/registration
 
 COPY --from=build /app/registration /app/registration
+COPY assets /app/assets
 
 RUN mkdir -p /data /data/public \
   && chown -R node:node /app /data

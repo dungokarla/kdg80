@@ -52,6 +52,8 @@ export type FestivalEvent = {
   title: string;
   format: string;
   formatLabel: string;
+  publicationStatus?: string;
+  hiddenFromPublic?: boolean;
   accessLabel?: string;
   dateLabel: string;
   monthLabel: string;
@@ -67,8 +69,11 @@ export type FestivalEvent = {
   showingsLabel: string;
   summary: string;
   whyGo: string;
+  speakerAbout: string;
   questions: string[];
   registrationUrl?: string;
+  publicInfoNotice?: string;
+  publicRegistrationStateOverride?: 'registration_soon';
   calendarReady: boolean;
   googleCalendarUrl?: string;
   icsUrl?: string;
@@ -100,6 +105,8 @@ const MASTER_PATH_CANDIDATES = [
 ].filter((value): value is string => Boolean(value));
 const MASTER_PATH = MASTER_PATH_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || MASTER_PATH_CANDIDATES[0];
 const DEFAULT_CITY = 'Калининград';
+const ICAE_PUBLIC_INFO_NOTICE = 'Информация о площадке и времени скоро появится.';
+const ICAE_CALENDAR_NOTE = 'Календарь появится после уточнения площадки и времени.';
 const SPEAKER_SHOWCASE_KEYWORD_WEIGHTS: Array<{ pattern: RegExp; bonus: number }> = [
   { pattern: /доктор|д\.\s*н\./i, bonus: 3.2 },
   { pattern: /к\.\s*[а-я]\.\s*н\.|кандидат/i, bonus: 2.4 },
@@ -415,12 +422,17 @@ const EXHIBITION_LOCATION_OVERRIDES: Array<{
 
 let cache: FestivalEvent[] | null = null;
 
+function isHiddenPublicationStatus(value: string) {
+  const normalized = normalizeLookup(value);
+  return normalized.includes('skryto') || normalized.includes('hidden');
+}
+
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function extractField(body: string, label: string) {
-  const pattern = new RegExp(`\\*\\*${escapeRegex(label)}:\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)`);
+  const pattern = new RegExp(`\\*\\*${escapeRegex(label)}:\\*\\*[ \\t]*([\\s\\S]*?)(?=\\n\\*\\*|$)`);
   const match = body.match(pattern);
   return match?.[1]?.trim() ?? '';
 }
@@ -501,6 +513,11 @@ function startsWithTemplateLead(value: string) {
   return normalized.startsWith('лекция, которая помогает увидеть тему')
     || normalized.startsWith('лекция о теме')
     || normalized.startsWith('открытый разговор о теме');
+}
+
+function startsWithSyntheticWhyGo(value: string) {
+  const normalized = normalizeText(value).toLowerCase();
+  return normalized.startsWith('это способ увидеть за темой');
 }
 
 function isGenericQuestionSet(items: string[]) {
@@ -1191,6 +1208,23 @@ function applyEventLocationOverride(title: string, location: { venue: string; ad
   return location;
 }
 
+function isIcaePublicHoldbackLocation(location: { venue: string; address: string }) {
+  const locationLookup = normalizeLookup(`${location.venue} ${location.address}`);
+  return (
+    locationLookup.includes(normalizeLookup('ИЦАЭ'))
+    || locationLookup.includes(normalizeLookup('КГТУ'))
+    || locationLookup.includes(normalizeLookup('Советский проспект 1'))
+  );
+}
+
+export function getFestivalEventHref(slug: string) {
+  return `/sobytiya/${slug}/`;
+}
+
+export function getFestivalRegistrationHref(slug: string) {
+  return `${getFestivalEventHref(slug)}?register=1`;
+}
+
 function createProvisionalZooExcursion(events: FestivalEvent[]) {
   const zooLecture = events.find((event) =>
     includesAnyNormalized(
@@ -1209,6 +1243,8 @@ function createProvisionalZooExcursion(events: FestivalEvent[]) {
     title: 'Премьера новой тематической экскурсии по Калининградскому зоопарку',
     format: 'Экскурсия',
     formatLabel: 'Экскурсия',
+    publicationStatus: '',
+    hiddenFromPublic: false,
     accessLabel: '',
     dateLabel: 'Июнь 2026',
     monthLabel: 'Скоро',
@@ -1222,6 +1258,7 @@ function createProvisionalZooExcursion(events: FestivalEvent[]) {
     heroRole: '',
     summary: 'Премьера новой тематической экскурсии по зоопарку, которая лучше раскроет, что появилось в зоопарке в советское время, познакомит с историей зоопарка того периода и покажет вживую, как менялся зоопарк после немецкой эпохи.',
     whyGo: 'Экскурсия задумывается как весёлая и полная необычных зоопарковых историй прогулка по советскому слою Калининградского зоопарка.',
+    speakerAbout: '',
     questions: [],
     registrationUrl: undefined,
     calendarReady: false,
@@ -1305,6 +1342,7 @@ function parseSections() {
     const slug = toSlug(title);
     const formatRaw = extractField(body, 'Формат') || 'Событие';
     const formatLabel = normalizeFormatName(formatRaw);
+    const publicationStatus = normalizeText(extractField(body, 'Статус публикации'));
     const kind: FestivalEvent['kind'] = heading.startsWith('Спецсобытие')
       ? 'special'
       : formatRaw.includes('Выставка') || body.includes('**Период проведения:**') || body.includes('**Период работы:**')
@@ -1312,15 +1350,16 @@ function parseSections() {
         : 'dated';
     const durationLabel = resolveDurationLabel(kind, body, formatRaw);
     const summary = composeEventSummary(title, body, formatRaw);
-    const whyGo = normalizeText(
+    const rawWhyGo = normalizeText(
       extractFirst(body, [
         'Зачем идти на эту лекцию',
         'Зачем идти на это событие',
         'Зачем посетить выставку',
-        'Зачем идти на фестиваль',
         'Зачем идти на спектакль',
       ]),
     );
+    const whyGo = startsWithSyntheticWhyGo(rawWhyGo) ? '' : rawWhyGo;
+    const speakerAbout = normalizeText(extractField(body, 'О спикере'));
     const questions = [
       '3 вопроса, на которые отвечает событие',
       '3 вопроса, на которые отвечает лекция',
@@ -1360,28 +1399,41 @@ function parseSections() {
     const rangeDate = kind === 'range' ? parseRangeStart(heading) : null;
     const monthInfo = exactDate || rangeDate || { monthLabel: 'Скоро', monthAnchor: 'soon' };
     const durationMinutes = parseDurationMinutes(durationLabel);
-    const calendar = createCalendarLinks({
-      title,
-      slug,
-      summary: summary || whyGo,
-      venue: normalizedLocation.venue,
-      address: normalizedLocation.address,
-      isoStart: exactDate?.isoStart,
-      durationMinutes,
-    });
+    const isIcaePublicHoldback = kind === 'dated' && isIcaePublicHoldbackLocation(normalizedLocation);
+    const publicVenue = isIcaePublicHoldback ? '' : normalizedLocation.venue;
+    const publicAddress = isIcaePublicHoldback ? '' : normalizedLocation.address;
+    const publicTimeLabel = isIcaePublicHoldback ? '' : timeLabel;
+    const calendar = isIcaePublicHoldback
+      ? {
+          ready: false,
+          note: ICAE_CALENDAR_NOTE,
+          googleUrl: undefined,
+          icsUrl: undefined,
+        }
+      : createCalendarLinks({
+          title,
+          slug,
+          summary: summary || whyGo,
+          venue: normalizedLocation.venue,
+          address: normalizedLocation.address,
+          isoStart: exactDate?.isoStart,
+          durationMinutes,
+        });
 
     events.push({
       slug,
       title,
       format: formatRaw,
       formatLabel,
+      publicationStatus,
+      hiddenFromPublic: isHiddenPublicationStatus(publicationStatus),
       dateLabel,
       monthLabel: monthInfo.monthLabel,
       monthAnchor: monthInfo.monthAnchor,
-      timeLabel,
+      timeLabel: publicTimeLabel,
       durationLabel,
-      venue: normalizedLocation.venue,
-      address: normalizedLocation.address,
+      venue: publicVenue,
+      address: publicAddress,
       city: DEFAULT_CITY,
       speakerLabel: kind === 'special' ? '' : speakerData.speakerLabel,
       affiliation: kind === 'special' ? '' : speakerData.affiliation,
@@ -1389,12 +1441,19 @@ function parseSections() {
       showingsLabel,
       summary,
       whyGo,
+      speakerAbout: kind === 'special' ? '' : speakerAbout,
       questions,
-      registrationUrl: kind === 'dated' ? `https://example.com/register?event=${slug}` : undefined,
+      registrationUrl: kind === 'dated' ? getFestivalRegistrationHref(slug) : undefined,
+      publicInfoNotice: isIcaePublicHoldback ? ICAE_PUBLIC_INFO_NOTICE : undefined,
+      publicRegistrationStateOverride: isIcaePublicHoldback ? 'registration_soon' : undefined,
       calendarReady: kind === 'dated' ? calendar.ready : false,
       googleCalendarUrl: kind === 'dated' ? calendar.googleUrl : undefined,
       icsUrl: kind === 'dated' ? calendar.icsUrl : undefined,
-      calendarNote: kind === 'special' ? 'Дата спектакля будет объявлена позже.' : undefined,
+      calendarNote: kind === 'special'
+        ? 'Дата спектакля будет объявлена позже.'
+        : isIcaePublicHoldback
+          ? ICAE_CALENDAR_NOTE
+          : undefined,
       image: assignImage(title, speakerData.speakerLabel),
       speakerImages: kind === 'special' ? [] : assignSpeakerImages(speakerData.speakerLabel),
       dialogueParticipants,
@@ -1416,7 +1475,11 @@ export function getFestivalEvents() {
   if (!cache) {
     cache = parseSections();
   }
-  return cache;
+  return cache.filter((event) => !event.hiddenFromPublic);
+}
+
+export function getFestivalEventBySlug(slug: string) {
+  return getFestivalEvents().find((event) => event.slug === slug);
 }
 
 export function getMonthGroups(events: FestivalEvent[]) {

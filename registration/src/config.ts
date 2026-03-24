@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 type AppConfig = {
+  operatingMode: 'testing' | 'production';
   host: string;
   port: number;
   appBaseUrl: string;
@@ -56,7 +57,12 @@ function parseBoolean(value: string | undefined, fallback: boolean) {
   return normalized === '1' || normalized === 'true' || normalized === 'yes';
 }
 
+function parseOperatingMode(value: string | undefined): 'testing' | 'production' {
+  return value?.trim().toLowerCase() === 'testing' ? 'testing' : 'production';
+}
+
 export function loadConfig(): AppConfig {
+  const operatingMode = parseOperatingMode(process.env.REGISTRATION_OPERATING_MODE);
   const host = process.env.HOST?.trim() || '0.0.0.0';
   const port = parsePort(process.env.PORT, 3001);
   const flyAppName = process.env.FLY_APP_NAME?.trim();
@@ -90,6 +96,7 @@ export function loadConfig(): AppConfig {
   const storageDriver = s3Bucket && s3Endpoint && s3Region && s3AccessKeyId && s3SecretAccessKey ? 's3' : 'local';
 
   return {
+    operatingMode,
     host,
     port,
     appBaseUrl,

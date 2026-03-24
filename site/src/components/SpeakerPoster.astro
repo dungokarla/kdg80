@@ -75,6 +75,34 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
 
 <script is:inline>
   const speakerPoster = document.querySelector('[data-speaker-poster]');
+  const speakerPathSlash = String.fromCharCode(47);
+  const speakerPathDoubleSlash = `${speakerPathSlash}${speakerPathSlash}`;
+  const speakerTicketsRoot = `${speakerPathSlash}tickets${speakerPathSlash}`;
+  const speakerPreviewMatch = window.location.pathname.match(/^\/(preview-[^/]+)/u);
+  const speakerPreviewPrefix = speakerPreviewMatch ? `/${speakerPreviewMatch[1]}` : '';
+
+  const withSpeakerPreviewPrefix = (value) => {
+    if (!value || !speakerPreviewPrefix || !value.startsWith(speakerPathSlash) || value.startsWith(speakerPathDoubleSlash)) {
+      return value;
+    }
+
+    if (value === speakerPreviewPrefix || value.startsWith(`${speakerPreviewPrefix}${speakerPathSlash}`) || value.startsWith(speakerTicketsRoot)) {
+      return value;
+    }
+
+    return `${speakerPreviewPrefix}${value}`;
+  };
+
+  const normalizeSpeakerCard = (card) => {
+    if (!card || typeof card !== 'object') {
+      return null;
+    }
+
+    return {
+      ...card,
+      image: withSpeakerPreviewPrefix(card.image),
+    };
+  };
 
   const createSpeakerEntry = (card) => {
     const link = document.createElement('a');
@@ -99,7 +127,7 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
 
     const image = document.createElement('img');
     image.className = 'speaker-entry__portrait';
-    image.src = card.image;
+    image.src = withSpeakerPreviewPrefix(card.image);
     image.alt = card.name;
     image.loading = 'lazy';
     image.decoding = 'async';
@@ -117,11 +145,15 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
   if (speakerPoster instanceof HTMLElement) {
     const strip = speakerPoster.querySelector('[data-speaker-strip]');
     const button = speakerPoster.querySelector('[data-speaker-load]');
-    const loadUrl = speakerPoster.dataset.speakerLoadUrl;
+    const loadUrl = withSpeakerPreviewPrefix(speakerPoster.dataset.speakerLoadUrl);
     const initialCards = (() => {
       try {
         const payload = JSON.parse(speakerPoster.dataset.speakerInitialCards || '[]');
-        return Array.isArray(payload) ? payload.filter((card) => card?.name && card?.image && card?.anchor) : [];
+        return Array.isArray(payload)
+          ? payload
+              .map((card) => normalizeSpeakerCard(card))
+              .filter((card) => card?.name && card?.image && card?.anchor)
+          : [];
       } catch {
         return [];
       }
@@ -130,7 +162,8 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
     if (strip instanceof HTMLElement && button instanceof HTMLButtonElement && loadUrl) {
       let loadedCards = null;
       let currentCards = initialCards.slice();
-      let deck = [];
+      let unseenDeck = [];
+      let recycleDeck = [];
 
       const shuffle = (items) => {
         const values = items.slice();
@@ -146,11 +179,16 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
       const dedupeCards = (items) => {
         const seen = new Set();
         return items.filter((card) => {
-          if (!card?.anchor || seen.has(card.anchor)) {
+          if (!card?.anchor || !card?.name) {
             return false;
           }
 
-          seen.add(card.anchor);
+          const signature = `${card.anchor}::${card.name}`;
+          if (seen.has(signature)) {
+            return false;
+          }
+
+          seen.add(signature);
           return true;
         });
       };
@@ -177,26 +215,49 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
 
       const allCards = () => dedupeCards([...(loadedCards ?? []), ...initialCards]);
 
-      const refillDeck = (excludeCards) => {
-        const excludedAnchors = new Set(excludeCards.map((card) => card.anchor));
-        return shuffle(allCards().filter((card) => !excludedAnchors.has(card.anchor)));
-      };
-
       const getNextCards = () => {
         const slotCount = currentCards.length || initialCards.length || 8;
+        const nextCards = [];
+        const nextAnchors = new Set();
+        const currentAnchors = new Set(currentCards.map((card) => card.anchor));
 
-        if (deck.length < slotCount) {
-          deck = refillDeck(currentCards);
+        while (nextCards.length < slotCount && unseenDeck.length) {
+          const candidate = unseenDeck.shift();
+          if (!candidate || nextAnchors.has(candidate.anchor)) {
+            continue;
+          }
+
+          nextCards.push(candidate);
+          nextAnchors.add(candidate.anchor);
         }
 
-        let nextCards = deck.splice(0, slotCount);
+        if (nextCards.length > 0 && nextCards.length < slotCount) {
+          const carryCards = currentCards.filter((card) => !nextAnchors.has(card.anchor));
+
+          for (const candidate of carryCards) {
+            if (nextCards.length >= slotCount) {
+              break;
+            }
+
+            nextCards.push(candidate);
+            nextAnchors.add(candidate.anchor);
+          }
+        }
 
         if (nextCards.length < slotCount) {
-          const takenAnchors = new Set([...currentCards, ...nextCards].map((card) => card.anchor));
-          const refill = shuffle(allCards().filter((card) => !takenAnchors.has(card.anchor)));
-          const needed = slotCount - nextCards.length;
-          nextCards = nextCards.concat(refill.slice(0, needed));
-          deck = refill.slice(needed);
+          if (!recycleDeck.length) {
+            recycleDeck = shuffle(allCards().filter((card) => !currentAnchors.has(card.anchor)));
+          }
+
+          while (nextCards.length < slotCount && recycleDeck.length) {
+            const candidate = recycleDeck.shift();
+            if (!candidate || nextAnchors.has(candidate.anchor)) {
+              continue;
+            }
+
+            nextCards.push(candidate);
+            nextAnchors.add(candidate.anchor);
+          }
         }
 
         return nextCards.length ? nextCards : currentCards;
@@ -220,8 +281,12 @@ const remainingCount = Math.max(totalCount - cards.length, 0);
 
             const payload = await response.json();
             loadedCards = Array.isArray(payload?.cards)
-              ? payload.cards.filter((card) => card?.name && card?.image && card?.anchor)
+              ? payload.cards
+                  .map((card) => normalizeSpeakerCard(card))
+                  .filter((card) => card?.name && card?.image && card?.anchor)
               : [];
+            unseenDeck = shuffle(dedupeCards(loadedCards));
+            recycleDeck = [];
           }
 
           const nextCards = getNextCards();

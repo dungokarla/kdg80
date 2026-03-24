@@ -265,6 +265,7 @@ export async function createRegistration(payload: RegistrationPayload, deps: Reg
 
   const artifacts = await publishTicketArtifacts(deps.storagePublisher, {
     publicHash: created.publicHash,
+    eventSlug: event.slug,
     shortTicketId: created.shortTicketId,
     ticketBaseUrl: deps.publicTicketBaseUrl,
     ticketsPrefix: deps.ticketsPrefix,

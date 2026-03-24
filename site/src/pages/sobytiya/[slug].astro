@@ -1,0 +1,240 @@
+---
+import RegistrationClient from '../../components/RegistrationClient.astro';
+import EventCard from '../../components/EventCard.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Layout from '../../layouts/Layout.astro';
+import {
+  getEventEndIso,
+  getEventTemporalState,
+  getFestivalEventBySlug,
+  getFestivalEventHref,
+  getFestivalEvents,
+} from '../../lib/festival';
+import { getRouteNavItems, getSmartProgramHref } from '../../lib/routes';
+
+export function getStaticPaths() {
+  return getFestivalEvents().map((event) => ({
+    params: { slug: event.slug },
+  }));
+}
+
+const event = getFestivalEventBySlug(Astro.params.slug ?? '');
+
+if (!event) {
+  return Astro.redirect('/programma/');
+}
+
+const allEvents = getFestivalEvents();
+const routeItems = getRouteNavItems();
+const now = new Date();
+const temporalState = getEventTemporalState(event, now);
+const programHref = getSmartProgramHref(allEvents, false, now);
+const canonicalPath = getFestivalEventHref(event.slug);
+const siteOrigin = (import.meta.env.PUBLIC_SITE_ORIGIN || 'https://kgd80.ru').replace(/\/+$/u, '');
+const absoluteEventUrl = new URL(canonicalPath, `${siteOrigin}/`).toString();
+const programMonthHref = `/programma/#month-${event.monthAnchor}`;
+const descriptionBase = event.summary || event.whyGo || `Событие фестиваля «80 историй о главном»: ${event.title}.`;
+const title = `${event.title} | 80 историй о главном`;
+const description = [
+  event.dateLabel,
+  event.timeLabel,
+  event.speakerLabel,
+  descriptionBase,
+].filter(Boolean).join(' · ');
+const whyGoCopy = event.whyGo && event.whyGo !== event.summary ? event.whyGo : '';
+const metadataParts = [event.dateLabel, event.timeLabel, event.venue].filter(Boolean);
+const robots = temporalState === 'past' ? 'noindex, follow, noarchive' : undefined;
+const jsonLdStartDate = event.timeLabel ? event.isoStart : event.isoStart?.slice(0, 10);
+const jsonLdEndDate = event.timeLabel ? getEventEndIso(event) : event.isoStart?.slice(0, 10);
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: event.title,
+  description: descriptionBase,
+  startDate: jsonLdStartDate,
+  endDate: jsonLdEndDate,
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  eventStatus: temporalState === 'past'
+    ? 'https://schema.org/EventCompleted'
+    : 'https://schema.org/EventScheduled',
+  isAccessibleForFree: true,
+  url: absoluteEventUrl,
+  image: event.image ? [event.image] : undefined,
+  location: event.venue ? {
+    '@type': 'Place',
+    name: event.venue,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: event.address,
+      addressLocality: 'Калининград',
+      addressCountry: 'RU',
+    },
+  } : undefined,
+  organizer: {
+    '@type': 'Organization',
+    name: 'Российское общество Знание',
+    url: 'https://znanierussia.ru/',
+  },
+};
+---
+
+<Layout
+  title={title}
+  description={description}
+  canonicalPath={canonicalPath}
+  robots={robots}
+  ogImage={event.image}
+  ogType="article"
+  structuredData={structuredData}
+>
+  <div class="page page--event-leaf">
+    <div id="top" aria-hidden="true"></div>
+    <SiteHeader routeItems={routeItems} programHref={programHref} />
+
+    <main>
+      <section class="event-leaf">
+        <div class="container">
+          <div class="event-leaf__shell">
+            <nav class="event-leaf__crumbs" aria-label="Навигация по странице события">
+              <a href={programMonthHref}>Программа</a>
+              <span aria-hidden="true">/</span>
+              <span>{event.title}</span>
+            </nav>
+
+            <div class="event-leaf__identity">
+              <EventCard event={event} now={now} showActions={false} linkToDetails={false} headingLevel="page" />
+            </div>
+
+            <div class="event-leaf__hero">
+              <div class="event-leaf__copy">
+                <p class="event-leaf__eyebrow">О событии</p>
+                <p class="event-leaf__meta">{metadataParts.join(' · ')}</p>
+                {event.address && <p class="event-leaf__meta">{event.address}</p>}
+                {event.publicInfoNotice && <p class="event-leaf__notice">{event.publicInfoNotice}</p>}
+                {event.speakerLabel && <p class="event-leaf__speaker">Спикер: {event.speakerLabel}</p>}
+
+                <div class="event-leaf__actions">
+                  {temporalState === 'past' ? (
+                    <div class="button button--ghost button--disabled" aria-disabled="true">Событие прошло</div>
+                  ) : (
+                    <div class="event-leaf__registration" data-registration-card data-event-slug={event.slug} data-registration-autoload>
+                      <button
+                        class="button button--primary button--disabled"
+                        type="button"
+                        data-registration-cta
+                        data-registration-autoload
+                        data-event-slug={event.slug}
+                        data-event-title={event.title}
+                        data-event-start={event.isoStart ?? ''}
+                        data-event-venue={event.venue}
+                        data-event-address={event.address}
+                        data-event-speaker={event.speakerLabel}
+                        data-registration-state-override={event.publicRegistrationStateOverride ?? ''}
+                        disabled
+                        aria-disabled="true"
+                      >
+                        Проверяем регистрацию…
+                      </button>
+                      <div class="notice" data-registration-notice hidden></div>
+                    </div>
+                  )}
+
+                  <button
+                    class="button button--ghost event-leaf__share"
+                    type="button"
+                    data-event-share
+                    data-share-path={canonicalPath}
+                    data-share-title={event.title}
+                    hidden
+                  >
+                    Скопировать ссылку
+                  </button>
+                  <a class="button button--ghost" href={programMonthHref}>Смотреть другие события</a>
+                </div>
+                <p class="event-leaf__share-feedback" data-event-share-feedback hidden aria-live="polite"></p>
+                <div class="event-leaf__share-manual" data-event-share-manual hidden>
+                  <p class="event-leaf__share-manual-title">Ссылка на событие готова</p>
+                  <p class="event-leaf__share-manual-copy">Браузер не дал доступ к буферу обмена. Скопируйте ссылку вручную.</p>
+                  <input
+                    class="event-leaf__share-input"
+                    type="text"
+                    readonly
+                    data-event-share-input
+                    aria-label="Прямая ссылка на событие"
+                  />
+                </div>
+
+                {temporalState !== 'past' && event.calendarReady ? (
+                  <div class="event-leaf__calendar" aria-label="Добавить событие в календарь">
+                    <a class="event-leaf__calendar-link" href={event.icsUrl}>Android (ICS)</a>
+                    <a class="event-leaf__calendar-link" href={event.icsUrl}>Календарь Apple</a>
+                    <a
+                      class="event-leaf__calendar-link"
+                      href={event.googleCalendarUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Google
+                    </a>
+                  </div>
+                ) : temporalState !== 'past' && event.calendarNote ? (
+                  <p class="event-leaf__notice">{event.calendarNote}</p>
+                ) : null}
+              </div>
+            </div>
+
+            {event.image && (
+              <figure class="event-leaf__poster-panel">
+                <img src={event.image} alt={`Афиша события ${event.title}`} loading="eager" decoding="async" />
+              </figure>
+            )}
+
+            <div class="event-leaf__sections">
+              {whyGoCopy && (
+                <section class="event-leaf__section" aria-labelledby="event-leaf-why-go">
+                  <h2 id="event-leaf-why-go">Почему стоит прийти</h2>
+                  <p class="event-leaf__section-copy">{whyGoCopy}</p>
+                </section>
+              )}
+
+              {event.speakerAbout && (
+                <section class="event-leaf__section" aria-labelledby="event-leaf-speaker">
+                  <h2 id="event-leaf-speaker">О спикере</h2>
+                  <p class="event-leaf__section-copy">{event.speakerAbout}</p>
+                </section>
+              )}
+
+              {event.questions.length > 0 && (
+                <section class="event-leaf__section" aria-labelledby="event-leaf-questions">
+                  <h2 id="event-leaf-questions">О чём поговорим</h2>
+                  <ul class="event-leaf__question-list">
+                    {event.questions.map((question) => (
+                      <li>{question}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {event.speakerLectureLinks.length > 0 && (
+                <section class="event-leaf__section" aria-labelledby="event-leaf-more">
+                  <h2 id="event-leaf-more">Ещё у лектора</h2>
+                  <ul class="event-leaf__more-list">
+                    {event.speakerLectureLinks.map((lecture) => (
+                      <li>
+                        <a href={getFestivalEventHref(lecture.slug)}>{lecture.title}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <SiteFooter routeItems={routeItems} programHref={programHref} />
+    <RegistrationClient />
+  </div>
+</Layout>

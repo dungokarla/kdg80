@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  getFestivalEventHref,
   getFestivalEvents,
   getEventTemporalState,
   normalizeFestivalLookup,
@@ -269,7 +270,7 @@ function buildRoutes() {
         routeTitle: spec.title,
         routeSlug: spec.slug,
         routeHref: `/${spec.slug}/`,
-        eventHref: `#event-${event.slug}`,
+        eventHref: getFestivalEventHref(event.slug),
         eventLabel: event.title,
         speakerName: event.speakerLabel,
         speakerRole: event.heroRole || event.affiliation || '',
@@ -465,5 +466,5 @@ export function getSmartProgramHref(events: FestivalEvent[], isHome = false, now
   const currentOrUpcoming = datedEvents.find((event) => getEventTemporalState(event, now) !== 'past');
   const fallbackEvent = currentOrUpcoming ?? datedEvents[0];
   const anchor = fallbackEvent ? `#month-${fallbackEvent.monthAnchor}` : '#program';
-  return isHome ? anchor : `/${anchor}`;
+  return isHome ? anchor : `/programma/${anchor}`;
 }

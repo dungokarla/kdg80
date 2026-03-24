@@ -1,0 +1,66 @@
+---
+import EventCard from './EventCard.astro';
+import type { FestivalEvent } from '../lib/festival';
+
+type ProgramMonthGroup = {
+  label: string;
+  anchor: string;
+  events: FestivalEvent[];
+};
+
+interface Props {
+  monthGroups: ProgramMonthGroup[];
+  now: Date;
+  standalone?: boolean;
+}
+
+const { monthGroups, now, standalone = false } = Astro.props;
+const title = standalone
+  ? 'Полная программа фестиваля по месяцам, чтобы можно было быстро перейти к нужной дате и сразу открыть регистрацию.'
+  : 'Найдите подходящие события фестиваля в нашей программе';
+const description = standalone
+  ? 'Это отдельный маршрут программы: вся хронологическая лента вынесена в самостоятельную страницу, а карточки остаются теми же, что и на главной и в маршрутах.'
+  : 'В программе фестиваля ни одно событие не пересекается с другим по времени, выбирать между одним или другим не придётся, большинство мероприятий проходит в удобное вечернее время в будни и днём на выходных.';
+---
+
+<section class="section section--program" id="program">
+  <div class="container">
+    <div class="section__header section__header--split">
+      <div>
+        <p class="section__eyebrow">Программа</p>
+        <h2>{title}</h2>
+      </div>
+      <p class="section__text">
+        {description}
+      </p>
+    </div>
+
+    <div class="month-nav-wrap">
+      <nav class="month-nav" aria-label="Навигация по месяцам">
+        {monthGroups.map((group) => (
+          <a href={`#month-${group.anchor}`}>{group.label}</a>
+        ))}
+      </nav>
+    </div>
+
+    <div class="program">
+      {monthGroups.map((group) => (
+        <section class="month-block" id={`month-${group.anchor}`}>
+          <header class="month-block__header">
+            <div>
+              <p class="month-block__eyebrow">2026</p>
+              <h3>{group.label}</h3>
+            </div>
+            <span class="month-block__count">{group.events.length} событий</span>
+          </header>
+
+          <div class="event-list">
+            {group.events.map((event) => (
+              <EventCard event={event} now={now} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  </div>
+</section>

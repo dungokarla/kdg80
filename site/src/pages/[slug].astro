@@ -39,7 +39,7 @@ const title = `${route.title} | 80 историй о главном`;
 const description = route.description || `Маршрут по интересам «${route.title}»: подборка событий фестиваля и сильные мифы, связанные с темой.`;
 ---
 
-<Layout title={title} description={description}>
+<Layout title={title} description={description} canonicalPath={`/${route.slug}/`}>
   <div class="page page--route">
     <div id="top" aria-hidden="true"></div>
     <SiteHeader routeItems={routeItems} currentRouteSlug={route.slug} programHref={programHref} />
@@ -52,10 +52,10 @@ const description = route.description || `Маршрут по интересам
           <div class="section__header section__header--split">
             <div>
               <p class="section__eyebrow">События маршрута</p>
-              <h2>Сначала редкие сценические форматы, затем лекции по хронологии, а выставки вынесены ниже.</h2>
+              <h2>В программе — открытые дискуссии, лекции, иммерсивный спектакль и выставки.</h2>
             </div>
             <p class="section__text">
-              Карточки здесь те же, что и в общей программе, поэтому правки по событию должны совпадать везде без отдельной route-версии.
+              Зарегистрируйтесь на заинтересовавшее вас мероприятие.
             </p>
           </div>
 

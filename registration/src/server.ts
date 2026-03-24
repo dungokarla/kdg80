@@ -99,6 +99,7 @@ app.get('/api/v1/health', async () => {
   return {
     ok: true,
     service: 'registration',
+    operatingMode: config.operatingMode,
     appBaseUrl: config.appBaseUrl,
     storageDriver: storagePublisher.driver,
   };
@@ -129,6 +130,8 @@ await app.listen({
   host: config.host,
   port: config.port,
 });
+
+app.log.info({ operatingMode: config.operatingMode }, 'registration_operating_mode');
 
 if (telegramBot) {
   await telegramBot.ensureWebhook();

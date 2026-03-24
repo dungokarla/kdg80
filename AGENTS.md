@@ -49,6 +49,11 @@
 - If the task is explicitly about GEO, AI visibility, AI citations, LLM discoverability, `llms.txt`, crawler access, or structured discoverability for AI systems, additionally use the `geo` skill.
 - Default workflow for site UI tasks: use `ui-ux-pro-max` + `seo` + `seo-geo`; add `geo` whenever the task touches AI-search readiness or GEO outcomes.
 
+## Registration Production Rules
+
+- После перевода registration-системы в production любые новые тестовые регистрации на живом контуре допускаются только по отдельной необходимости и должны создаваться с именем `ТЕСТ`.
+- Без явной команды владельца проекта не менять доступность регистрации на события: не открывать, не закрывать, не переводить в `registration_soon`, не выполнять иные mutating-переключения availability-state.
+
 ## Visual Verification Policy
 
 - For any website, frontend, layout, or visual task, do not mark the work complete until you have done a visual verification pass through Playwright CLI or an equivalent Playwright command-line workflow.

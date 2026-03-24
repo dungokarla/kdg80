@@ -1,6 +1,6 @@
 ---
-import EventCard from '../components/EventCard.astro';
 import InterestChooser from '../components/InterestChooser.astro';
+import ProgramSection from '../components/ProgramSection.astro';
 import RegistrationClient from '../components/RegistrationClient.astro';
 import SpeakerPoster from '../components/SpeakerPoster.astro';
 import SiteFooter from '../components/SiteFooter.astro';
@@ -8,6 +8,7 @@ import SiteHeader from '../components/SiteHeader.astro';
 import Layout from '../layouts/Layout.astro';
 import portraitBounds from '../data/portrait-bounds.json';
 import {
+  getFestivalEventHref,
   getFestivalEvents,
   getMonthGroups,
   getOpenDialogues,
@@ -33,7 +34,7 @@ const SPEAKER_SHOWCASE_LIMIT = 8;
 const allSpeakerShowcase = getSpeakerShowcase(events, Number.POSITIVE_INFINITY);
 const speakerShowcase = allSpeakerShowcase.slice(0, SPEAKER_SHOWCASE_LIMIT);
 const speakerLoadHref = '/data/speakers-more.json';
-const openDialogues = getOpenDialogues(events).slice(0, 5);
+const openDialogues = getOpenDialogues(events);
 type RelatedEventCard = NonNullable<(typeof events)[number]['relatedEvent']>;
 type HeroQuoteType = 'festival' | 'lecture';
 type HeroVariantBase = {
@@ -150,7 +151,7 @@ const HERO_SCENE_STYLE_OVERRIDES: Array<{ match: string; style: string }> = [
   { match: 'Никитин', style: '--hero-mobile-portrait-right: -20%;' },
   { match: 'Мосиенко', style: '--hero-mobile-portrait-right: -20%; --hero-mobile-copy-width: 44%;' },
   { match: 'Казакова', style: '--hero-mobile-copy-width: 46%;' },
-  { match: 'Соколова', style: '--hero-mobile-portrait-height: 62%; --hero-copy-width: 30rem; --hero-copy-start: 7.75rem;' },
+  { match: 'Соколова', style: '--hero-mobile-portrait-height: 62%; --hero-copy-width: 38rem; --hero-copy-start: 4.9rem; --hero-quote-max-width: 16.4ch;' },
   { match: 'Долотова', style: '--hero-mobile-portrait-right: -20%; --hero-mobile-copy-width: 50%;' },
   { match: 'Конюхова', style: '--hero-mobile-portrait-right: -20%; --hero-mobile-copy-width: 50%;' },
 ];
@@ -179,7 +180,7 @@ const HERO_QUOTE_VARIANT_SPECS: HeroQuoteVariantSpec[] = [
     quoteType: 'festival',
     eventMatch: 'Мост, который соединяет времена',
     prompt: 'Зачем идти на фестиваль',
-    quote: 'Фестиваль собирает «своих» — тех, кому не все равно. Это шанс подойти к лектору, задать вопрос, вписаться в движ, найти новые знакомства или просто пообщаться с единомышленниками.',
+    quote: 'Фестиваль собирает «своих» — тех, кому не всё равно. Это шанс подойти к лектору, задать вопрос, вписаться в движ, найти новые знакомства или просто пообщаться с единомышленниками.',
     priority: 86,
   },
   {
@@ -235,7 +236,7 @@ const HERO_QUOTE_VARIANT_SPECS: HeroQuoteVariantSpec[] = [
     quoteType: 'lecture',
     eventMatch: 'История становления и развития малых городов',
     prompt: 'Зачем идти на эту лекцию',
-    quote: 'Влюбиться в маленький город и остаться здесь жить и работать. Я впервые приехала в этот поселок 5 лет назад и поняла, что здесь я хочу жить и встречать своих внуков.',
+    quote: 'Влюбиться в маленький город и остаться здесь жить и работать. Я впервые приехала в этот посёлок 5 лет назад и поняла, что здесь я хочу жить и встречать своих внуков.',
     priority: 87,
   },
   {
@@ -401,7 +402,63 @@ function getFestivalPeriodLabel(items: typeof events) {
   return `${stripWeekday(first.dateLabel)} - ${stripWeekday(last.dateLabel)}`;
 }
 
+function getParticipantCount(items: typeof events) {
+  const names = new Set<string>();
+
+  for (const event of items) {
+    if (event.speakerLabel) {
+      names.add(event.speakerLabel);
+    }
+
+    for (const participant of event.dialogueParticipants) {
+      names.add(participant.name);
+    }
+  }
+
+  return names.size;
+}
+
 const festivalPeriodLabel = getFestivalPeriodLabel(events);
+const participantCount = getParticipantCount(events);
+const lectureCount = events.filter((event) => event.formatLabel === 'Лекция').length;
+const publicDiscussionCount = openDialogues.length;
+const specialProjectCount = events.filter((event) => event.kind === 'range' || event.kind === 'special').length;
+const expertiseStats = [
+  { value: '1', label: 'доктор наук' },
+  { value: '6', label: 'кандидатов наук' },
+  { value: '5', label: 'авторов книг' },
+  { value: '4', label: 'руководителя госучреждений' },
+  { value: '5', label: 'руководителей НКО и частных организаций' },
+];
+const institutionHighlights = [
+  'Янтарный комбинат',
+  'Третьяковская галерея',
+  'нацпарк «Куршская коса»',
+  'АтлантНИРО',
+  'биостанция «Рыбачий» / «Фрингилла»',
+  'Калининградский зоопарк',
+  'музей «Фридландские ворота»',
+  'БФУ им. И. Канта',
+  'Музей Мирового океана',
+];
+const fieldHighlights = [
+  'кино',
+  'медицина',
+  'космос',
+  'промышленность',
+  'архитектура',
+  'искусство',
+  'историческая память',
+  'океанология',
+  'кулинария',
+  'жизнь замечательных людей',
+  'спорт',
+  'быт и повседневность',
+  'демография',
+  'природа',
+  'социология',
+  'городской фольклор',
+];
 type PortraitSliceBounds = {
   y: number;
   visibleLeft: number;
@@ -624,7 +681,7 @@ function buildHeroVariants(): HeroVariant[] {
       prompt: spec.prompt,
       priority: spec.priority,
       title: event.title,
-      eventHref: spec.quoteType === 'lecture' ? `#event-${event.slug}` : undefined,
+      eventHref: spec.quoteType === 'lecture' ? getFestivalEventHref(event.slug) : undefined,
       quote: spec.quote,
       quoteSize: getHeroQuoteSize(spec.quote),
       speakerName: event.speakerLabel,
@@ -688,6 +745,7 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 <Layout
   title="80 историй о главном | Фестиваль Российского общества Знание"
   description="Просветительский фестиваль к 80-летию Калининградской области: лекции, открытые диалоги, выставки и сильные истории о людях, памяти и культурном коде региона."
+  canonicalPath="/"
 >
   <div class="page">
     <div id="top" aria-hidden="true"></div>
@@ -702,12 +760,16 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
               <p class="hero__kicker">К 80-летию Калининградской области</p>
               <h1 class="hero__brand">
                 <span class="sr-only">80 историй о главном</span>
-                <img src="/shared-assets/logo-80-istorii-hero.svg" alt="" width="431" height="373" decoding="async" fetchpriority="high" aria-hidden="true" />
+                <span class="festival-lockup festival-lockup--hero">
+                  <img src="/shared-assets/logo-80-istorii-hero.svg" alt="" width="431" height="373" decoding="async" fetchpriority="high" aria-hidden="true" />
+                </span>
               </h1>
               <p class="hero__lead">
                 Истории людей, мест и привычек, из которых складывалась новая Калининградская область.
-                Первый экран теперь чередует сильные цитаты и мифы, чтобы быстрее показать, о чём спорит фестиваль и с какой истории начать.
+                Советское прошлое и современность, встречи со значимыми людьми, развенчивание заблуждений в современных форматах:
+                открытые диалоги, лекции и спецформаты. Участие в мероприятиях бесплатное по регистрации*
               </p>
+              <p class="hero__footnote">* За исключением спецпроектов.</p>
 
               <div class="hero__meta" aria-label="Ключевые параметры фестиваля">
                 <span>Калининград</span>
@@ -734,7 +796,9 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
               >
                 <div class="hero-showcase__media" aria-hidden="true">
                   <div class="hero-showcase__brandbadge" aria-hidden="true">
-                    <img src="/shared-assets/logo-80-istorii-hero.svg" alt="" width="431" height="373" decoding="async" loading="eager" />
+                    <span class="festival-lockup festival-lockup--badge">
+                      <img src="/shared-assets/logo-80-istorii-hero.svg" alt="" width="431" height="373" decoding="async" loading="eager" />
+                    </span>
                   </div>
                 </div>
 
@@ -851,7 +915,7 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 
             <div class="dialogue-strip dialogue-strip--feature">
               {openDialogues.map((event) => (
-                <a class="dialogue-card dialogue-card--feature" href={`#event-${event.slug}`}>
+                <a class="dialogue-card dialogue-card--feature" href={getFestivalEventHref(event.slug)}>
                   <span class="dialogue-card__meta">{event.dateLabel}</span>
                   <strong>{event.title}</strong>
                   <span>{event.venue}</span>
@@ -862,45 +926,78 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
         </section>
       )}
 
-      <section class="section section--program" id="program">
+      <ProgramSection monthGroups={monthGroups} now={now} />
+
+      <section class="section section--facts" aria-labelledby="facts-title">
         <div class="container">
-          <div class="section__header section__header--split">
-            <div>
-              <p class="section__eyebrow">Программа</p>
-              <h2>Вся лента должна сканироваться быстро: дата, картинка, спикер и минимум ключевой информации</h2>
+          <div class="facts-overview">
+            <div class="section__header section__header--split">
+              <div>
+                <p class="section__eyebrow">Фестиваль в цифрах</p>
+                <h2 id="facts-title">Собрали для вас в одном месте все цифры по фестивалю: оцените масштаб и приходите вживую на наши мероприятия.</h2>
+              </div>
+              <p class="section__text">
+                В фестивале принимают участие многие известные и признанные эксперты региона, и этот состав ещё хорошо дополнят несколько новых спикеров.
+              </p>
             </div>
-            <p class="section__text">
-              На десктопе перестраиваю список в плотный image-first ритм. Длинные абзацы убраны из первого экрана карточки,
-              а на первый план выходят дата, афиша события и заметный человек.
-            </p>
-          </div>
 
-          <div class="month-nav-wrap">
-            <nav class="month-nav" aria-label="Навигация по месяцам">
-              {monthGroups.map((group) => (
-                <a href={`#month-${group.anchor}`}>{group.label}</a>
+            <div class="facts-overview__grid" aria-label="Ключевые показатели фестиваля">
+              <article class="facts-card facts-card--accent">
+                <strong>{participantCount}</strong>
+                <span>участников фестиваля</span>
+              </article>
+              <article class="facts-card">
+                <strong>{events.length}</strong>
+                <span>события в программе</span>
+              </article>
+              <article class="facts-card">
+                <strong>{publicDiscussionCount}</strong>
+                <span>публичных дискуссий</span>
+              </article>
+              <article class="facts-card">
+                <strong>{lectureCount}</strong>
+                <span>лекции</span>
+              </article>
+              <article class="facts-card">
+                <strong>{specialProjectCount}</strong>
+                <span>спецпроекта</span>
+              </article>
+              <article class="facts-card facts-card--wide">
+                <strong>{festivalPeriodLabel}</strong>
+                <span>период проведения фестиваля</span>
+              </article>
+            </div>
+
+            <div class="facts-overview__grid facts-overview__grid--expertise" aria-label="Профессиональный профиль участников">
+              {expertiseStats.map((item) => (
+                <article class="facts-card facts-card--compact">
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                </article>
               ))}
-            </nav>
-          </div>
+            </div>
 
-          <div class="program">
-            {monthGroups.map((group) => (
-              <section class="month-block" id={`month-${group.anchor}`}>
-                <header class="month-block__header">
-                  <div>
-                    <p class="month-block__eyebrow">2026</p>
-                    <h3>{group.label}</h3>
-                  </div>
-                  <span class="month-block__count">{group.events.length} событий</span>
-                </header>
-
-                <div class="event-list">
-                  {group.events.map((event) => (
-                    <EventCard event={event} now={now} />
+            <div class="facts-panels">
+              <article class="facts-panel">
+                <p class="facts-panel__eyebrow">Институции</p>
+                <h3>Организации-партнёры фестиваля</h3>
+                <div class="facts-tags" aria-label="Ключевые организации фестиваля">
+                  {institutionHighlights.map((item) => (
+                    <span>{item}</span>
                   ))}
                 </div>
-              </section>
-            ))}
+              </article>
+
+              <article class="facts-panel">
+                <p class="facts-panel__eyebrow">Темы</p>
+                <h3>Какие отрасли и сюжеты собраны в программе</h3>
+                <div class="facts-tags" aria-label="Темы фестивальной программы">
+                  {fieldHighlights.map((item) => (
+                    <span>{item}</span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </div>
         </div>
       </section>
@@ -911,55 +1008,7 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 
   <script is:inline>
     const heroShowcase = document.querySelector('[data-hero-showcase]');
-    const interestChooser = document.querySelector('[data-interest-chooser]');
-    const interestZone = document.querySelector('[data-interest-zone]');
-    const programSection = document.querySelector('#program');
     const DESKTOP_HERO_AUTOPLAY_MS = 9000;
-
-    let cachedHeaderHeight = 64;
-    let chooserSyncFrame = 0;
-
-    const updateHeaderHeight = () => {
-      const rootStyle = getComputedStyle(document.documentElement);
-      cachedHeaderHeight = Number.parseFloat(rootStyle.getPropertyValue('--site-header-height')) || 64;
-    };
-
-    const syncInterestChooserState = () => {
-      if (!(interestChooser instanceof HTMLElement) || !(interestZone instanceof HTMLElement) || !(programSection instanceof HTMLElement)) {
-        return;
-      }
-
-      const stickTop = cachedHeaderHeight + 8;
-      const zoneTop = interestZone.getBoundingClientRect().top;
-      const programTop = programSection.getBoundingClientRect().top;
-      const isProgramActive = programTop <= stickTop + 28;
-      const isChooserStuck = zoneTop <= stickTop && !isProgramActive;
-
-      interestChooser.dataset.hidden = isProgramActive ? 'true' : 'false';
-      interestChooser.dataset.stuck = isChooserStuck ? 'true' : 'false';
-    };
-
-    const scheduleInterestChooserSync = () => {
-      if (chooserSyncFrame) {
-        return;
-      }
-
-      chooserSyncFrame = window.requestAnimationFrame(() => {
-        chooserSyncFrame = 0;
-        syncInterestChooserState();
-      });
-    };
-
-    if (interestChooser instanceof HTMLElement && interestZone instanceof HTMLElement && programSection instanceof HTMLElement) {
-      updateHeaderHeight();
-      syncInterestChooserState();
-      window.addEventListener('load', scheduleInterestChooserSync);
-      window.addEventListener('scroll', scheduleInterestChooserSync, { passive: true });
-      window.addEventListener('resize', () => {
-        updateHeaderHeight();
-        scheduleInterestChooserSync();
-      });
-    }
 
     const buildWeightedDeck = (variants) => {
       const weightedShuffle = (pool) => {

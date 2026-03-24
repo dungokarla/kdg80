@@ -2,6 +2,8 @@
 
 Исходники сайта находятся в каталоге `site/`. Проект собран на Astro и рассчитан на Node.js 22.
 
+Общий документный роутинг и связанный registration/E2E runbook собраны в [docs/README.md](/workspaces/kdg80/docs/README.md).
+
 ## Локальный запуск
 
 ```sh
@@ -20,6 +22,23 @@ npm run build
 ```
 
 Готовый статический сайт будет собран в `site/dist/`.
+
+## Скрытый preview на Yandex Static
+
+Для секретного preview используется скрипт из корня репозитория:
+
+```sh
+./deploy-preview-to-yc.sh
+```
+
+Что он делает:
+
+- читает YC-переменные из корневого `.env` или из `docs/.env`;
+- собирает Astro-сайт в `site/dist`;
+- переписывает root-absolute site URLs под секретный preview-prefix;
+- сохраняет same-origin пути `/tickets/...` на корне домена, чтобы не ломать manifest и ticket flow;
+- публикует новый preview-prefix без bucket listing, так что для секретного preview достаточно put-only доступа на запись;
+- выкладывает результат в скрытую подпапку вида `/preview-<timestamp>-<slug>/`.
 
 ## Правила входных данных
 

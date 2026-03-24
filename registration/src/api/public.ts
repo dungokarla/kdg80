@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { listPublicEventStates } from '../services/catalog';
 
 export async function registerPublicApi(app: FastifyInstance, db: Database.Database) {
-  app.get('/api/v1/public/events/states', async (request) => {
+  app.get('/api/v1/public/events/states', async (request, reply) => {
     const rawSlugs = typeof request.query === 'object' && request.query
       ? (request.query as Record<string, unknown>).slugs
       : undefined;
@@ -11,6 +11,8 @@ export async function registerPublicApi(app: FastifyInstance, db: Database.Datab
     const slugs = typeof rawSlugs === 'string'
       ? rawSlugs.split(',').map((item) => item.trim()).filter(Boolean)
       : [];
+
+    reply.header('Cache-Control', 'no-store');
 
     return {
       items: listPublicEventStates(db, slugs),

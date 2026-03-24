@@ -1,12 +1,31 @@
 import type { PublicEventCtaState, RegistrationPublicState } from '../types';
 
 type EventStateRow = {
+  slug?: string;
   starts_at: string;
   ends_at: string;
+  venue_name?: string;
+  hall_name?: string;
+  address?: string;
   capacity: number;
   seats_taken: number;
   registration_public_state: RegistrationPublicState;
 };
+
+export function isDeferredPublicEvent(row: Pick<EventStateRow, 'slug' | 'venue_name' | 'hall_name' | 'address'>) {
+  const lookup = [
+    row.slug ?? '',
+    row.venue_name ?? '',
+    row.hall_name ?? '',
+    row.address ?? '',
+  ].join(' ').toLowerCase();
+
+  return (
+    lookup.includes('ицаэ')
+    || lookup.includes('кгту')
+    || lookup.includes('советский проспект')
+  );
+}
 
 export function derivePublicState(row: EventStateRow, now = new Date()): PublicEventCtaState {
   const nowMs = now.getTime();
@@ -19,6 +38,10 @@ export function derivePublicState(row: EventStateRow, now = new Date()): PublicE
 
   if (!Number.isNaN(endsAtMs) && nowMs >= endsAtMs) {
     return 'past';
+  }
+
+  if (isDeferredPublicEvent(row)) {
+    return 'registration_soon';
   }
 
   if (row.seats_taken >= row.capacity) {

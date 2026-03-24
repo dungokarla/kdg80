@@ -60,9 +60,10 @@
 - `consent_accepted_at`
 - технические метаданные отправки формы, которые уже собираются для регистрации
 
-## Планируемый публичный файл
+## Публичная редакция для формы
 
-- Рабочий PDF этого согласия публикуется как отдельный документ репозитория: [registration-personal-data-consent-draft.pdf](/workspaces/kdg80/docs/registration-personal-data-consent-draft.pdf)
+- Пользовательская ссылка из checkbox-блока ведёт на чистую публичную редакцию без служебных разделов: [site/public/docs/registration-personal-data-consent.html](/workspaces/kdg80/site/public/docs/registration-personal-data-consent.html)
+- Внутренний markdown-файл остаётся каноническим источником текста для разработки, версионирования и последующей юридической правки.
 
 ## Как обновлять текст после правок юриста
 

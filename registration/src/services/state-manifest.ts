@@ -22,7 +22,7 @@ export async function publishPublicStateManifest(
     key,
     body: JSON.stringify(manifest),
     contentType: 'application/json; charset=utf-8',
-    cacheControl: 'public, max-age=5, stale-while-revalidate=30',
+    cacheControl: 'public, max-age=5, stale-while-revalidate=30, stale-if-error=3600',
   });
 
   return manifest;

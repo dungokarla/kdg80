@@ -6,10 +6,12 @@ CLAUDE_PROMPT.md
 .env
 .env.*
 !.env.example
+.venv-e2e/
 .secrets/
 Исходные данные/desktop.ini
 .playwright-cli/
 .tmp-*.png
+scripts/__pycache__/
 site/.vscode/
 site/.tmp-playwright*/
 site/scripts/__pycache__/
