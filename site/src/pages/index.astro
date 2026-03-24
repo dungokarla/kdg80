@@ -432,6 +432,7 @@ const expertiseStats = [
 ];
 const institutionHighlights = [
   'Янтарный комбинат',
+  'Третьяковская галерея',
   'нацпарк «Куршская коса»',
   'АтлантНИРО',
   'биостанция «Рыбачий» / «Фрингилла»',
@@ -765,8 +766,8 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
               </h1>
               <p class="hero__lead">
                 Истории людей, мест и привычек, из которых складывалась новая Калининградская область.
-                Советское прошлое и современность, встречи со значимыми людьми, заблуждения в современных форматах открытых диалогах,
-                лекциях и спецформатах. Участие в мероприятиях бесплатное по регистрации*
+                Советское прошлое и современность, встречи со значимыми людьми, развенчивание заблуждений в современных форматах:
+                открытые диалоги, лекции и спецформаты. Участие в мероприятиях бесплатное по регистрации*
               </p>
               <p class="hero__footnote">* За исключением спецпроектов.</p>
 
@@ -936,8 +937,7 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
                 <h2 id="facts-title">Собрали для вас в одном месте все цифры по фестивалю: оцените маштаб и приходить вживую на наши мероприятия.</h2>
               </div>
               <p class="section__text">
-                Проверили текущий состав участников по согласованным регалиям и вывели цифры, которые помогают быстро понять размах темы:
-                от науки и музейного дела до городской среды, природы и повседневной памяти региона.
+                В фестивале принимают участие многие известные и признанные эксперты региона, и этот состав ещё хорошо дополнят несколько новых спикеров.
               </p>
             </div>
 
@@ -1008,55 +1008,7 @@ const heroVariantsPayload = JSON.stringify(heroStoryVariants);
 
   <script is:inline>
     const heroShowcase = document.querySelector('[data-hero-showcase]');
-    const interestChooser = document.querySelector('[data-interest-chooser]');
-    const interestZone = document.querySelector('[data-interest-zone]');
-    const programSection = document.querySelector('#program');
     const DESKTOP_HERO_AUTOPLAY_MS = 9000;
-
-    let cachedHeaderHeight = 64;
-    let chooserSyncFrame = 0;
-
-    const updateHeaderHeight = () => {
-      const rootStyle = getComputedStyle(document.documentElement);
-      cachedHeaderHeight = Number.parseFloat(rootStyle.getPropertyValue('--site-header-height')) || 64;
-    };
-
-    const syncInterestChooserState = () => {
-      if (!(interestChooser instanceof HTMLElement) || !(interestZone instanceof HTMLElement) || !(programSection instanceof HTMLElement)) {
-        return;
-      }
-
-      const stickTop = cachedHeaderHeight + 8;
-      const zoneTop = interestZone.getBoundingClientRect().top;
-      const programTop = programSection.getBoundingClientRect().top;
-      const isProgramActive = programTop <= stickTop + 28;
-      const isChooserStuck = zoneTop <= stickTop && !isProgramActive;
-
-      interestChooser.dataset.hidden = isProgramActive ? 'true' : 'false';
-      interestChooser.dataset.stuck = isChooserStuck ? 'true' : 'false';
-    };
-
-    const scheduleInterestChooserSync = () => {
-      if (chooserSyncFrame) {
-        return;
-      }
-
-      chooserSyncFrame = window.requestAnimationFrame(() => {
-        chooserSyncFrame = 0;
-        syncInterestChooserState();
-      });
-    };
-
-    if (interestChooser instanceof HTMLElement && interestZone instanceof HTMLElement && programSection instanceof HTMLElement) {
-      updateHeaderHeight();
-      syncInterestChooserState();
-      window.addEventListener('load', scheduleInterestChooserSync);
-      window.addEventListener('scroll', scheduleInterestChooserSync, { passive: true });
-      window.addEventListener('resize', () => {
-        updateHeaderHeight();
-        scheduleInterestChooserSync();
-      });
-    }
 
     const buildWeightedDeck = (variants) => {
       const weightedShuffle = (pool) => {

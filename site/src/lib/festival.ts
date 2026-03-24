@@ -52,6 +52,8 @@ export type FestivalEvent = {
   title: string;
   format: string;
   formatLabel: string;
+  publicationStatus?: string;
+  hiddenFromPublic?: boolean;
   accessLabel?: string;
   dateLabel: string;
   monthLabel: string;
@@ -420,12 +422,17 @@ const EXHIBITION_LOCATION_OVERRIDES: Array<{
 
 let cache: FestivalEvent[] | null = null;
 
+function isHiddenPublicationStatus(value: string) {
+  const normalized = normalizeLookup(value);
+  return normalized.includes('skryto') || normalized.includes('hidden');
+}
+
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function extractField(body: string, label: string) {
-  const pattern = new RegExp(`\\*\\*${escapeRegex(label)}:\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)`);
+  const pattern = new RegExp(`\\*\\*${escapeRegex(label)}:\\*\\*[ \\t]*([\\s\\S]*?)(?=\\n\\*\\*|$)`);
   const match = body.match(pattern);
   return match?.[1]?.trim() ?? '';
 }
@@ -1236,6 +1243,8 @@ function createProvisionalZooExcursion(events: FestivalEvent[]) {
     title: 'Премьера новой тематической экскурсии по Калининградскому зоопарку',
     format: 'Экскурсия',
     formatLabel: 'Экскурсия',
+    publicationStatus: '',
+    hiddenFromPublic: false,
     accessLabel: '',
     dateLabel: 'Июнь 2026',
     monthLabel: 'Скоро',
@@ -1333,6 +1342,7 @@ function parseSections() {
     const slug = toSlug(title);
     const formatRaw = extractField(body, 'Формат') || 'Событие';
     const formatLabel = normalizeFormatName(formatRaw);
+    const publicationStatus = normalizeText(extractField(body, 'Статус публикации'));
     const kind: FestivalEvent['kind'] = heading.startsWith('Спецсобытие')
       ? 'special'
       : formatRaw.includes('Выставка') || body.includes('**Период проведения:**') || body.includes('**Период работы:**')
@@ -1345,7 +1355,6 @@ function parseSections() {
         'Зачем идти на эту лекцию',
         'Зачем идти на это событие',
         'Зачем посетить выставку',
-        'Зачем идти на фестиваль',
         'Зачем идти на спектакль',
       ]),
     );
@@ -1416,6 +1425,8 @@ function parseSections() {
       title,
       format: formatRaw,
       formatLabel,
+      publicationStatus,
+      hiddenFromPublic: isHiddenPublicationStatus(publicationStatus),
       dateLabel,
       monthLabel: monthInfo.monthLabel,
       monthAnchor: monthInfo.monthAnchor,
@@ -1464,7 +1475,7 @@ export function getFestivalEvents() {
   if (!cache) {
     cache = parseSections();
   }
-  return cache;
+  return cache.filter((event) => !event.hiddenFromPublic);
 }
 
 export function getFestivalEventBySlug(slug: string) {

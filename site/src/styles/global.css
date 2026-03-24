@@ -2352,13 +2352,13 @@ summary {
 .event-card__question-block {
   display: grid;
   gap: 0.42rem;
-  padding-top: 0.12rem;
+  padding-top: 0.82rem;
 }
 
 .event-card__speaker-about {
   display: grid;
   gap: 0.42rem;
-  padding-top: 0.12rem;
+  padding-top: 0.82rem;
 }
 
 .event-card__question-label {
@@ -3515,8 +3515,7 @@ summary {
 }
 
 .interest-chooser {
-  position: sticky;
-  top: calc(var(--site-header-height, 4.25rem) + 0.15rem);
+  position: static;
   display: grid;
   gap: 1rem;
   padding: 1rem;
@@ -3526,20 +3525,6 @@ summary {
   backdrop-filter: blur(16px);
   box-shadow: 0 18px 42px rgba(18, 17, 14, 0.08);
   transition: none;
-}
-
-.interest-chooser[data-hidden="true"] {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.interest-chooser[data-stuck="true"] {
-  gap: 0.78rem;
-  padding: 0.9rem 0.98rem;
-  border-radius: 1.25rem;
-  background: rgba(252, 246, 237, 0.97);
-  box-shadow: 0 20px 40px rgba(18, 17, 14, 0.1);
 }
 
 .interest-chooser__copy {
@@ -3567,18 +3552,6 @@ summary {
   margin: 0;
   max-width: 52rem;
   color: var(--ink-soft);
-}
-
-.interest-chooser[data-stuck="true"] .interest-chooser__copy {
-  gap: 0.12rem;
-}
-
-.interest-chooser[data-stuck="true"] .interest-chooser__copy h2 {
-  font-size: clamp(1rem, 2.1vw, 1.35rem);
-}
-
-.interest-chooser[data-stuck="true"] .interest-chooser__copy p {
-  display: none;
 }
 
 .interest-chooser__nav {
@@ -4796,11 +4769,6 @@ body.registration-modal-open {
     align-items: center;
   }
 
-  .interest-chooser[data-stuck="true"] {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-  }
-
   .route-hero__shell {
     grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
     align-items: stretch;
@@ -5006,10 +4974,6 @@ body.registration-modal-open {
     align-items: flex-start;
   }
 
-  .interest-chooser {
-    top: calc(var(--site-header-height, 4.25rem) + 0.15rem);
-  }
-
   .interest-chooser__nav {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5026,10 +4990,6 @@ body.registration-modal-open {
     text-align: center;
     white-space: normal;
     text-wrap: balance;
-  }
-
-  .interest-chooser[data-stuck="true"] .interest-chooser__copy h2 {
-    font-size: 1rem;
   }
 
   .program {

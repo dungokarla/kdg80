@@ -8,13 +8,13 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<section class="interest-chooser-zone" id="interest-chooser" data-interest-zone aria-labelledby="interest-chooser-title">
+<section class="interest-chooser-zone" id="interest-chooser" aria-labelledby="interest-chooser-title">
   <div class="container">
-    <div class="interest-chooser" data-interest-chooser data-stuck="false" data-hidden="false">
+    <div class="interest-chooser">
       <div class="interest-chooser__copy">
         <p class="interest-chooser__eyebrow">По интересам</p>
         <h2 id="interest-chooser-title">Выберите свой маршрут по фестивалю</h2>
-        <p>Короткий вход в тематические подборки, который до программы становится временным вторым уровнем навигации.</p>
+        <p>Выберите тематику, которая вам по душе: там будут события разных форматов, лекции, открытые дискуссии, выставки, иммерсивный спектакль и даже премьера экскурсии.</p>
       </div>
 
       <nav class="interest-chooser__nav" aria-label="Маршруты по интересам">
